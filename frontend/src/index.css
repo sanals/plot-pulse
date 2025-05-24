@@ -1,0 +1,267 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Import leaflet CSS */
+@import url('https://unpkg.com/leaflet@1.7.1/dist/leaflet.css');
+
+/* Import marker cluster CSS */
+@import url('https://unpkg.com/react-leaflet-markercluster/dist/styles.min.css');
+
+/* Fix Leaflet default icon paths issue */
+.leaflet-default-icon-path {
+  background-image: url('https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png');
+}
+
+.leaflet-default-shadow-path {
+  background-image: url('https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png');
+}
+
+/* Prevent blue highlight when interacting with the map on mobile */
+.leaflet-container {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Style the popups */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2);
+}
+
+.leaflet-popup-content {
+  margin: 12px;
+  line-height: 1.4;
+}
+
+.leaflet-popup-tip {
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom map controls */
+.map-control {
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.map-control:hover {
+  background-color: #f4f4f4;
+}
+
+/* Marker Cluster Customization */
+.marker-cluster-small {
+  background-color: rgba(33, 150, 243, 0.6);
+}
+
+.marker-cluster-small div {
+  background-color: rgba(33, 150, 243, 0.8);
+}
+
+.marker-cluster-medium {
+  background-color: rgba(33, 150, 243, 0.6);
+}
+
+.marker-cluster-medium div {
+  background-color: rgba(33, 150, 243, 0.8);
+}
+
+.marker-cluster-large {
+  background-color: rgba(33, 150, 243, 0.6);
+}
+
+.marker-cluster-large div {
+  background-color: rgba(33, 150, 243, 0.8);
+}
+
+/* Control positioning utilities */
+.leaflet-top.leaflet-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.leaflet-bottom.leaflet-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .leaflet-touch .leaflet-control-zoom {
+    margin-right: 10px;
+    margin-bottom: 50px;
+  }
+  
+  .form-actions {
+    justify-content: center;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px; /* Prevent zoom on mobile */
+  }
+}
+
+/* User location marker styles */
+.user-location-marker {
+  background-color: #4285F4;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #4285F4;
+}
+
+.user-location-marker.pulsating::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  background-color: #4285F4;
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Location button styles */
+.location-button {
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.location-button:hover {
+  background-color: #f4f4f4;
+}
+
+.location-button.active {
+  background-color: #4285F4;
+  color: white;
+}
+
+.location-button.error {
+  background-color: #ffebee;
+  color: #f44336;
+}
+
+/* Accuracy circle styles */
+.accuracy-circle {
+  stroke: #4285F4;
+  stroke-width: 1;
+  stroke-opacity: 0.8;
+  fill: #4285F4;
+  fill-opacity: 0.15;
+}

@@ -1,0 +1,271 @@
+# PlotPulse PWA - Cursor Development Rules
+
+## Project Overview
+You are developing PlotPulse, a Progressive Web Application (PWA) for interactive plot price mapping and availability tracking. Users can view plot information on an interactive map and contribute new data through long-press interactions.
+
+## Technology Stack
+- **Frontend**: React 18+ with TypeScript, Vite for build tooling
+- **Mapping**: react-leaflet with OpenStreetMap
+- **Backend**: Java Spring Boot 3.x with Spring Data JPA
+- **Database**: PostgreSQL 15+ with PostGIS extension
+- **PWA**: Vite PWA plugin with Workbox
+
+## Code Quality Standards
+- Use TypeScript with strict mode enabled
+- Follow React functional components with hooks
+- Implement proper error handling with try-catch blocks
+- Use async/await instead of Promise.then()
+- Add JSDoc comments for complex functions
+- Maintain clean, readable code structure
+- Use meaningful variable and function names
+
+## File Structure Standards
+```
+plotpulse/
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Map/
+│   │   │   │   ├── MapComponent.tsx
+│   │   │   │   ├── PlotMarker.tsx
+│   │   │   │   └── LongPressPopup.tsx
+│   │   │   ├── Forms/
+│   │   │   │   └── PlotSubmissionForm.tsx
+│   │   │   └── Common/
+│   │   │       └── LoadingSpinner.tsx
+│   │   ├── hooks/
+│   │   │   ├── useGeolocation.ts
+│   │   │   ├── usePlotData.ts
+│   │   │   └── useLongPress.ts
+│   │   ├── services/
+│   │   │   └── plotService.ts
+│   │   ├── types/
+│   │   │   └── plot.types.ts
+│   │   └── utils/
+│   │       └── mapUtils.ts
+├── backend/
+│   ├── src/main/java/com/plotpulse/
+│   │   ├── controller/
+│   │   │   └── PlotController.java
+│   │   ├── entity/
+│   │   │   └── Plot.java
+│   │   ├── repository/
+│   │   │   └── PlotRepository.java
+│   │   ├── service/
+│   │   │   └── PlotService.java
+│   │   └── dto/
+│   │       ├── PlotDto.java
+│   │       └── NearestPlotRequest.java
+```
+
+## React/TypeScript Guidelines
+
+### Component Patterns
+- Always use functional components with TypeScript interfaces
+- Create custom hooks for complex logic (geolocation, API calls)
+- Use React.memo() for components that receive stable props
+- Implement proper cleanup in useEffect hooks
+
+### State Management
+- Use useState for local component state
+- Use useContext for shared app state (user location, plot data)
+- Implement useReducer for complex state logic
+
+### Error Handling
+```typescript
+const [error, setError] = useState<string | null>(null);
+const [loading, setLoading] = useState<boolean>(false);
+
+try {
+  setLoading(true);
+  const result = await apiCall();
+  // handle success
+} catch (err) {
+  setError(err instanceof Error ? err.message : 'An error occurred');
+} finally {
+  setLoading(false);
+}
+```
+
+## Spring Boot Guidelines
+
+### Entity Design
+- Use JPA annotations properly (@Entity, @Id, @Column)
+- Implement PostGIS Point type with org.locationtech.jts.geom.Point
+- Add audit fields (createdAt, updatedAt) with @CreationTimestamp/@UpdateTimestamp
+- Use BigDecimal for price fields
+
+### Repository Pattern
+- Extend JpaRepository<Entity, Long>
+- Use @Query annotations for custom spatial queries
+- Implement native PostGIS functions (ST_DWithin, ST_Distance)
+
+### Controller Design
+- Use @RestController and @RequestMapping
+- Implement proper HTTP status codes
+- Add @Valid for request validation
+- Use ResponseEntity<> for response handling
+
+### Error Handling
+```java
+@ExceptionHandler(EntityNotFoundException.class)
+public ResponseEntity<ErrorResponse> handleNotFound(EntityNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(new ErrorResponse(ex.getMessage()));
+}
+```
+
+## Map Integration Rules
+
+### Long Press Implementation
+- Use custom hook with touch/mouse event detection
+- Implement 500ms delay for long press recognition
+- Prevent default context menu on right-click
+- Clear any existing timeouts on pointer up
+
+### Geolocation Handling
+- Request permission before accessing location
+- Implement fallback for denied permissions
+- Cache user location with reasonable expiry
+- Handle geolocation errors gracefully
+
+### Marker Management
+- Use marker clustering for dense plot areas
+- Implement custom icons for different plot types
+- Add hover effects and tooltips
+- Optimize marker rendering for performance
+
+## Database & PostGIS Guidelines
+
+### Spatial Data
+- Use SRID 4326 (WGS84) for coordinate system consistency
+- Create spatial indexes on geometry columns
+- Use ST_MakePoint() for point creation
+- Implement proper distance calculations with ST_DWithin
+
+### Performance Optimization
+- Add indexes on frequently queried columns
+- Use spatial indexes for geometry columns
+- Implement pagination for large datasets
+- Cache frequently accessed data
+
+## PWA Requirements
+
+### Service Worker
+- Cache static assets (HTML, CSS, JS, images)
+- Implement cache-first strategy for assets
+- Use network-first for API calls
+- Handle offline scenarios gracefully
+
+### Manifest Configuration
+```json
+{
+  "name": "PlotPulse - Plot Price Mapping",
+  "short_name": "PlotPulse",
+  "theme_color": "#2196F3",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [...]
+}
+```
+
+## API Design Standards
+
+### Endpoint Patterns
+- GET /api/plots - Retrieve all plots (with pagination)
+- GET /api/plots/nearest?lat={lat}&lon={lon}&radius={radius} - Find nearest plot
+- POST /api/plots - Create new plot
+- PUT /api/plots/{id} - Update existing plot
+- DELETE /api/plots/{id} - Delete plot
+
+### Request/Response Format
+```typescript
+interface PlotDto {
+  id?: number;
+  price: number;
+  isForSale: boolean;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+```
+
+### Validation Rules
+- Latitude: -90 to 90
+- Longitude: -180 to 180
+- Price: Must be positive number
+- Description: Max 500 characters
+
+## Common Issues & Solutions
+
+### Long Press Detection
+```typescript
+const useLongPress = (callback: (event: any) => void, delay = 500) => {
+  const [longPressTriggered, setLongPressTriggered] = useState(false);
+  const timeout = useRef<NodeJS.Timeout>();
+  const target = useRef<EventTarget>();
+
+  const start = useCallback((event: any) => {
+    target.current = event.target;
+    timeout.current = setTimeout(() => {
+      callback(event);
+      setLongPressTriggered(true);
+    }, delay);
+  }, [callback, delay]);
+
+  const clear = useCallback(() => {
+    timeout.current && clearTimeout(timeout.current);
+    setLongPressTriggered(false);
+  }, []);
+
+  return { onMouseDown: start, onTouchStart: start, onMouseUp: clear, onTouchEnd: clear };
+};
+```
+
+### PostGIS Integration
+```java
+@Entity
+@Table(name = "plots")
+public class Plot {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(columnDefinition = "geometry(Point,4326)")
+    private Point location;
+    
+    // Use org.locationtech.jts.geom.Point
+    // Configure in application.properties: spring.jpa.database-platform=org.hibernate.spatial.dialect.postgis.PostgisPG95Dialect
+}
+```
+
+### Nearest Point Query
+```java
+@Query(value = "SELECT * FROM plots WHERE ST_DWithin(location, ST_MakePoint(?2, ?1), ?3) ORDER BY ST_Distance(location, ST_MakePoint(?2, ?1)) LIMIT 1", nativeQuery = true)
+Optional<Plot> findNearestPlot(double latitude, double longitude, double radiusInMeters);
+```
+
+## Testing Requirements
+- Unit tests for utility functions
+- Integration tests for API endpoints
+- Component testing for React components
+- End-to-end testing for critical user flows
+
+## Performance Guidelines
+- Lazy load map tiles
+- Implement virtual scrolling for large lists
+- Use React.lazy() for code splitting
+- Optimize bundle size with tree shaking
+- Implement proper caching strategies
+
+## Security Considerations
+- Validate all user inputs on both client and server
+- Implement CORS properly
+- Use HTTPS in production
+- Sanitize user-generated content
+- Implement rate limiting for API endpoints
+
+Always prioritize user experience, maintainable code, and proper error handling in your implementations.
