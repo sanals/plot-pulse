@@ -308,7 +308,20 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     refreshPlots: () => {
       cacheRef.current = {};
       if (lastBounds) {
-        loadPlotsInViewport(lastBounds);
+        // Force reload by bypassing the bounds change check
+        setLoading(true);
+        setError(null);
+        
+        getCachedOrFetchPlots(lastBounds).then(plotsData => {
+          setPlots(plotsData);
+          setLoading(false);
+        }).catch(error => {
+          if ((error as Error).message !== 'Request was cancelled') {
+            console.error('Error refreshing plots:', error);
+            setError(error instanceof Error ? error.message : 'Failed to refresh plots');
+          }
+          setLoading(false);
+        });
       }
     }
   };

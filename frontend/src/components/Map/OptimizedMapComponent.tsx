@@ -85,7 +85,8 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
     loading: plotsLoading,
     error: plotsError,
     plotStats,
-    loadPlotsInViewport
+    loadPlotsInViewport,
+    refreshPlots
   } = useOptimizedPlotData({
     enableViewportLoading: true,
     debounceDelay: 500, // Balanced between responsiveness and performance
@@ -178,8 +179,9 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
 
   const handlePlotAdded = useCallback(async () => {
     console.log('%c[Map] Plot added, refreshing data', 'color: purple; font-weight: bold');
-    // The optimized hook handles cache invalidation automatically
-  }, []);
+    // Refresh plots to show the newly added plot immediately
+    refreshPlots();
+  }, [refreshPlots]);
 
   const handlePermissionChange = useCallback((state: 'granted' | 'denied' | 'prompt' | 'unavailable') => {
     if (state === 'granted') {
@@ -193,14 +195,16 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
   }, []);
 
   const handlePlotUpdated = useCallback(() => {
-    // Optimized hook handles updates automatically
     console.log('%c[Map] Plot updated', 'color: green; font-weight: bold');
-  }, []);
+    // Refresh plots to show the updated plot immediately
+    refreshPlots();
+  }, [refreshPlots]);
 
   const handlePlotDeleted = useCallback(() => {
-    // Optimized hook handles deletions automatically
     console.log('%c[Map] Plot deleted', 'color: red; font-weight: bold');
-  }, []);
+    // Refresh plots to remove the deleted plot immediately
+    refreshPlots();
+  }, [refreshPlots]);
 
   // Memoized map container props for performance
   const mapContainerProps = useMemo(() => ({

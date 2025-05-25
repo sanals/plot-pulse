@@ -1,5 +1,6 @@
 import { useMap } from 'react-leaflet';
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { TileLayer } from 'leaflet';
 
 interface MapLayer {
@@ -37,6 +38,7 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
   const [activeLayer, setActiveLayer] = useState<string>(mapLayers[0].name);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const customLayerRef = useRef<TileLayer | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   
   const updateMapLayer = (layer: MapLayer) => {
     // Only remove our custom layer, not the default one
@@ -86,6 +88,7 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
       }}
     >
       <button 
+        ref={buttonRef}
         style={{
           width: '100%',
           padding: '8px 12px',
@@ -109,18 +112,17 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
         </span>
       </button>
       
-      {isOpen && (
+      {isOpen && buttonRef.current && createPortal(
         <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
-          marginTop: '4px',
+          position: 'fixed',
+          top: buttonRef.current.getBoundingClientRect().bottom + 4,
+          left: buttonRef.current.getBoundingClientRect().left,
+          width: buttonRef.current.getBoundingClientRect().width,
           backgroundColor: 'white',
           border: '1px solid #e2e8f0',
           borderRadius: '6px',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          zIndex: 1001
+          zIndex: 9999
         }}>
           {mapLayers.map((layer) => (
             <button
@@ -150,7 +152,8 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
               {layer.name}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
