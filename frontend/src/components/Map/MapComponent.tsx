@@ -37,6 +37,7 @@ const MapComponent = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showGeoPermission, setShowGeoPermission] = useState<boolean>(true);
+  const [anyPlotModalOpen, setAnyPlotModalOpen] = useState<boolean>(false);
   
   // Debug: Add debug marker to visualize click detection
   const [debugMarker, setDebugMarker] = useState<MapPosition | null>(null);
@@ -143,6 +144,10 @@ const MapComponent = () => {
       setShowUserLocation(true);
     }
   }, []);
+
+  const handlePlotModalStateChange = useCallback((isOpen: boolean) => {
+    setAnyPlotModalOpen(isOpen);
+  }, []);
   
   return (
     <div style={{ 
@@ -228,7 +233,7 @@ const MapComponent = () => {
         {/* Helper components */}
         {centerPosition && <MapRecenterComponent position={centerPosition} />}
         {/* Only enable long press handler when no modal is open */}
-        {!showPopup && !showPlotForm && <MapLongPressHandler onLongPress={handleLongPress} />}
+        {!showPopup && !showPlotForm && !anyPlotModalOpen && <MapLongPressHandler onLongPress={handleLongPress} />}
         <MapBoundsTracker onBoundsChange={handleBoundsChange} />
         
         {/* User location marker */}
@@ -260,7 +265,13 @@ const MapComponent = () => {
           // </MarkerClusterGroup>
           <>
             {filteredPlots.map(plot => (
-              <PlotMarker key={plot.id} plot={plot} />
+              <PlotMarker 
+                key={plot.id} 
+                plot={plot} 
+                onPlotUpdated={handlePlotAdded}
+                onPlotDeleted={handlePlotAdded}
+                onModalStateChange={handlePlotModalStateChange}
+              />
             ))}
           </>
         )}

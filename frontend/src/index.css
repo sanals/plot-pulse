@@ -520,3 +520,43 @@ html {
     font-size: 16px; /* Prevent zoom on mobile */
   }
 }
+
+/* Plot action buttons */
+.plot-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.btn-small {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+.btn-danger {
+  background-color: #f44336;
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background-color: #d32f2f;
+}
+
+/* Confirmation dialog styles */
+.confirmation-dialog {
+  max-width: 400px;
+}
+
+.confirmation-dialog .modal-body {
+  text-align: center;
+  padding: 20px;
+}
+
+.confirmation-dialog .modal-body p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}

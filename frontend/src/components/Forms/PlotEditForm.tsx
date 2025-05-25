@@ -1,27 +1,36 @@
 import React, { useState } from 'react';
-import { createPlot } from '../../services/plotService';
+import { updatePlot } from '../../services/plotService';
 import type { PlotDto } from '../../types/plot.types';
 
-interface PlotSubmissionFormProps {
+interface PlotEditFormProps {
   isOpen: boolean;
-  position: { lat: number; lng: number } | null;
+  plot: PlotDto | null;
   onClose: () => void;
-  onPlotAdded?: () => void;
+  onPlotUpdated?: () => void;
 }
 
-export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
+export const PlotEditForm: React.FC<PlotEditFormProps> = ({
   isOpen,
-  position,
+  plot,
   onClose,
-  onPlotAdded
+  onPlotUpdated
 }) => {
-  const [price, setPrice] = useState<string>('');
-  const [isForSale, setIsForSale] = useState<boolean>(true);
-  const [description, setDescription] = useState<string>('');
+  const [price, setPrice] = useState<string>(plot?.price?.toString() || '');
+  const [isForSale, setIsForSale] = useState<boolean>(plot?.isForSale || true);
+  const [description, setDescription] = useState<string>(plot?.description || '');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen || !position) return null;
+  // Update form when plot changes
+  React.useEffect(() => {
+    if (plot) {
+      setPrice(plot.price?.toString() || '');
+      setIsForSale(plot.isForSale || true);
+      setDescription(plot.description || '');
+    }
+  }, [plot]);
+
+  if (!isOpen || !plot) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,31 +44,25 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
     setSubmitting(true);
     
     try {
-      const plotData: PlotDto = {
+      const updatedPlotData: PlotDto = {
+        ...plot,
         price: Number(price),
         isForSale,
         description: description || undefined,
-        latitude: position.lat,
-        longitude: position.lng,
       };
       
-      console.log('Creating plot:', plotData);
-      const newPlot = await createPlot(plotData);
-      console.log('Plot created successfully:', newPlot);
-      
-      // Reset form
-      setPrice('');
-      setDescription('');
-      setIsForSale(true);
+      console.log('Updating plot:', updatedPlotData);
+      const updatedPlot = await updatePlot(plot.id!, updatedPlotData);
+      console.log('Plot updated successfully:', updatedPlot);
       
       // Notify parent and close
-      if (onPlotAdded) {
-        onPlotAdded();
+      if (onPlotUpdated) {
+        onPlotUpdated();
       }
       onClose();
     } catch (err) {
-      console.error('Error creating plot:', err);
-      setError('Failed to create plot. Please try again.');
+      console.error('Error updating plot:', err);
+      setError('Failed to update plot. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +78,7 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
     <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
       <div className="long-press-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Add New Plot</h3>
+          <h3>Edit Plot {plot.id}</h3>
           <button className="close-button" onClick={onClose}>
             ×
           </button>
@@ -86,12 +89,13 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
             <div className="coordinates-display">
               <div className="coordinate-item">
                 <label>Latitude:</label>
-                <span>{position.lat.toFixed(6)}</span>
+                <span>{plot.latitude.toFixed(6)}</span>
               </div>
               <div className="coordinate-item">
                 <label>Longitude:</label>
-                <span>{position.lng.toFixed(6)}</span>
+                <span>{plot.longitude.toFixed(6)}</span>
               </div>
+              <small>Location cannot be changed</small>
             </div>
 
             {error && (
@@ -101,10 +105,10 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
             )}
 
             <div className="form-group">
-              <label htmlFor="price">Price ($)</label>
+              <label htmlFor="edit-price">Price ($)</label>
               <input
                 type="number"
-                id="price"
+                id="edit-price"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 required
@@ -116,9 +120,9 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="isForSale">Status</label>
+              <label htmlFor="edit-isForSale">Status</label>
               <select
-                id="isForSale"
+                id="edit-isForSale"
                 value={isForSale ? 'true' : 'false'}
                 onChange={(e) => setIsForSale(e.target.value === 'true')}
                 disabled={submitting}
@@ -129,9 +133,9 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="description">Description (optional)</label>
+              <label htmlFor="edit-description">Description (optional)</label>
               <textarea
-                id="description"
+                id="edit-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={500}
@@ -139,6 +143,7 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
                 disabled={submitting}
                 placeholder="Enter plot description..."
               />
+              <small>{description.length}/500 characters</small>
             </div>
           </div>
 
@@ -148,7 +153,7 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
               className="btn btn-primary"
               disabled={submitting}
             >
-              {submitting ? 'Creating...' : 'Create Plot'}
+              {submitting ? 'Updating...' : 'Update Plot'}
             </button>
             <button 
               type="button"
