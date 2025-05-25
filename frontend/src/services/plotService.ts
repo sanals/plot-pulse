@@ -1,11 +1,249 @@
 import type { NearestPlotRequest, PlotDto, MapBounds } from '../types/plot.types';
 
-// Disable mock data to use real backend API
+// Configuration
 const USE_MOCK_DATA = false;
 const API_URL = 'http://localhost:8091/api/v1';
+const REQUEST_TIMEOUT = 10000; // 10 seconds
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
 
 // Store mock plots in memory so we can add to them (only used as fallback)
 let mockPlots: PlotDto[] = [];
+
+/**
+ * Global state management for API requests
+ */
+interface ApiState {
+  loading: boolean;
+  error: string | null;
+  requestsInProgress: Set<string>;
+}
+
+const apiState: ApiState = {
+  loading: false,
+  error: null,
+  requestsInProgress: new Set(),
+};
+
+// State change listeners
+const stateListeners: Array<(state: ApiState) => void> = [];
+
+/**
+ * Subscribe to API state changes
+ */
+export const subscribeToApiState = (listener: (state: ApiState) => void): (() => void) => {
+  stateListeners.push(listener);
+  
+  // Return unsubscribe function
+  return () => {
+    const index = stateListeners.indexOf(listener);
+    if (index > -1) {
+      stateListeners.splice(index, 1);
+    }
+  };
+};
+
+/**
+ * Get current API state
+ */
+export const getApiState = (): Readonly<ApiState> => {
+  return { ...apiState };
+};
+
+/**
+ * Update API state and notify listeners
+ */
+const updateApiState = (updates: Partial<ApiState>): void => {
+  Object.assign(apiState, updates);
+  stateListeners.forEach(listener => listener({ ...apiState }));
+};
+
+/**
+ * Track request start
+ */
+const startRequest = (requestId: string): void => {
+  apiState.requestsInProgress.add(requestId);
+  updateApiState({
+    loading: apiState.requestsInProgress.size > 0,
+    error: null,
+  });
+};
+
+/**
+ * Track request completion
+ */
+const endRequest = (requestId: string, error?: Error): void => {
+  apiState.requestsInProgress.delete(requestId);
+  updateApiState({
+    loading: apiState.requestsInProgress.size > 0,
+    error: error?.message || null,
+  });
+};
+
+/**
+ * Clear all errors
+ */
+export const clearApiError = (): void => {
+  updateApiState({ error: null });
+};
+
+/**
+ * Enhanced fetch with timeout support
+ */
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = REQUEST_TIMEOUT): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeout}ms`);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Retry logic for failed requests
+ */
+const retryRequest = async <T>(
+  requestFn: () => Promise<T>,
+  maxRetries = MAX_RETRIES,
+  delay = RETRY_DELAY
+): Promise<T> => {
+  let lastError: Error;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+      
+      // Don't retry client errors (400-499)
+      if ((error as any).response?.status >= 400 && (error as any).response?.status < 500) {
+        throw error;
+      }
+      
+      if (attempt === maxRetries) {
+        console.error(`Request failed after ${maxRetries} attempts:`, lastError);
+        throw lastError;
+      }
+      
+      console.warn(`Request attempt ${attempt} failed, retrying in ${delay}ms:`, lastError.message);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      delay *= 1.5; // Exponential backoff
+    }
+  }
+  
+  throw lastError!;
+};
+
+/**
+ * Request interceptor for common headers and logging
+ */
+const createRequestOptions = (options: RequestInit = {}): RequestInit => {
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Client-Version': '1.0.0',
+    'X-Request-ID': generateRequestId(),
+  };
+  
+  return {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  };
+};
+
+/**
+ * Response interceptor for common error handling and logging
+ */
+const handleResponse = async (response: Response, url: string): Promise<any> => {
+  const requestId = response.headers.get('X-Request-ID') || 'unknown';
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[${requestId}] HTTP ${response.status} error for ${url}:`, errorText);
+    
+    // Parse the error response to extract backend message
+    let backendError;
+    try {
+      backendError = JSON.parse(errorText);
+    } catch (parseError) {
+      backendError = { message: `HTTP ${response.status}: ${response.statusText}` };
+    }
+    
+    // Create an error object that mimics Axios structure for compatibility
+    const error = new Error(backendError.message || `HTTP ${response.status}: ${response.statusText}`);
+    (error as any).response = {
+      status: response.status,
+      statusText: response.statusText,
+      data: backendError
+    };
+    
+    throw error;
+  }
+  
+  const data = await response.json();
+  console.log(`[${requestId}] Successful response from ${url}`);
+  return data;
+};
+
+/**
+ * Generate unique request ID for tracking
+ */
+const generateRequestId = (): string => {
+  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
+/**
+ * Enhanced API request wrapper with timeout, retry, and interceptors
+ */
+const apiRequest = async <T>(
+  endpoint: string,
+  options: RequestInit = {},
+  useRetry = true
+): Promise<T> => {
+  const url = `${API_URL}${endpoint}`;
+  const requestOptions = createRequestOptions(options);
+  const requestId = (requestOptions.headers as Record<string, string>)?.['X-Request-ID'] || generateRequestId();
+  
+  // Start tracking this request
+  startRequest(requestId);
+  
+  const makeRequest = async (): Promise<T> => {
+    console.log(`[${requestId}] Making request to ${url}`, { method: requestOptions.method || 'GET' });
+    const response = await fetchWithTimeout(url, requestOptions);
+    return handleResponse(response, url);
+  };
+  
+  try {
+    let result: T;
+    if (useRetry) {
+      result = await retryRequest(makeRequest);
+    } else {
+      result = await makeRequest();
+    }
+    
+    // Request completed successfully
+    endRequest(requestId);
+    return result;
+  } catch (error) {
+    // Request failed
+    endRequest(requestId, error instanceof Error ? error : new Error('Unknown error'));
+    throw error;
+  }
+};
 
 /**
  * Fetch all plots (with optional pagination)
@@ -21,14 +259,7 @@ export const getPlots = async (page = 0, size = 100): Promise<PlotDto[]> => {
   }
 
   try {
-    console.log(`Fetching plots from ${API_URL}/plots?page=${page}&size=${size}`);
-    const response = await fetch(`${API_URL}/plots?page=${page}&size=${size}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch plots: ${response.status} ${response.statusText}`);
-    }
-    
-    const plots = await response.json();
+    const plots = await apiRequest<PlotDto[]>(`/plots?page=${page}&size=${size}`);
     console.log(`Successfully fetched ${plots.length} plots from backend`);
     return plots;
   } catch (error) {
@@ -59,16 +290,9 @@ export const getPlotsInBounds = async (bounds: MapBounds, page = 0, size = 100):
 
   try {
     const { north, south, east, west } = bounds;
-    const url = `${API_URL}/plots/bounds?minLat=${south}&maxLat=${north}&minLng=${west}&maxLng=${east}&page=${page}&size=${size}`;
+    const endpoint = `/plots/bounds?minLat=${south}&maxLat=${north}&minLng=${west}&maxLng=${east}&page=${page}&size=${size}`;
     
-    console.log(`Fetching plots in bounds from ${url}`);
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch plots in bounds: ${response.status} ${response.statusText}`);
-    }
-    
-    const plots = await response.json();
+    const plots = await apiRequest<PlotDto[]>(endpoint);
     console.log(`Successfully fetched ${plots.length} plots in bounds from backend`);
     return plots;
   } catch (error) {
@@ -114,23 +338,21 @@ export const getNearestPlot = async (request: NearestPlotRequest): Promise<PlotD
   }
 
   try {
-    console.log(`Finding nearest plot from ${API_URL}/plots/nearest`);
     const { latitude, longitude, radius } = request;
-    const response = await fetch(`${API_URL}/plots/nearest?lat=${latitude}&lon=${longitude}&radius=${radius}`, {
-      method: 'GET',
-    });
+    const endpoint = `/plots/nearest?lat=${latitude}&lon=${longitude}&radius=${radius}`;
     
-    if (!response.ok) {
-      if (response.status === 404) {
+    try {
+      const nearestPlot = await apiRequest<PlotDto>(endpoint);
+      console.log('Successfully found nearest plot from backend:', nearestPlot);
+      return nearestPlot;
+    } catch (error) {
+      // Handle 404 as no plot found (not an error)
+      if ((error as any).response?.status === 404) {
         console.log('No nearest plot found within radius');
         return null;
       }
-      throw new Error(`Failed to find nearest plot: ${response.status} ${response.statusText}`);
+      throw error;
     }
-    
-    const nearestPlot = await response.json();
-    console.log('Successfully found nearest plot from backend:', nearestPlot);
-    return nearestPlot;
   } catch (error) {
     console.error('Error finding nearest plot from backend:', error);
     console.log('Falling back to mock data');
@@ -210,41 +432,13 @@ export const createPlot = async (plot: PlotDto): Promise<PlotDto> => {
   }
 
   try {
-    console.log(`Creating new plot via ${API_URL}/plots`);
-    console.log('Plot data:', plot);
+    console.log('Creating new plot with data:', plot);
     
-    const response = await fetch(`${API_URL}/plots`, {
+    const responseData = await apiRequest<PlotDto>('/plots', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(plot),
-    });
+    }, false); // Don't retry for create operations to avoid duplicates
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Server error response:', errorText);
-      
-      // Parse the error response to extract backend message
-      let backendError;
-      try {
-        backendError = JSON.parse(errorText);
-      } catch (parseError) {
-        backendError = { message: `Failed to create plot: ${response.status} ${response.statusText}` };
-      }
-      
-      // Create an error object that mimics Axios structure for compatibility
-      const error = new Error(backendError.message || `Failed to create plot: ${response.status}`);
-      (error as any).response = {
-        status: response.status,
-        statusText: response.statusText,
-        data: backendError
-      };
-      
-      throw error;
-    }
-    
-    const responseData = await response.json();
     console.log('Plot created successfully on backend:', responseData);
     return responseData;
   } catch (error) {
@@ -283,19 +477,13 @@ export const createPlot = async (plot: PlotDto): Promise<PlotDto> => {
  */
 export const updatePlot = async (id: number, plot: PlotDto): Promise<PlotDto> => {
   try {
-    const response = await fetch(`${API_URL}/plots/${id}`, {
+    const updatedPlot = await apiRequest<PlotDto>(`/plots/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(plot),
-    });
+    }, false); // Don't retry for update operations to avoid conflicts
     
-    if (!response.ok) {
-      throw new Error(`Failed to update plot: ${response.status} ${response.statusText}`);
-    }
-    
-    return await response.json();
+    console.log('Plot updated successfully:', updatedPlot);
+    return updatedPlot;
   } catch (error) {
     console.error('Error updating plot:', error);
     throw error;
@@ -307,13 +495,11 @@ export const updatePlot = async (id: number, plot: PlotDto): Promise<PlotDto> =>
  */
 export const deletePlot = async (id: number): Promise<void> => {
   try {
-    const response = await fetch(`${API_URL}/plots/${id}`, {
+    await apiRequest<void>(`/plots/${id}`, {
       method: 'DELETE',
-    });
+    }, false); // Don't retry for delete operations to avoid confusion
     
-    if (!response.ok) {
-      throw new Error(`Failed to delete plot: ${response.status} ${response.statusText}`);
-    }
+    console.log('Plot deleted successfully:', id);
   } catch (error) {
     console.error('Error deleting plot:', error);
     throw error;

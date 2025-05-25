@@ -27,7 +27,7 @@ public interface PlotRepository extends JpaRepository<Plot, Long> {
      * @param distanceInMeters The distance in meters
      * @return List of plots within the specified distance
      */
-    @Query(value = "SELECT * FROM plots WHERE ST_DWithin(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :distanceInMeters)", nativeQuery = true)
+    @Query(value = "SELECT * FROM plots WHERE ST_Distance_Sphere(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) <= :distanceInMeters", nativeQuery = true)
     List<Plot> findPlotsWithinDistance(@Param("longitude") double longitude, @Param("latitude") double latitude, @Param("distanceInMeters") double distanceInMeters);
     
     /**
@@ -37,8 +37,8 @@ public interface PlotRepository extends JpaRepository<Plot, Long> {
      * @param distanceInMeters The maximum distance in meters
      * @return Optional containing the nearest plot, if one exists within the distance
      */
-    @Query(value = "SELECT * FROM plots WHERE ST_DWithin(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :distanceInMeters) " +
-            "ORDER BY ST_Distance(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM plots WHERE ST_Distance_Sphere(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) <= :distanceInMeters " +
+            "ORDER BY ST_Distance_Sphere(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) LIMIT 1", nativeQuery = true)
     Optional<Plot> findNearestPlot(@Param("latitude") double latitude, @Param("longitude") double longitude, 
                                   @Param("distanceInMeters") double distanceInMeters);
     
@@ -96,7 +96,7 @@ public interface PlotRepository extends JpaRepository<Plot, Long> {
      * @param distanceInMeters The distance in meters
      * @return True if any plots exist within the distance, false otherwise
      */
-    @Query(value = "SELECT COUNT(*) > 0 FROM plots WHERE ST_DWithin(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :distanceInMeters)", nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) > 0 FROM plots WHERE ST_DWithin(ST_Transform(location, 3857), ST_Transform(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), 3857), :distanceInMeters)", nativeQuery = true)
     boolean existsPlotsWithinDistance(@Param("latitude") double latitude, @Param("longitude") double longitude, 
                                      @Param("distanceInMeters") double distanceInMeters);
     
@@ -109,7 +109,7 @@ public interface PlotRepository extends JpaRepository<Plot, Long> {
      * @param excludeId Plot ID to exclude from the check
      * @return True if any plots exist within the distance, false otherwise
      */
-    @Query(value = "SELECT COUNT(*) > 0 FROM plots WHERE id != :excludeId AND ST_DWithin(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :distanceInMeters)", nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) > 0 FROM plots WHERE id != :excludeId AND ST_DWithin(ST_Transform(location, 3857), ST_Transform(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), 3857), :distanceInMeters)", nativeQuery = true)
     boolean existsPlotsWithinDistanceExcluding(@Param("latitude") double latitude, @Param("longitude") double longitude, 
                                               @Param("distanceInMeters") double distanceInMeters, @Param("excludeId") Long excludeId);
 } 

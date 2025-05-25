@@ -45,6 +45,8 @@ spring:
         - X-Requested-With
         - Accept
         - Origin
+        - X-Request-ID
+        - X-Client-Version
       allow-credentials: true
       max-age: 3600
 
@@ -66,6 +68,8 @@ cors:
     - X-Requested-With
     - Accept
     - Origin
+    - X-Request-ID
+    - X-Client-Version
   max-age: 3600
 
 jwt:
