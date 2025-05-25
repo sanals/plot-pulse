@@ -568,3 +568,8 @@ Expected output: Production-ready deployment configuration
 - Solution: Ensure consistent SRID usage (4326) and proper coordinate order
 
 Each task should be tackled individually, and you can ask Claude in Cursor to implement specific parts by referencing these task descriptions and the cursor rules file.
+
+
+//New ideas
+Search visible area for a specific price.
+Add greater that less than or equal option

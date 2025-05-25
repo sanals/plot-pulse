@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import L from 'leaflet';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import PlotMarker from './PlotMarker';
-import LongPressPopup from './LongPressPopup';
+import { LongPressPopup, LongPressModal } from './LongPressPopup';
+import { PlotSubmissionForm } from '../Forms/PlotSubmissionForm';
 import MapLayerControl from './MapLayerControl';
 import LocationButton from './LocationButton';
 import UserLocationMarker from './UserLocationMarker';
@@ -29,11 +31,15 @@ const MapComponent = () => {
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [longPressPosition, setLongPressPosition] = useState<MapPosition | null>(null);
   const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [showPlotForm, setShowPlotForm] = useState<boolean>(false);
   const [plotsVisible, setPlotsVisible] = useState<boolean>(true);
   const [showUserLocation, setShowUserLocation] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showGeoPermission, setShowGeoPermission] = useState<boolean>(true);
+  
+  // Debug: Add debug marker to visualize click detection
+  const [debugMarker, setDebugMarker] = useState<MapPosition | null>(null);
   
   // Transform the geolocation position to the map position format
   const centerPosition: MapPosition | null = position 
@@ -85,12 +91,15 @@ const MapComponent = () => {
   }, [mapBounds, plots]);
   
   const handleLongPress = useCallback((position: MapPosition) => {
+    console.log('%c[MAP] Long press handler called with:', 'color: purple; font-weight: bold', position);
     setLongPressPosition(position);
+    setDebugMarker(position); // Debug: Show where we detected the click
     setShowPopup(true);
   }, []);
   
   const handleClosePopup = useCallback(() => {
     setShowPopup(false);
+    setDebugMarker(null); // Clear debug marker when popup closes
   }, []);
   
   const handleBoundsChange = useCallback((bounds: MapBounds) => {
@@ -218,11 +227,25 @@ const MapComponent = () => {
         
         {/* Helper components */}
         {centerPosition && <MapRecenterComponent position={centerPosition} />}
-        <MapLongPressHandler onLongPress={handleLongPress} />
+        {/* Only enable long press handler when no modal is open */}
+        {!showPopup && !showPlotForm && <MapLongPressHandler onLongPress={handleLongPress} />}
         <MapBoundsTracker onBoundsChange={handleBoundsChange} />
         
         {/* User location marker */}
         {showUserLocation && <UserLocationMarker />}
+        
+        {/* Debug marker to visualize click detection */}
+        {debugMarker && (
+          <Marker 
+            position={[debugMarker.lat, debugMarker.lng]}
+            icon={L.divIcon({
+              className: 'debug-marker',
+              html: '<div style="background: red; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 2px red;"></div>',
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            })}
+          />
+        )}
         
         {/* Plot markers with clustering */}
         {plotsVisible && (
@@ -244,13 +267,32 @@ const MapComponent = () => {
         
         {/* Show popup for adding new plot on long press */}
         {showPopup && longPressPosition && (
-          <LongPressPopup 
+          <LongPressModal 
+            isOpen={showPopup}
             position={longPressPosition} 
             onClose={handleClosePopup} 
-            onPlotAdded={handlePlotAdded}
+            onAddPlot={(lat, lng) => {
+              console.log('Opening plot form for ORIGINAL coordinates:', longPressPosition);
+              console.log('Button was clicked at:', { lat, lng }, '(ignoring this)');
+              // Use the original stored coordinates, not the button click coordinates
+              setShowPopup(false);
+              setShowPlotForm(true);
+              // longPressPosition is already set correctly, no need to update it
+            }}
           />
         )}
       </MapContainer>
+      
+      {/* Plot submission form */}
+      <PlotSubmissionForm
+        isOpen={showPlotForm}
+        position={longPressPosition}
+        onClose={() => {
+          setShowPlotForm(false);
+          setLongPressPosition(null);
+        }}
+        onPlotAdded={handlePlotAdded}
+      />
     </div>
   );
 };

@@ -1,32 +1,31 @@
-import { useState } from 'react';
-import type { PlotDto } from '../../types/plot.types';
+import React, { useState } from 'react';
 import { createPlot } from '../../services/plotService';
-import LoadingSpinner from '../Common/LoadingSpinner';
+import type { PlotDto } from '../../types/plot.types';
 
 interface PlotSubmissionFormProps {
-  latitude: number;
-  longitude: number;
-  onSubmitSuccess?: () => void;
-  onCancel?: () => void;
+  isOpen: boolean;
+  position: { lat: number; lng: number } | null;
+  onClose: () => void;
+  onPlotAdded?: () => void;
 }
 
-const PlotSubmissionForm = ({
-  latitude,
-  longitude,
-  onSubmitSuccess,
-  onCancel
-}: PlotSubmissionFormProps) => {
+export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
+  isOpen,
+  position,
+  onClose,
+  onPlotAdded
+}) => {
   const [price, setPrice] = useState<string>('');
   const [isForSale, setIsForSale] = useState<boolean>(true);
   const [description, setDescription] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
+
+  if (!isOpen || !position) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate input
     if (!price || isNaN(Number(price)) || Number(price) <= 0) {
       setError('Please enter a valid price');
       return;
@@ -39,128 +38,129 @@ const PlotSubmissionForm = ({
       const plotData: PlotDto = {
         price: Number(price),
         isForSale,
-        description: description.trim() || undefined,
-        latitude,
-        longitude,
+        description: description || undefined,
+        latitude: position.lat,
+        longitude: position.lng,
       };
       
-      await createPlot(plotData);
-      setSuccess(true);
+      console.log('Creating plot:', plotData);
+      const newPlot = await createPlot(plotData);
+      console.log('Plot created successfully:', newPlot);
+      
+      // Reset form
       setPrice('');
       setDescription('');
       setIsForSale(true);
       
-      if (onSubmitSuccess) {
-        onSubmitSuccess();
+      // Notify parent and close
+      if (onPlotAdded) {
+        onPlotAdded();
       }
+      onClose();
     } catch (err) {
-      setError('Failed to submit plot information. Please try again.');
-      console.error('Error submitting plot:', err);
+      console.error('Error creating plot:', err);
+      setError('Failed to create plot. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (submitting) {
-    return <LoadingSpinner message="Submitting plot data..." />;
-  }
-
-  if (success) {
-    return (
-      <div className="success-message">
-        <h3>Plot Added Successfully!</h3>
-        <p>Your plot information has been saved.</p>
-        <button 
-          type="button" 
-          onClick={() => {
-            setSuccess(false);
-            if (onSubmitSuccess) onSubmitSuccess();
-          }}
-          className="primary-button"
-        >
-          Close
-        </button>
-      </div>
-    );
-  }
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   return (
-    <div className="plot-submission-form">
-      <h2>Add New Plot</h2>
-      
-      <div className="coordinates-display">
-        <p>
-          <strong>Location:</strong> {latitude.toFixed(6)}, {longitude.toFixed(6)}
-        </p>
-      </div>
-      
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="price">Price ($)</label>
-          <input
-            type="number"
-            id="price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-            min="1"
-            step="any"
-            placeholder="Enter price"
-          />
+    <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
+      <div className="long-press-modal">
+        <div className="modal-header">
+          <h3>Add New Plot</h3>
+          <button className="close-button" onClick={onClose}>
+            ×
+          </button>
         </div>
         
-        <div className="form-group">
-          <label htmlFor="isForSale">Status</label>
-          <select
-            id="isForSale"
-            value={isForSale ? 'true' : 'false'}
-            onChange={(e) => setIsForSale(e.target.value === 'true')}
-          >
-            <option value="true">For Sale</option>
-            <option value="false">Not For Sale</option>
-          </select>
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="description">Description (optional)</label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={500}
-            rows={4}
-            placeholder="Enter additional details about this plot..."
-          />
-          <small>{description.length}/500 characters</small>
-        </div>
-        
-        <div className="form-actions">
-          {onCancel && (
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body">
+            <div className="coordinates-display">
+              <div className="coordinate-item">
+                <label>Latitude:</label>
+                <span>{position.lat.toFixed(6)}</span>
+              </div>
+              <div className="coordinate-item">
+                <label>Longitude:</label>
+                <span>{position.lng.toFixed(6)}</span>
+              </div>
+            </div>
+
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+
+            <div className="form-group">
+              <label htmlFor="price">Price ($)</label>
+              <input
+                type="number"
+                id="price"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+                min="1"
+                step="any"
+                disabled={submitting}
+                placeholder="Enter plot price"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="isForSale">Status</label>
+              <select
+                id="isForSale"
+                value={isForSale ? 'true' : 'false'}
+                onChange={(e) => setIsForSale(e.target.value === 'true')}
+                disabled={submitting}
+              >
+                <option value="true">For Sale</option>
+                <option value="false">Not For Sale</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="description">Description (optional)</label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={500}
+                rows={3}
+                disabled={submitting}
+                placeholder="Enter plot description..."
+              />
+            </div>
+          </div>
+
+          <div className="modal-footer">
             <button 
-              type="button" 
-              onClick={onCancel}
-              className="secondary-button"
+              type="submit" 
+              className="btn btn-primary"
+              disabled={submitting}
+            >
+              {submitting ? 'Creating...' : 'Create Plot'}
+            </button>
+            <button 
+              type="button"
+              className="btn btn-secondary"
+              onClick={onClose}
+              disabled={submitting}
             >
               Cancel
             </button>
-          )}
-          <button 
-            type="submit" 
-            className="primary-button"
-            disabled={submitting}
-          >
-            Submit Plot
-          </button>
-        </div>
-      </form>
+          </div>
+        </form>
+      </div>
     </div>
   );
-};
-
-export default PlotSubmissionForm; 
+}; 

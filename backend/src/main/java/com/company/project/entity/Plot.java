@@ -78,13 +78,14 @@ public class Plot {
 
     /**
      * Pre-persist hook to extract latitude and longitude from Point
+     * Note: In PostGIS/JTS, Point coordinates are stored as (X, Y) = (longitude, latitude)
      */
     @PrePersist
     @PreUpdate
     public void updateCoordinates() {
         if (location != null) {
-            this.latitude = location.getX();
-            this.longitude = location.getY();
+            this.latitude = location.getY();  // Y coordinate is latitude
+            this.longitude = location.getX(); // X coordinate is longitude
         }
     }
 } 
