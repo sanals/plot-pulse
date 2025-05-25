@@ -1,7 +1,8 @@
 import { useMap } from 'react-leaflet';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { TileLayer } from 'leaflet';
+import L from 'leaflet';
 
 interface MapLayer {
   name: string;
@@ -39,6 +40,14 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const customLayerRef = useRef<TileLayer | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  
+  // Prevent double-click zoom and map drag on the dropdown button
+  useEffect(() => {
+    if (buttonRef.current) {
+      L.DomEvent.disableClickPropagation(buttonRef.current);
+      L.DomEvent.disableScrollPropagation(buttonRef.current);
+    }
+  }, [buttonRef.current]);
   
   const updateMapLayer = (layer: MapLayer) => {
     // Only remove our custom layer, not the default one
@@ -113,17 +122,20 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
       </button>
       
       {isOpen && buttonRef.current && createPortal(
-        <div style={{
-          position: 'fixed',
-          top: buttonRef.current.getBoundingClientRect().bottom + 4,
-          left: buttonRef.current.getBoundingClientRect().left,
-          width: buttonRef.current.getBoundingClientRect().width,
-          backgroundColor: 'white',
-          border: '1px solid #e2e8f0',
-          borderRadius: '6px',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          zIndex: 9999
-        }}>
+        <div 
+          style={{
+            position: 'fixed',
+            top: buttonRef.current.getBoundingClientRect().bottom + 4,
+            left: buttonRef.current.getBoundingClientRect().left,
+            width: buttonRef.current.getBoundingClientRect().width,
+            backgroundColor: 'white',
+            border: '1px solid #e2e8f0',
+            borderRadius: '6px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            zIndex: 9999
+          }}
+
+        >
           {mapLayers.map((layer) => (
             <button
               key={layer.name}
