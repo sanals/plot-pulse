@@ -9,6 +9,20 @@ interface MapLongPressHandlerProps {
 
 const MapLongPressHandler: React.FC<MapLongPressHandlerProps> = ({ onLongPress }) => {
   const handleLongPress = (lat: number, lng: number, event: any) => {
+    // Check if the click is on a UI control element (not the map itself)
+    if (event && event.originalEvent) {
+      const target = event.originalEvent.target as HTMLElement;
+      
+      // Skip if clicking on a control
+      if (target.closest('.leaflet-control') || 
+          target.closest('.leaflet-bar') || 
+          target.closest('button') ||
+          target.closest('.map-control')) {
+        console.log('%c[LONG PRESS] Ignored on control:', 'color: orange; font-weight: bold', target);
+        return;
+      }
+    }
+    
     console.log('%c[LONG PRESS] Detected at:', 'color: red; font-weight: bold', { lat, lng });
     console.log('[LONG PRESS] Event details:', event);
     onLongPress({ lat, lng });
@@ -39,6 +53,21 @@ const MapLongPressHandler: React.FC<MapLongPressHandlerProps> = ({ onLongPress }
     // Handle right-click (context menu) as immediate long press
     contextmenu: (event) => {
       event.originalEvent.preventDefault();
+      
+      // Check if the click is on a UI control element
+      if (event && event.originalEvent) {
+        const target = event.originalEvent.target as HTMLElement;
+        
+        // Skip if clicking on a control
+        if (target.closest('.leaflet-control') || 
+            target.closest('.leaflet-bar') || 
+            target.closest('button') ||
+            target.closest('.map-control')) {
+          console.log('%c[RIGHT-CLICK] Ignored on control:', 'color: orange; font-weight: bold', target);
+          return;
+        }
+      }
+      
       const { lat, lng } = event.latlng;
       console.log('%c[RIGHT-CLICK] Detected at:', 'color: green; font-weight: bold', { lat, lng });
       console.log('[RIGHT-CLICK] Event details:', event);

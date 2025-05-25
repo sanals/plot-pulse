@@ -55,7 +55,18 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
   const boundsChanged = useCallback((newBounds: MapBounds, oldBounds: MapBounds | null): boolean => {
     if (!oldBounds) return true;
     
-    const threshold = 0.005; // Minimum change threshold (increased from 0.001)
+    // Check if new bounds are fully contained within old bounds (zoom in case)
+    const isZoomIn = 
+      newBounds.north <= oldBounds.north && 
+      newBounds.south >= oldBounds.south && 
+      newBounds.east <= oldBounds.east && 
+      newBounds.west >= oldBounds.west;
+    
+    // If it's a zoom in operation, don't refetch data
+    if (isZoomIn) return false;
+    
+    // For pan operations, use a threshold to avoid small movements triggering refetch
+    const threshold = 0.005; // Minimum change threshold
     return (
       Math.abs(newBounds.north - oldBounds.north) > threshold ||
       Math.abs(newBounds.south - oldBounds.south) > threshold ||
