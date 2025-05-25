@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { updatePlot } from '../../services/plotService';
 import type { PlotDto } from '../../types/plot.types';
 
@@ -21,14 +21,16 @@ export const PlotEditForm: React.FC<PlotEditFormProps> = ({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Update form when plot changes
-  React.useEffect(() => {
-    if (plot) {
+  // Update form when plot changes or modal opens/closes
+  useEffect(() => {
+    if (plot && isOpen) {
+      // Reset form to original plot values when modal opens
       setPrice(plot.price?.toString() || '');
       setIsForSale(plot.isForSale || true);
       setDescription(plot.description || '');
+      setError(null);
     }
-  }, [plot]);
+  }, [plot, isOpen]);
 
   if (!isOpen || !plot) return null;
 

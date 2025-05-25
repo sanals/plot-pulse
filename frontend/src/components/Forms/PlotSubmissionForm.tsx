@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPlot } from '../../services/plotService';
 import type { PlotDto } from '../../types/plot.types';
 
@@ -20,6 +20,17 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
   const [description, setDescription] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Reset form when modal opens or closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset form when modal closes
+      setPrice('');
+      setDescription('');
+      setIsForSale(true);
+      setError(null);
+    }
+  }, [isOpen]);
 
   if (!isOpen || !position) return null;
 
