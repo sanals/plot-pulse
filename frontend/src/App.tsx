@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import MapComponent from './components/Map/MapComponent'
+import OptimizedMapComponent from './components/Map/OptimizedMapComponent'
 import LoadingSpinner from './components/Common/LoadingSpinner'
 import OfflineIndicator from './components/Common/OfflineIndicator'
 import PWAInstallPrompt from './components/Common/PWAInstallPrompt'
@@ -40,7 +40,7 @@ function App() {
         </div>
       ) : (
         <>
-          <MapComponent />
+          <OptimizedMapComponent />
           <OfflineIndicator position="top" />
           <PWAInstallPrompt />
         </>

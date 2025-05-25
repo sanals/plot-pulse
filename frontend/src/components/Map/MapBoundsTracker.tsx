@@ -4,9 +4,15 @@ import type { MapBounds } from '../../types/plot.types';
 
 interface MapBoundsTrackerProps {
   onBoundsChange: (bounds: MapBounds) => void;
+  onInteractionStart?: () => void;
+  onInteractionEnd?: () => void;
 }
 
-const MapBoundsTracker: React.FC<MapBoundsTrackerProps> = ({ onBoundsChange }) => {
+const MapBoundsTracker: React.FC<MapBoundsTrackerProps> = ({ 
+  onBoundsChange, 
+  onInteractionStart, 
+  onInteractionEnd 
+}) => {
   const map = useMap();
   const timeoutRef = useRef<number | null>(null);
   const lastBoundsRef = useRef<MapBounds | null>(null);
@@ -40,21 +46,44 @@ const MapBoundsTracker: React.FC<MapBoundsTrackerProps> = ({ onBoundsChange }) =
           lastBoundsRef.current = newBounds;
           onBoundsChange(newBounds);
         }
-      }, 250); // 250ms debounce
+      }, 300); // 300ms debounce for better responsiveness
     };
     
     // Initial bounds (delayed to avoid immediate trigger)
     const initialTimeout = setTimeout(updateBounds, 100);
     
+    // Handle interaction start/end
+    const handleInteractionStart = () => {
+      if (onInteractionStart) {
+        onInteractionStart();
+      }
+    };
+
+    const handleInteractionEnd = () => {
+      if (onInteractionEnd) {
+        onInteractionEnd();
+      }
+    };
+
     // Update bounds when map moves
-    map.on('moveend', updateBounds);
-    map.on('zoomend', updateBounds);
+    map.on('movestart', handleInteractionStart);
+    map.on('zoomstart', handleInteractionStart);
+    map.on('moveend', () => {
+      handleInteractionEnd();
+      updateBounds();
+    });
+    map.on('zoomend', () => {
+      handleInteractionEnd();
+      updateBounds();
+    });
     
     return () => {
       if (timeoutRef.current !== null) {
         clearTimeout(timeoutRef.current);
       }
       clearTimeout(initialTimeout);
+      map.off('movestart', handleInteractionStart);
+      map.off('zoomstart', handleInteractionStart);
       map.off('moveend', updateBounds);
       map.off('zoomend', updateBounds);
     };

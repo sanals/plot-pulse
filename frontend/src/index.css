@@ -560,3 +560,273 @@ html {
   font-size: 16px;
   line-height: 1.5;
 }
+
+/* Marker Clustering Styles */
+.custom-marker-cluster {
+  background: transparent;
+  border: none;
+}
+
+.cluster-small {
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.cluster-medium {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.cluster-large {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.cluster-small span,
+.cluster-medium span,
+.cluster-large span {
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.cluster-small:hover,
+.cluster-medium:hover,
+.cluster-large:hover {
+  transform: scale(1.1);
+}
+
+/* Performance optimizations for map */
+.leaflet-container {
+  will-change: transform;
+}
+
+.leaflet-marker-icon {
+  will-change: transform;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .cluster-small,
+  .cluster-medium,
+  .cluster-large {
+    transform: scale(1.1);
+  }
+  
+  .cluster-small span,
+  .cluster-medium span,
+  .cluster-large span {
+    font-size: 11px;
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  /* Touch-friendly interface elements */
+  .btn {
+    min-height: 44px; /* iOS recommended touch target size */
+    min-width: 44px;
+    padding: 12px 16px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .btn-small {
+    min-height: 40px;
+    min-width: 40px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  /* Map controls optimization */
+  .leaflet-control-container .leaflet-control {
+    margin: 8px;
+  }
+  
+  /* Form inputs optimization */
+  input, textarea, select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  /* Modal optimizations */
+  .modal-content {
+    margin: 10px;
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
+  }
+  
+  /* Plot popup optimizations */
+  .plot-popup {
+    min-width: 200px;
+    max-width: 280px;
+  }
+  
+  .plot-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  
+  .plot-actions .btn {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* High DPI displays optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .leaflet-marker-icon {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .cluster-small,
+  .cluster-medium,
+  .cluster-large {
+    transition: none;
+  }
+  
+  .cluster-small:hover,
+  .cluster-medium:hover,
+  .cluster-large:hover {
+    transform: none;
+  }
+  
+  .user-location-marker.pulsating::before {
+    animation: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .modal-content {
+    background-color: #1f2937;
+    color: #f9fafb;
+  }
+  
+  .btn {
+    background-color: #374151;
+    color: #f9fafb;
+    border-color: #4b5563;
+  }
+  
+  .btn:hover {
+    background-color: #4b5563;
+  }
+  
+  .btn-primary {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+  }
+  
+  .btn-primary:hover {
+    background-color: #2563eb;
+  }
+}
+
+/* Performance optimizations */
+.leaflet-container {
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  
+  /* Optimize scrolling */
+  -webkit-overflow-scrolling: touch;
+  
+  /* Reduce repaints */
+  will-change: transform;
+}
+
+/* Optimize marker rendering */
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  
+  /* Optimize image rendering */
+  image-rendering: optimizeSpeed;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Optimize cluster rendering */
+.custom-marker-cluster {
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  
+  /* Reduce repaints */
+  will-change: transform;
+}
+
+/* Fast touch interactions */
+.btn,
+.leaflet-control,
+.plot-popup button {
+  /* Remove tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Improve touch responsiveness */
+  touch-action: manipulation;
+}
+
+/* Optimize font loading */
+@font-face {
+  font-family: 'System';
+  src: local('system-ui'), local('-apple-system'), local('BlinkMacSystemFont');
+  font-display: swap;
+}
+
+/* Reduce data usage optimizations */
+@media (max-width: 768px) and (max-resolution: 150dpi) {
+  /* Use lower quality images on low-res mobile */
+  .leaflet-tile {
+    image-rendering: optimizeSpeed;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  .modal-content {
+    max-height: calc(100vh - 10px);
+    margin: 5px;
+  }
+  
+  /* Adjust control positions for landscape */
+  .leaflet-control-container .leaflet-top {
+    top: 5px;
+  }
+  
+  .leaflet-control-container .leaflet-bottom {
+    bottom: 5px;
+  }
+}
