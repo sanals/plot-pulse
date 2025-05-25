@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.company.project.dto.NearestPlotRequestDto;
 import com.company.project.dto.PlotDto;
 import com.company.project.service.PlotService;
 

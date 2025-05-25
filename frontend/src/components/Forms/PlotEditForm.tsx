@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+/* @refresh reset */
+import React, { useState, useEffect, memo } from 'react';
 import { updatePlot } from '../../services/plotService';
 import type { PlotDto } from '../../types/plot.types';
 
@@ -9,48 +10,66 @@ interface PlotEditFormProps {
   onPlotUpdated?: () => void;
 }
 
-export const PlotEditForm: React.FC<PlotEditFormProps> = ({
+// Use memo to make the component more stable with React refresh
+const PlotEditForm = memo(function PlotEditForm({
   isOpen,
   plot,
   onClose,
   onPlotUpdated
-}) => {
-  const [price, setPrice] = useState<string>(plot?.price?.toString() || '');
-  const [isForSale, setIsForSale] = useState<boolean>(plot?.isForSale || true);
-  const [description, setDescription] = useState<string>(plot?.description || '');
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+}: PlotEditFormProps) {
+  // Initialize state only when component mounts
+  const [formState, setFormState] = useState({
+    price: '',
+    isForSale: true,
+    description: '',
+    submitting: false,
+    error: null as string | null
+  });
 
-  // Update form when plot changes or modal opens/closes
+  // Reset form when plot changes or modal opens/closes
   useEffect(() => {
     if (plot && isOpen) {
-      // Reset form to original plot values when modal opens
-      setPrice(plot.price?.toString() || '');
-      setIsForSale(plot.isForSale || true);
-      setDescription(plot.description || '');
-      setError(null);
+      setFormState({
+        price: plot.price?.toString() || '',
+        isForSale: plot.isForSale || true,
+        description: plot.description || '',
+        submitting: false,
+        error: null
+      });
     }
   }, [plot, isOpen]);
 
   if (!isOpen || !plot) return null;
 
+  // Handle input changes
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState(prev => ({ ...prev, price: e.target.value }));
+  };
+
+  const handleIsForSaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormState(prev => ({ ...prev, isForSale: e.target.value === 'true' }));
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormState(prev => ({ ...prev, description: e.target.value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!price || isNaN(Number(price)) || Number(price) <= 0) {
-      setError('Please enter a valid price');
+    if (!formState.price || isNaN(Number(formState.price)) || Number(formState.price) <= 0) {
+      setFormState(prev => ({ ...prev, error: 'Please enter a valid price' }));
       return;
     }
     
-    setError(null);
-    setSubmitting(true);
+    setFormState(prev => ({ ...prev, error: null, submitting: true }));
     
     try {
       const updatedPlotData: PlotDto = {
         ...plot,
-        price: Number(price),
-        isForSale,
-        description: description || undefined,
+        price: Number(formState.price),
+        isForSale: formState.isForSale,
+        description: formState.description || undefined,
       };
       
       console.log('Updating plot:', updatedPlotData);
@@ -64,9 +83,11 @@ export const PlotEditForm: React.FC<PlotEditFormProps> = ({
       onClose();
     } catch (err) {
       console.error('Error updating plot:', err);
-      setError('Failed to update plot. Please try again.');
-    } finally {
-      setSubmitting(false);
+      setFormState(prev => ({ 
+        ...prev, 
+        error: 'Failed to update plot. Please try again.',
+        submitting: false
+      }));
     }
   };
 
@@ -76,6 +97,9 @@ export const PlotEditForm: React.FC<PlotEditFormProps> = ({
     }
   };
 
+  // Destructure for easier access in render
+  const { price, isForSale, description, submitting, error } = formState;
+  
   return (
     <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
       <div className="long-press-modal" onClick={(e) => e.stopPropagation()}>
@@ -112,7 +136,7 @@ export const PlotEditForm: React.FC<PlotEditFormProps> = ({
                 type="number"
                 id="edit-price"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={handlePriceChange}
                 required
                 min="1"
                 step="any"
@@ -126,7 +150,7 @@ export const PlotEditForm: React.FC<PlotEditFormProps> = ({
               <select
                 id="edit-isForSale"
                 value={isForSale ? 'true' : 'false'}
-                onChange={(e) => setIsForSale(e.target.value === 'true')}
+                onChange={handleIsForSaleChange}
                 disabled={submitting}
               >
                 <option value="true">For Sale</option>
@@ -139,7 +163,7 @@ export const PlotEditForm: React.FC<PlotEditFormProps> = ({
               <textarea
                 id="edit-description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={handleDescriptionChange}
                 maxLength={500}
                 rows={3}
                 disabled={submitting}
@@ -170,4 +194,6 @@ export const PlotEditForm: React.FC<PlotEditFormProps> = ({
       </div>
     </div>
   );
-}; 
+});
+
+export { PlotEditForm }; 

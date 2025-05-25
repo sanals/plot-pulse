@@ -1,4 +1,4 @@
-import { useState } from 'react';
+// import { useState } from 'react';
 
 interface PlotVisibilityControlProps {
   position?: 'topleft' | 'topright' | 'bottomleft' | 'bottomright';
@@ -15,15 +15,15 @@ const PlotVisibilityControl: React.FC<PlotVisibilityControlProps> = ({
     onToggle(!visible);
   };
   
-  const getPositionClass = () => {
-    switch(position) {
-      case 'topright': return 'top-16 right-4'; // Below layer control
-      case 'topleft': return 'top-4 left-4';
-      case 'bottomright': return 'bottom-32 right-4'; // Above locate control
-      case 'bottomleft': return 'bottom-20 left-4';
-      default: return 'top-16 right-4';
-    }
-  };
+  // const getPositionClass = () => {
+  //   switch(position) {
+  //     case 'topright': return 'top-16 right-4'; // Below layer control
+  //     case 'topleft': return 'top-4 left-4';
+  //     case 'bottomright': return 'bottom-32 right-4'; // Above locate control
+  //     case 'bottomleft': return 'bottom-20 left-4';
+  //     default: return 'top-16 right-4';
+  //   }
+  // };
   
   return (
     <div 

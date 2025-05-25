@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import type { PlotDto, MapPosition } from '../../types/plot.types';
 import { PlotEditForm } from '../Forms/PlotEditForm';

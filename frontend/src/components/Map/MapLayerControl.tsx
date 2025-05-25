@@ -1,5 +1,5 @@
 import { useMap } from 'react-leaflet';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { TileLayer } from 'leaflet';
 
 interface MapLayer {
@@ -59,15 +59,15 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
     setIsOpen(false);
   };
   
-  const getPositionClass = () => {
-    switch(position) {
-      case 'topright': return 'top-4 right-4';
-      case 'topleft': return 'top-4 left-4';
-      case 'bottomright': return 'bottom-20 right-4';
-      case 'bottomleft': return 'bottom-20 left-4';
-      default: return 'top-4 right-4';
-    }
-  };
+  // const getPositionClass = () => {
+  //   switch(position) {
+  //     case 'topright': return 'top-4 right-4';
+  //     case 'topleft': return 'top-4 left-4';
+  //     case 'bottomright': return 'bottom-20 right-4';
+  //     case 'bottomleft': return 'bottom-20 left-4';
+  //     default: return 'top-4 right-4';
+  //   }
+  // };
   
   return (
     <div 

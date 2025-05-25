@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import MapComponent from './components/Map/MapComponent'
 import LoadingSpinner from './components/Common/LoadingSpinner'
+import OfflineIndicator from './components/Common/OfflineIndicator'
+import PWAInstallPrompt from './components/Common/PWAInstallPrompt'
 import './App.css'
 
 function App() {
@@ -37,7 +39,11 @@ function App() {
           <LoadingSpinner message="Loading PlotPulse..." />
         </div>
       ) : (
-        <MapComponent />
+        <>
+          <MapComponent />
+          <OfflineIndicator position="top" />
+          <PWAInstallPrompt />
+        </>
       )}
     </div>
   )

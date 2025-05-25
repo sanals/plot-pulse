@@ -194,9 +194,22 @@ const handleResponse = async (response: Response, url: string): Promise<any> => 
     throw error;
   }
   
-  const data = await response.json();
-  console.log(`[${requestId}] Successful response from ${url}`);
-  return data;
+  // Handle 204 No Content responses (common for DELETE operations)
+  if (response.status === 204) {
+    console.log(`[${requestId}] Successful response (204 No Content) from ${url}`);
+    return null;
+  }
+  
+  // For other successful responses, try to parse JSON
+  try {
+    const data = await response.json();
+    console.log(`[${requestId}] Successful response from ${url}`);
+    return data;
+  } catch (error) {
+    // Some successful responses might not have JSON content
+    console.log(`[${requestId}] Successful response from ${url} (no JSON content)`);
+    return null;
+  }
 };
 
 /**
@@ -495,11 +508,14 @@ export const updatePlot = async (id: number, plot: PlotDto): Promise<PlotDto> =>
  */
 export const deletePlot = async (id: number): Promise<void> => {
   try {
+    // For DELETE operations, backend returns 204 No Content
     await apiRequest<void>(`/plots/${id}`, {
       method: 'DELETE',
     }, false); // Don't retry for delete operations to avoid confusion
     
     console.log('Plot deleted successfully:', id);
+    // Return void as expected
+    return;
   } catch (error) {
     console.error('Error deleting plot:', error);
     throw error;

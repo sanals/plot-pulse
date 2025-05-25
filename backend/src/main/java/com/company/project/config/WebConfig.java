@@ -58,16 +58,11 @@ public class WebConfig implements WebMvcConfigurer {
     /**
      * CORS configuration has been moved to SecurityConfig
      * 
-     * This method is kept as a placeholder to satisfy the interface
-     * but security configuration now handles CORS properly
+     * This method is intentionally left empty as SecurityConfig handles CORS
+     * to avoid conflicts between multiple CORS configurations
      */
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("Authorization", "Content-Type")
-                .allowCredentials(true)
-                .maxAge(3600);
+        // CORS is handled in SecurityConfig - do not configure here to avoid conflicts
     }
 }

@@ -21,7 +21,7 @@ const MapLongPressHandler: React.FC<MapLongPressHandlerProps> = ({ onLongPress }
     cleanup
   } = useMapLongPress(handleLongPress, 500);
 
-  const map = useMapEvents({
+  useMapEvents({
     // Debug: Add simple click handler to compare coordinates
     click: (event) => {
       console.log('%c[CLICK] Simple click at:', 'color: blue; font-weight: bold', {

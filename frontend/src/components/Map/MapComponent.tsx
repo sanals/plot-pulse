@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import PlotMarker from './PlotMarker';
-import { LongPressPopup, LongPressModal } from './LongPressPopup';
+import { LongPressModal } from './LongPressPopup';
 import { PlotSubmissionForm } from '../Forms/PlotSubmissionForm';
 import MapLayerControl from './MapLayerControl';
 import LocationButton from './LocationButton';
@@ -36,7 +36,7 @@ const MapComponent = () => {
   const [showUserLocation, setShowUserLocation] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [showGeoPermission, setShowGeoPermission] = useState<boolean>(true);
+  const [showGeoPermission] = useState<boolean>(true);
   const [anyPlotModalOpen, setAnyPlotModalOpen] = useState<boolean>(false);
   
   // Debug: Add debug marker to visualize click detection
@@ -111,9 +111,9 @@ const MapComponent = () => {
     setPlotsVisible(visible);
   }, []);
   
-  const handleToggleUserLocation = useCallback(() => {
-    setShowUserLocation(prev => !prev);
-  }, []);
+  // const handleToggleUserLocation = useCallback(() => {
+  //   setShowUserLocation(prev => !prev);
+  // }, []);
   
   const handlePlotAdded = useCallback(async () => {
     console.log('%c[Map] Refreshing plots after new plot was added', 'color: purple; font-weight: bold');

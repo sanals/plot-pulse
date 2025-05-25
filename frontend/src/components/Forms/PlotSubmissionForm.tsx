@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+/* @refresh reset */
+import React, { useState, useEffect, memo } from 'react';
 import { createPlot } from '../../services/plotService';
 import type { PlotDto } from '../../types/plot.types';
 
@@ -9,47 +10,65 @@ interface PlotSubmissionFormProps {
   onPlotAdded?: () => void;
 }
 
-export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
+// Use memo to make the component more stable with React refresh
+const PlotSubmissionForm = memo(function PlotSubmissionForm({
   isOpen,
   position,
   onClose,
   onPlotAdded
-}) => {
-  const [price, setPrice] = useState<string>('');
-  const [isForSale, setIsForSale] = useState<boolean>(true);
-  const [description, setDescription] = useState<string>('');
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+}: PlotSubmissionFormProps) {
+  // Initialize state only when component mounts
+  const [formState, setFormState] = useState({
+    price: '',
+    isForSale: true,
+    description: '',
+    submitting: false,
+    error: null as string | null
+  });
 
   // Reset form when modal opens or closes
   useEffect(() => {
     if (!isOpen) {
-      // Reset form when modal closes
-      setPrice('');
-      setDescription('');
-      setIsForSale(true);
-      setError(null);
+      setFormState({
+        price: '',
+        isForSale: true,
+        description: '',
+        submitting: false,
+        error: null
+      });
     }
   }, [isOpen]);
 
   if (!isOpen || !position) return null;
 
+  // Handle input changes
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState(prev => ({ ...prev, price: e.target.value }));
+  };
+
+  const handleIsForSaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormState(prev => ({ ...prev, isForSale: e.target.value === 'true' }));
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormState(prev => ({ ...prev, description: e.target.value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!price || isNaN(Number(price)) || Number(price) <= 0) {
-      setError('Please enter a valid price');
+    if (!formState.price || isNaN(Number(formState.price)) || Number(formState.price) <= 0) {
+      setFormState(prev => ({ ...prev, error: 'Please enter a valid price' }));
       return;
     }
     
-    setError(null);
-    setSubmitting(true);
+    setFormState(prev => ({ ...prev, error: null, submitting: true }));
     
     try {
       const plotData: PlotDto = {
-        price: Number(price),
-        isForSale,
-        description: description || undefined,
+        price: Number(formState.price),
+        isForSale: formState.isForSale,
+        description: formState.description || undefined,
         latitude: position.lat,
         longitude: position.lng,
       };
@@ -58,12 +77,15 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
       const newPlot = await createPlot(plotData);
       console.log('Plot created successfully:', newPlot);
       
-      // Reset form
-      setPrice('');
-      setDescription('');
-      setIsForSale(true);
+      // Reset form and notify parent
+      setFormState({
+        price: '',
+        isForSale: true,
+        description: '',
+        submitting: false,
+        error: null
+      });
       
-      // Notify parent and close
       if (onPlotAdded) {
         onPlotAdded();
       }
@@ -81,13 +103,9 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
             // For other backend errors with a message
             errorMessage = err.response.data.message;
         }
-        // You might also want to handle validation errors (400) here if they have a specific format
-        // For example, checking for err.response.status === 400 and formatting err.response.data.data
       }
       
-      setError(errorMessage);
-    } finally {
-      setSubmitting(false);
+      setFormState(prev => ({ ...prev, error: errorMessage, submitting: false }));
     }
   };
 
@@ -96,6 +114,9 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
       onClose();
     }
   };
+
+  // Destructure for easier access in render
+  const { price, isForSale, description, submitting, error } = formState;
 
   return (
     <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
@@ -132,7 +153,7 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
                 type="number"
                 id="price"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={handlePriceChange}
                 required
                 min="1"
                 step="any"
@@ -146,7 +167,7 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
               <select
                 id="isForSale"
                 value={isForSale ? 'true' : 'false'}
-                onChange={(e) => setIsForSale(e.target.value === 'true')}
+                onChange={handleIsForSaleChange}
                 disabled={submitting}
               >
                 <option value="true">For Sale</option>
@@ -159,7 +180,7 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
               <textarea
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={handleDescriptionChange}
                 maxLength={500}
                 rows={3}
                 disabled={submitting}
@@ -189,4 +210,6 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
       </div>
     </div>
   );
-}; 
+});
+
+export { PlotSubmissionForm }; 
