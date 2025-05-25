@@ -1,3 +1,9 @@
+/* Import leaflet CSS */
+@import url('https://unpkg.com/leaflet@1.7.1/dist/leaflet.css');
+
+/* Import marker cluster CSS */
+@import url('https://unpkg.com/react-leaflet-markercluster/dist/styles.min.css');
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -83,12 +89,6 @@ html {
   overflow: hidden;
   position: relative;
 }
-
-/* Import leaflet CSS */
-@import url('https://unpkg.com/leaflet@1.7.1/dist/leaflet.css');
-
-/* Import marker cluster CSS */
-@import url('https://unpkg.com/react-leaflet-markercluster/dist/styles.min.css');
 
 /* Fix Leaflet default icon paths issue */
 .leaflet-default-icon-path {
@@ -227,6 +227,11 @@ html {
     transform: scale(1);
     opacity: 0;
   }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Location button styles */

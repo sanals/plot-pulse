@@ -1,8 +1,11 @@
 import type { NearestPlotRequest, PlotDto, MapBounds } from '../types/plot.types';
 
-// Use mock data in development environment
-const USE_MOCK_DATA = true;
-const API_URL = 'http://localhost:8091/api';
+// Disable mock data to use real backend API
+const USE_MOCK_DATA = false;
+const API_URL = 'http://localhost:8091/api/v1';
+
+// Store mock plots in memory so we can add to them (only used as fallback)
+let mockPlots: PlotDto[] = [];
 
 /**
  * Fetch all plots (with optional pagination)
@@ -10,20 +13,32 @@ const API_URL = 'http://localhost:8091/api';
 export const getPlots = async (page = 0, size = 100): Promise<PlotDto[]> => {
   if (USE_MOCK_DATA) {
     console.log('Using mock data for plots');
-    return getMockPlots();
+    if (mockPlots.length === 0) {
+      // Initialize mock data on first call
+      mockPlots = generateMockPlots();
+    }
+    return [...mockPlots]; // Return a copy
   }
 
   try {
+    console.log(`Fetching plots from ${API_URL}/plots?page=${page}&size=${size}`);
     const response = await fetch(`${API_URL}/plots?page=${page}&size=${size}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch plots: ${response.status} ${response.statusText}`);
     }
     
-    return await response.json();
+    const plots = await response.json();
+    console.log(`Successfully fetched ${plots.length} plots from backend`);
+    return plots;
   } catch (error) {
-    console.error('Error fetching plots:', error);
-    return getMockPlots();
+    console.error('Error fetching plots from backend:', error);
+    console.log('Falling back to mock data');
+    if (mockPlots.length === 0) {
+      // Initialize mock data on first call
+      mockPlots = generateMockPlots();
+    }
+    return [...mockPlots]; // Return a copy as fallback
   }
 };
 
@@ -46,15 +61,19 @@ export const getPlotsInBounds = async (bounds: MapBounds, page = 0, size = 100):
     const { north, south, east, west } = bounds;
     const url = `${API_URL}/plots/bounds?minLat=${south}&maxLat=${north}&minLng=${west}&maxLng=${east}&page=${page}&size=${size}`;
     
+    console.log(`Fetching plots in bounds from ${url}`);
     const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch plots in bounds: ${response.status} ${response.statusText}`);
     }
     
-    return await response.json();
+    const plots = await response.json();
+    console.log(`Successfully fetched ${plots.length} plots in bounds from backend`);
+    return plots;
   } catch (error) {
-    console.error('Error fetching plots in bounds:', error);
+    console.error('Error fetching plots in bounds from backend:', error);
+    console.log('Falling back to mock data');
     // For development, return mock data if API is not available
     return getMockPlots().filter(
       plot => 
@@ -95,6 +114,7 @@ export const getNearestPlot = async (request: NearestPlotRequest): Promise<PlotD
   }
 
   try {
+    console.log(`Finding nearest plot from ${API_URL}/plots/nearest`);
     const response = await fetch(`${API_URL}/plots/nearest`, {
       method: 'POST',
       headers: {
@@ -104,13 +124,39 @@ export const getNearestPlot = async (request: NearestPlotRequest): Promise<PlotD
     });
     
     if (!response.ok) {
+      if (response.status === 404) {
+        console.log('No nearest plot found within radius');
+        return null;
+      }
       throw new Error(`Failed to find nearest plot: ${response.status} ${response.statusText}`);
     }
     
-    return await response.json();
+    const nearestPlot = await response.json();
+    console.log('Successfully found nearest plot from backend:', nearestPlot);
+    return nearestPlot;
   } catch (error) {
-    console.error('Error finding nearest plot:', error);
-    return null;
+    console.error('Error finding nearest plot from backend:', error);
+    console.log('Falling back to mock data');
+    
+    // Fallback to mock data calculation
+    const { latitude, longitude, radius } = request;
+    const plots = getMockPlots();
+    let nearestPlot: PlotDto | null = null;
+    let minDistance = Infinity;
+    
+    for (const plot of plots) {
+      const distance = calculateDistance(
+        latitude, longitude, 
+        plot.latitude, plot.longitude
+      );
+      
+      if (distance <= radius && distance < minDistance) {
+        minDistance = distance;
+        nearestPlot = plot;
+      }
+    }
+    
+    return nearestPlot;
   }
 };
 
@@ -136,7 +182,9 @@ function deg2rad(deg: number): number {
  */
 export const createPlot = async (plot: PlotDto): Promise<PlotDto> => {
   if (USE_MOCK_DATA) {
-    console.log('Using mock data for creating plot');
+    console.log('%c[MOCK API] Creating new plot', 'color: green; font-weight: bold');
+    console.table(plot);
+    
     // Generate a random ID for the new plot
     const newId = Math.floor(Math.random() * 1000) + 100;
     const timestamp = new Date().toISOString();
@@ -148,12 +196,26 @@ export const createPlot = async (plot: PlotDto): Promise<PlotDto> => {
       updatedAt: timestamp,
     };
     
-    // In a real app, we would add this to a local store
-    // For now, just return the plot with the generated ID
+    console.log('%c[MOCK API] Plot created successfully', 'color: green; font-weight: bold');
+    console.table(newPlot);
+    
+    // Add to our mock plots collection
+    if (mockPlots.length === 0) {
+      // Initialize mock data if not already done
+      mockPlots = generateMockPlots();
+    }
+    mockPlots.push(newPlot);
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     return newPlot;
   }
 
   try {
+    console.log(`Creating new plot via ${API_URL}/plots`);
+    console.log('Plot data:', plot);
+    
     const response = await fetch(`${API_URL}/plots`, {
       method: 'POST',
       headers: {
@@ -163,19 +225,35 @@ export const createPlot = async (plot: PlotDto): Promise<PlotDto> => {
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Server error response:', errorText);
       throw new Error(`Failed to create plot: ${response.status} ${response.statusText}`);
     }
     
-    return await response.json();
+    const responseData = await response.json();
+    console.log('Plot created successfully on backend:', responseData);
+    return responseData;
   } catch (error) {
-    console.error('Error creating plot:', error);
-    // For development, return the plot with a mock ID
-    return {
+    console.error('Error creating plot on backend:', error);
+    console.log('Falling back to mock data');
+    
+    // For development, return the plot with a mock ID as fallback
+    const newId = Math.floor(Math.random() * 1000) + 100;
+    const timestamp = new Date().toISOString();
+    const fallbackPlot = {
       ...plot,
-      id: Math.floor(Math.random() * 1000) + 100,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      id: newId,
+      createdAt: timestamp,
+      updatedAt: timestamp,
     };
+    
+    // Add to our mock plots as fallback
+    if (mockPlots.length === 0) {
+      mockPlots = generateMockPlots();
+    }
+    mockPlots.push(fallbackPlot);
+    
+    return fallbackPlot;
   }
 };
 
@@ -224,8 +302,8 @@ export const deletePlot = async (id: number): Promise<void> => {
 /**
  * Generate mock plot data for development
  */
-const getMockPlots = (): PlotDto[] => {
-  const mockPlots: PlotDto[] = [];
+const generateMockPlots = (): PlotDto[] => {
+  const generatedPlots: PlotDto[] = [];
   
   // London area
   const centerLat = 51.505;
@@ -241,7 +319,7 @@ const getMockPlots = (): PlotDto[] => {
     const latOffset = (Math.random() - 0.5) * 0.04;
     const lngOffset = (Math.random() - 0.5) * 0.06;
     
-    mockPlots.push({
+    generatedPlots.push({
       id,
       price,
       isForSale,
@@ -253,5 +331,16 @@ const getMockPlots = (): PlotDto[] => {
     });
   }
   
-  return mockPlots;
+  console.log('%c[MOCK API] Generated initial mock plots', 'color: blue; font-weight: bold');
+  console.log(`Total plots: ${generatedPlots.length}`);
+  
+  return generatedPlots;
+};
+
+// Avoid re-exporting the actual mock plots generator
+const getMockPlots = (): PlotDto[] => {
+  if (mockPlots.length === 0) {
+    mockPlots = generateMockPlots();
+  }
+  return [...mockPlots]; // Return a copy
 }; 

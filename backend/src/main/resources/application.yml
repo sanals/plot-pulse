@@ -48,6 +48,26 @@ spring:
       allow-credentials: true
       max-age: 3600
 
+# CORS configuration for CorsProperties
+cors:
+  allowed-origins: 
+    - http://localhost:5173
+    - http://localhost:3000
+    - http://localhost:3003
+  allowed-methods: 
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowed-headers: 
+    - Authorization
+    - Content-Type
+    - X-Requested-With
+    - Accept
+    - Origin
+  max-age: 3600
+
 jwt:
   # Secret key used to sign JWT tokens (must be Base64 encoded)
   secret: V1R5cUI0TUE3RDdTbkhGcXFkSktHV3d0WWVKY3ZXM2U1UEQyNGxLRjN3cQ==

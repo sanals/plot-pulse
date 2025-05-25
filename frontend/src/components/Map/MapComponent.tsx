@@ -106,13 +106,28 @@ const MapComponent = () => {
   }, []);
   
   const handlePlotAdded = useCallback(async () => {
+    console.log('%c[Map] Refreshing plots after new plot was added', 'color: purple; font-weight: bold');
     try {
       const data = await getPlots();
+      console.log(`[Map] Loaded ${data.length} plots`);
       setPlots(data);
+      
+      // Also update filtered plots to show new plot immediately
+      if (mapBounds) {
+        const visible = data.filter(plot => 
+          plot.latitude <= mapBounds.north &&
+          plot.latitude >= mapBounds.south &&
+          plot.longitude <= mapBounds.east &&
+          plot.longitude >= mapBounds.west
+        );
+        setFilteredPlots(visible);
+      } else {
+        setFilteredPlots(data);
+      }
     } catch (err) {
-      console.error('Failed to refresh plots:', err);
+      console.error('[Map] Failed to refresh plots:', err);
     }
-  }, []);
+  }, [mapBounds]);
   
   const handlePermissionChange = useCallback((state: 'granted' | 'denied' | 'prompt' | 'unavailable') => {
     if (state === 'granted') {
