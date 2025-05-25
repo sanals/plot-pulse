@@ -5,6 +5,8 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 
+import com.company.project.exception.InvalidCoordinateException;
+
 /**
  * Utility class for geometry operations
  */
@@ -22,10 +24,28 @@ public class GeometryUtil {
      * @param latitude  the latitude
      * @param longitude the longitude
      * @return a Point geometry
+     * @throws InvalidCoordinateException if coordinates are out of valid range
      */
     public static Point createPoint(double latitude, double longitude) {
+        validateCoordinates(latitude, longitude);
         // In PostGIS/JTS, points are ordered as (x,y) = (longitude, latitude)
         return geometryFactory.createPoint(new Coordinate(longitude, latitude));
+    }
+    
+    /**
+     * Validates that coordinates are within valid ranges
+     * 
+     * @param latitude  the latitude (-90 to 90)
+     * @param longitude the longitude (-180 to 180)
+     * @throws InvalidCoordinateException if coordinates are out of valid range
+     */
+    public static void validateCoordinates(double latitude, double longitude) {
+        if (latitude < -90.0 || latitude > 90.0) {
+            throw new InvalidCoordinateException(latitude, longitude);
+        }
+        if (longitude < -180.0 || longitude > 180.0) {
+            throw new InvalidCoordinateException(latitude, longitude);
+        }
     }
     
     /**

@@ -13,8 +13,10 @@ import com.company.project.dto.PlotMapper;
 import com.company.project.entity.Plot;
 import com.company.project.repository.PlotRepository;
 import com.company.project.service.PlotService;
+import com.company.project.exception.DuplicateLocationException;
+import com.company.project.exception.PlotNotFoundException;
 
-import java.util.NoSuchElementException;
+import java.math.BigDecimal;
 
 /**
  * Database-backed implementation of the PlotService
@@ -41,10 +43,22 @@ public class PlotServiceImpl implements PlotService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<PlotDto> getAllPlotsWithFilters(Pageable pageable, BigDecimal minPrice, BigDecimal maxPrice, Boolean isForSale) {
+        log.debug("Fetching plots with filters: page={}, size={}, minPrice={}, maxPrice={}, isForSale={}", 
+                pageable.getPageNumber(), pageable.getPageSize(), minPrice, maxPrice, isForSale);
+        
+        Page<Plot> plotPage = plotRepository.findPlotsWithFilters(pageable, minPrice, maxPrice, isForSale);
+        log.debug("Found {} plots with filters", plotPage.getTotalElements());
+        
+        return plotPage.map(plotMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PlotDto getPlotById(Long id) {
         log.debug("Fetching plot with ID: {}", id);
         Plot plot = plotRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Plot not found with ID: " + id));
+                .orElseThrow(() -> new PlotNotFoundException(id));
         return plotMapper.toDto(plot);
     }
 
@@ -52,6 +66,14 @@ public class PlotServiceImpl implements PlotService {
     public PlotDto createPlot(PlotDto plotDto) {
         log.debug("Creating new plot: lat={}, lng={}, price={}", 
                 plotDto.getLatitude(), plotDto.getLongitude(), plotDto.getPrice());
+        
+        // Check for duplicate locations within 10 meters
+        double minDistance = 10.0; // meters
+        if (plotRepository.existsPlotsWithinDistance(plotDto.getLatitude(), plotDto.getLongitude(), minDistance)) {
+            log.warn("Attempted to create plot at duplicate location: lat={}, lng={}", 
+                    plotDto.getLatitude(), plotDto.getLongitude());
+            throw new DuplicateLocationException(plotDto.getLatitude(), plotDto.getLongitude(), minDistance);
+        }
         
         Plot plot = plotMapper.toEntity(plotDto);
         Plot savedPlot = plotRepository.save(plot);
@@ -65,7 +87,17 @@ public class PlotServiceImpl implements PlotService {
         log.debug("Updating plot with ID: {}", id);
         
         Plot existingPlot = plotRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Plot not found with ID: " + id));
+                .orElseThrow(() -> new PlotNotFoundException(id));
+        
+        // Check for duplicate locations within 10 meters (excluding current plot)
+        if (plotDto.getLatitude() != null && plotDto.getLongitude() != null) {
+            double minDistance = 10.0; // meters
+            if (plotRepository.existsPlotsWithinDistanceExcluding(plotDto.getLatitude(), plotDto.getLongitude(), minDistance, id)) {
+                log.warn("Attempted to update plot {} to duplicate location: lat={}, lng={}", 
+                        id, plotDto.getLatitude(), plotDto.getLongitude());
+                throw new DuplicateLocationException(plotDto.getLatitude(), plotDto.getLongitude(), minDistance);
+            }
+        }
         
         Plot updatedPlot = plotMapper.updateEntityFromDto(existingPlot, plotDto);
         Plot savedPlot = plotRepository.save(updatedPlot);
@@ -79,7 +111,7 @@ public class PlotServiceImpl implements PlotService {
         log.debug("Deleting plot with ID: {}", id);
         
         if (!plotRepository.existsById(id)) {
-            throw new NoSuchElementException("Plot not found with ID: " + id);
+            throw new PlotNotFoundException(id);
         }
         
         plotRepository.deleteById(id);

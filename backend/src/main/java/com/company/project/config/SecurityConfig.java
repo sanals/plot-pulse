@@ -134,7 +134,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
         configuration.setAllowedMethods(corsProperties.getAllowedMethods());
         configuration.setAllowedHeaders(corsProperties.getAllowedHeaders());
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false); // Disable credentials to avoid CORS conflict
         configuration.setMaxAge(corsProperties.getMaxAge());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

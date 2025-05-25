@@ -8,8 +8,18 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.company.project.dto.response.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.FieldError;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Global exception handler for the application
+ */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
@@ -35,14 +45,23 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<String>> handleValidationException(MethodArgumentNotValidException ex) {
-        ApiResponse<String> response = new ApiResponse<>(
-                "ERROR",
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation failed",
-                ex.getBindingResult().getAllErrors().get(0).getDefaultMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        
+        log.warn("Validation error: {}", errors);
+        ErrorResponse error = ErrorResponse.builder()
+                .status("ERROR")
+                .code(400)
+                .message("Validation failed")
+                .data(errors)
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
@@ -65,5 +84,41 @@ public class GlobalExceptionHandler {
                 null);
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(PlotNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePlotNotFound(PlotNotFoundException ex) {
+        log.warn("Plot not found: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status("ERROR")
+                .code(404)
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(DuplicateLocationException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateLocation(DuplicateLocationException ex) {
+        log.warn("Duplicate location error: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status("ERROR")
+                .code(409)
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(InvalidCoordinateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCoordinate(InvalidCoordinateException ex) {
+        log.warn("Invalid coordinate error: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status("ERROR")
+                .code(400)
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 }

@@ -57,9 +57,24 @@ export const PlotSubmissionForm: React.FC<PlotSubmissionFormProps> = ({
         onPlotAdded();
       }
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating plot:', err);
-      setError('Failed to create plot. Please try again.');
+      let errorMessage = 'Failed to create plot. Please try again.';
+      
+      // Check if it's an HTTP error and has a response
+      if (err.response && err.response.data) {
+        // Check for 409 Conflict and extract specific message
+        if (err.response.status === 409 && err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response.data.message) {
+            // For other backend errors with a message
+            errorMessage = err.response.data.message;
+        }
+        // You might also want to handle validation errors (400) here if they have a specific format
+        // For example, checking for err.response.status === 400 and formatting err.response.data.data
+      }
+      
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }

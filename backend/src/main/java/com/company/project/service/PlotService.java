@@ -1,5 +1,6 @@
 package com.company.project.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -16,6 +17,17 @@ public interface PlotService {
      * Get all plots with pagination
      */
     Page<PlotDto> getAllPlots(Pageable pageable);
+    
+    /**
+     * Get all plots with pagination and filtering
+     * 
+     * @param pageable Pagination information
+     * @param minPrice Minimum price filter (optional)
+     * @param maxPrice Maximum price filter (optional)
+     * @param isForSale Sale status filter (optional)
+     * @return Page of plots matching the criteria
+     */
+    Page<PlotDto> getAllPlotsWithFilters(Pageable pageable, BigDecimal minPrice, BigDecimal maxPrice, Boolean isForSale);
     
     /**
      * Get a specific plot by ID

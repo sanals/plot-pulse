@@ -115,12 +115,9 @@ export const getNearestPlot = async (request: NearestPlotRequest): Promise<PlotD
 
   try {
     console.log(`Finding nearest plot from ${API_URL}/plots/nearest`);
-    const response = await fetch(`${API_URL}/plots/nearest`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
+    const { latitude, longitude, radius } = request;
+    const response = await fetch(`${API_URL}/plots/nearest?lat=${latitude}&lon=${longitude}&radius=${radius}`, {
+      method: 'GET',
     });
     
     if (!response.ok) {
@@ -227,7 +224,24 @@ export const createPlot = async (plot: PlotDto): Promise<PlotDto> => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Server error response:', errorText);
-      throw new Error(`Failed to create plot: ${response.status} ${response.statusText}`);
+      
+      // Parse the error response to extract backend message
+      let backendError;
+      try {
+        backendError = JSON.parse(errorText);
+      } catch (parseError) {
+        backendError = { message: `Failed to create plot: ${response.status} ${response.statusText}` };
+      }
+      
+      // Create an error object that mimics Axios structure for compatibility
+      const error = new Error(backendError.message || `Failed to create plot: ${response.status}`);
+      (error as any).response = {
+        status: response.status,
+        statusText: response.statusText,
+        data: backendError
+      };
+      
+      throw error;
     }
     
     const responseData = await response.json();
@@ -235,7 +249,14 @@ export const createPlot = async (plot: PlotDto): Promise<PlotDto> => {
     return responseData;
   } catch (error) {
     console.error('Error creating plot on backend:', error);
-    console.log('Falling back to mock data');
+    
+    // Re-throw the error so the form can handle it
+    // Don't fall back to mock data when there's a validation error
+    if ((error as any).response && (error as any).response.status >= 400 && (error as any).response.status < 500) {
+      throw error; // Re-throw client errors (validation, conflict, etc.)
+    }
+    
+    console.log('Falling back to mock data for network/server errors');
     
     // For development, return the plot with a mock ID as fallback
     const newId = Math.floor(Math.random() * 1000) + 100;

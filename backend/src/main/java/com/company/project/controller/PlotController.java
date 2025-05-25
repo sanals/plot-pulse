@@ -1,10 +1,12 @@
 package com.company.project.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,7 @@ import com.company.project.dto.NearestPlotRequestDto;
 import com.company.project.dto.PlotDto;
 import com.company.project.service.PlotService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -33,14 +36,33 @@ public class PlotController {
     private final PlotService plotService;
 
     /**
-     * Get all plots with pagination
+     * Get all plots with pagination and filtering
+     * 
+     * @param page Page number (default: 0)
+     * @param size Page size (default: 10)
+     * @param minPrice Minimum price filter (optional)
+     * @param maxPrice Maximum price filter (optional)
+     * @param isForSale Sale status filter (optional)
+     * @return List of plots matching the criteria
      */
     @GetMapping
     public ResponseEntity<List<PlotDto>> getAllPlots(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Boolean isForSale) {
+        
         Pageable pageable = PageRequest.of(page, size);
-        Page<PlotDto> plotPage = plotService.getAllPlots(pageable);
+        
+        // If no filters are provided, use the basic method, otherwise use filtering
+        Page<PlotDto> plotPage;
+        if (minPrice == null && maxPrice == null && isForSale == null) {
+            plotPage = plotService.getAllPlots(pageable);
+        } else {
+            plotPage = plotService.getAllPlotsWithFilters(pageable, minPrice, maxPrice, isForSale);
+        }
+        
         return ResponseEntity.ok(plotPage.getContent());
     }
 
@@ -55,11 +77,14 @@ public class PlotController {
 
     /**
      * Create a new plot
+     * 
+     * @param plotDto Plot data to create
+     * @return Created plot with generated ID
      */
     @PostMapping
-    public ResponseEntity<PlotDto> createPlot(@RequestBody PlotDto plotDto) {
+    public ResponseEntity<PlotDto> createPlot(@Valid @RequestBody PlotDto plotDto) {
         PlotDto createdPlot = plotService.createPlot(plotDto);
-        return ResponseEntity.ok(createdPlot);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdPlot);
     }
 
     /**
@@ -81,22 +106,36 @@ public class PlotController {
 
     /**
      * Find the nearest plot to a location
+     * 
+     * @param lat Latitude coordinate
+     * @param lon Longitude coordinate  
+     * @param radius Search radius in meters (optional, default: 1000)
+     * @return Nearest plot or 404 if none found
      */
-    @PostMapping("/nearest")
-    public ResponseEntity<PlotDto> getNearestPlot(@RequestBody NearestPlotRequestDto request) {
-        PlotDto nearestPlot = plotService.getNearestPlot(
-                request.getLatitude(), 
-                request.getLongitude(), 
-                request.getRadius());
+    @GetMapping("/nearest")
+    public ResponseEntity<PlotDto> getNearestPlot(
+            @RequestParam Double lat,
+            @RequestParam Double lon,
+            @RequestParam(defaultValue = "1000") Double radius) {
+        
+        PlotDto nearestPlot = plotService.getNearestPlot(lat, lon, radius);
+        
+        if (nearestPlot == null) {
+            return ResponseEntity.notFound().build();
+        }
         
         return ResponseEntity.ok(nearestPlot);
     }
 
     /**
      * Update an existing plot
+     * 
+     * @param id Plot ID to update
+     * @param plotDto Updated plot data
+     * @return Updated plot
      */
     @PutMapping("/{id}")
-    public ResponseEntity<PlotDto> updatePlot(@PathVariable Long id, @RequestBody PlotDto plotDto) {
+    public ResponseEntity<PlotDto> updatePlot(@PathVariable Long id, @Valid @RequestBody PlotDto plotDto) {
         PlotDto updatedPlot = plotService.updatePlot(id, plotDto);
         return ResponseEntity.ok(updatedPlot);
     }

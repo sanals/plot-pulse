@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,4 +68,48 @@ public interface PlotRepository extends JpaRepository<Plot, Long> {
      * @return Page of plots owned by the user
      */
     Page<Plot> findByUserId(Long userId, Pageable pageable);
+    
+    /**
+     * Find plots with optional filters
+     *
+     * @param pageable Pagination information
+     * @param minPrice Minimum price filter (optional)
+     * @param maxPrice Maximum price filter (optional)
+     * @param isForSale Sale status filter (optional)
+     * @return Page of plots matching the criteria
+     */
+    @Query("SELECT p FROM Plot p WHERE " +
+           "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
+           "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
+           "(:isForSale IS NULL OR p.isForSale = :isForSale)")
+    Page<Plot> findPlotsWithFilters(
+            Pageable pageable,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            @Param("isForSale") Boolean isForSale);
+    
+    /**
+     * Check if any plots exist within a specified distance of a location
+     *
+     * @param latitude The latitude coordinate
+     * @param longitude The longitude coordinate
+     * @param distanceInMeters The distance in meters
+     * @return True if any plots exist within the distance, false otherwise
+     */
+    @Query(value = "SELECT COUNT(*) > 0 FROM plots WHERE ST_DWithin(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :distanceInMeters)", nativeQuery = true)
+    boolean existsPlotsWithinDistance(@Param("latitude") double latitude, @Param("longitude") double longitude, 
+                                     @Param("distanceInMeters") double distanceInMeters);
+    
+    /**
+     * Check if any plots exist within a specified distance of a location, excluding a specific plot ID
+     *
+     * @param latitude The latitude coordinate
+     * @param longitude The longitude coordinate
+     * @param distanceInMeters The distance in meters
+     * @param excludeId Plot ID to exclude from the check
+     * @return True if any plots exist within the distance, false otherwise
+     */
+    @Query(value = "SELECT COUNT(*) > 0 FROM plots WHERE id != :excludeId AND ST_DWithin(location, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :distanceInMeters)", nativeQuery = true)
+    boolean existsPlotsWithinDistanceExcluding(@Param("latitude") double latitude, @Param("longitude") double longitude, 
+                                              @Param("distanceInMeters") double distanceInMeters, @Param("excludeId") Long excludeId);
 } 
