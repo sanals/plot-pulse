@@ -35,21 +35,6 @@ const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted, onModalStateChan
     return null;
   }
 
-  // Create custom icon for text mode
-  const getMarkerIcon = () => {
-    if (mode === 'text') {
-      const price = plot.price ? `₹${plot.price.toLocaleString()}` : 'N/A';
-      return L.divIcon({
-        className: 'plot-price-marker',
-        html: `<span class="price-label">${price}</span>`,
-        iconSize: [80, 28],
-        iconAnchor: [40, 14],
-      });
-    }
-    // Return default icon for icon mode
-    return new L.Icon.Default();
-  };
-
   // Set plotId in marker options immediately when marker ref is available
   useEffect(() => {
     if (markerRef.current) {
@@ -59,6 +44,34 @@ const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted, onModalStateChan
       }
     }
   }, [plot.id]);
+
+  // Create custom icon for text mode
+  const getMarkerIcon = () => {
+    if (mode === 'text') {
+      const price = plot.price ? `₹${plot.price.toLocaleString()}` : 'N/A';
+      
+      // Determine price category for color coding
+      let priceClass = '';
+      if (plot.price) {
+        if (plot.price >= 5000000) { // 50 lakh and above - high price (red)
+          priceClass = 'price-high';
+        } else if (plot.price >= 2000000) { // 20 lakh to 50 lakh - medium price (orange)
+          priceClass = 'price-medium';
+        } else { // Below 20 lakh - low price (green)
+          priceClass = 'price-low';
+        }
+      }
+      
+      return L.divIcon({
+        className: `plot-price-marker ${priceClass}`,
+        html: `<span class="price-label">${price}</span>`,
+        iconSize: [80, 28],
+        iconAnchor: [40, 14],
+      });
+    }
+    // Return default icon for icon mode
+    return new L.Icon.Default();
+  };
 
   const handleEdit = () => {
     // Close the popup immediately when edit modal opens

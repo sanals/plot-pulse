@@ -8,7 +8,7 @@ import { PlotSubmissionForm } from '../Forms/PlotSubmissionForm';
 import MapLayerControl from './MapLayerControl';
 import LocationButton from './LocationButton';
 import UserLocationMarker from './UserLocationMarker';
-
+import LocationIndicatorToggle from './LocationIndicatorToggle';
 import MarkerDisplayToggle from './MarkerDisplayToggle';
 import { type MarkerDisplayMode } from './PlotMarker';
 import MapLongPressHandler from './MapLongPressHandler';
@@ -208,6 +208,10 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
     refreshPlots();
   }, [refreshPlots]);
 
+  const handleLocationIndicatorToggle = useCallback((visible: boolean) => {
+    setShowUserLocation(visible);
+  }, []);
+
   // Memoized map container props for performance
   const mapContainerProps = useMemo(() => ({
     center: mapCenter,
@@ -348,6 +352,12 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
         position="topright"
         mode={markerDisplayMode}
         onModeChange={setMarkerDisplayMode}
+      />
+      
+      <LocationIndicatorToggle
+        position="topright"
+        visible={showUserLocation}
+        onToggle={handleLocationIndicatorToggle}
       />
       
       {/* Modals */}
