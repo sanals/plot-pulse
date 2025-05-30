@@ -570,6 +570,98 @@ Expected output: Production-ready deployment configuration
 Each task should be tackled individually, and you can ask Claude in Cursor to implement specific parts by referencing these task descriptions and the cursor rules file.
 
 
+## Phase 8: Step-by-Step Prompt: Show Plot Values as Text on Map (with Toggle)
+
+### Task 8.1. Update the Marker Rendering Logic
+Goal: Replace the default blue marker icon with a text label showing the plot’s price.
+How:
+In PlotMarker.tsx, instead of using a default Leaflet marker, use a DivIcon with custom HTML that displays the price.
+Style the DivIcon so the background is transparent or semi-transparent, and the text is readable on the map.
+2. Show Average Value for Clustered Markers
+Goal: When markers are clustered, show the average price for that cluster.
+How:
+In PlotMarkerCluster.tsx, update the iconCreateFunction to calculate the average price of the plots in the cluster and display it as the cluster label.
+3. Add a 3-Way Toggle for Marker Display
+Goal: Let users choose between:
+No plot markers
+Classic map pointers (icon markers)
+Price text labels (the new feature)
+How:
+Replace the current "Plots Visible" button with a 3-way toggle button (e.g., using a segmented control or three icons).
+Store the toggle state in a React state variable (e.g., markerDisplayMode: 'none' | 'icon' | 'text').
+Pass this state down to PlotMarkerCluster and PlotMarker to control how markers are rendered.
+4. Update Marker Components to Support Modes
+Goal: Render markers according to the selected mode.
+How:
+In PlotMarker.tsx, render:
+Nothing if mode is 'none'
+Classic icon if mode is 'icon'
+Price text if mode is 'text'
+In PlotMarkerCluster.tsx, update cluster icon logic to match the selected mode.
+5. Style the Text Markers
+Goal: Ensure text markers are readable and look good on the map.
+How:
+Use CSS for font size, color, shadow, and background.
+Make the background transparent or semi-transparent for better map integration.
+6. Test All Scenarios
+Goal: Ensure all marker modes work, clusters show averages, and toggling is smooth.
+How:
+Test with dense and sparse plot data.
+Test on different zoom levels and map backgrounds.
+
+Example Implementation Steps
+1. Update PlotMarker.tsx:
+
+```
+import L from 'leaflet';
+import { Marker } from 'react-leaflet';
+
+const PlotMarker = ({ plot, mode }) => {
+  if (mode === 'none') return null;
+
+  if (mode === 'text') {
+    const price = plot.price ? `₹${plot.price}` : '';
+    const icon = L.divIcon({
+      className: 'plot-price-marker',
+      html: `<span>${price}</span>`,
+      iconSize: [60, 24],
+      iconAnchor: [30, 12],
+    });
+    return <Marker position={[plot.latitude, plot.longitude]} icon={icon} />;
+  }
+
+  // Default icon mode
+  return <Marker position={[plot.latitude, plot.longitude]} />;
+};```
+
+2. Update PlotMarkerCluster.tsx:
+In iconCreateFunction, calculate the average price for the cluster and show it as the label if in 'text' mode.
+3. Add a 3-way toggle in the UI:
+
+```// In your map controls area
+const [markerDisplayMode, setMarkerDisplayMode] = useState<'none' | 'icon' | 'text'>('icon');
+<ToggleButtonGroup value={markerDisplayMode} onChange={setMarkerDisplayMode}>
+  <ToggleButton value="none">None</ToggleButton>
+  <ToggleButton value="icon">Icon</ToggleButton>
+  <ToggleButton value="text">Price</ToggleButton>
+</ToggleButtonGroup>```
+
+4. Pass markerDisplayMode as a prop to PlotMarkerCluster and PlotMarker.
+5. Style the text marker:
+
+```.plot-price-marker span {
+  background: rgba(255,255,255,0.7);
+  color: #222;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  pointer-events: none;
+}```
+
+
+
 //New ideas
 Search visible area for a specific price.
 Add greater that less than or equal option

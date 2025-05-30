@@ -1,27 +1,64 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { Marker, Popup } from 'react-leaflet';
+import { useMap } from 'react-leaflet';
+import L from 'leaflet';
 import type { PlotDto, MapPosition } from '../../types/plot.types';
 import { PlotEditForm } from '../Forms/PlotEditForm';
 import { ConfirmationDialog } from '../Common/ConfirmationDialog';
 import { deletePlot } from '../../services/plotService';
 
+export type MarkerDisplayMode = 'none' | 'icon' | 'text';
+
 interface PlotMarkerProps {
   plot: PlotDto;
+  mode: MarkerDisplayMode;
   onPlotUpdated?: () => void;
   onPlotDeleted?: () => void;
   onModalStateChange?: (isOpen: boolean) => void;
 }
 
-const PlotMarker = ({ plot, onPlotUpdated, onPlotDeleted, onModalStateChange }: PlotMarkerProps) => {
+const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted, onModalStateChange }: PlotMarkerProps) => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const popupRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const map = useMap();
 
   const position: MapPosition = {
     lat: plot.latitude,
     lng: plot.longitude,
   };
+
+  // Don't render anything if mode is 'none'
+  if (mode === 'none') {
+    return null;
+  }
+
+  // Create custom icon for text mode
+  const getMarkerIcon = () => {
+    if (mode === 'text') {
+      const price = plot.price ? `₹${plot.price.toLocaleString()}` : 'N/A';
+      return L.divIcon({
+        className: 'plot-price-marker',
+        html: `<span class="price-label">${price}</span>`,
+        iconSize: [80, 28],
+        iconAnchor: [40, 14],
+      });
+    }
+    // Return default icon for icon mode
+    return new L.Icon.Default();
+  };
+
+  // Set plotId in marker options immediately when marker ref is available
+  useEffect(() => {
+    if (markerRef.current) {
+      const leafletMarker = markerRef.current;
+      if (leafletMarker.options) {
+        leafletMarker.options.plotId = plot.id;
+      }
+    }
+  }, [plot.id]);
 
   const handleEdit = () => {
     // Close the popup immediately when edit modal opens
@@ -69,7 +106,11 @@ const PlotMarker = ({ plot, onPlotUpdated, onPlotDeleted, onModalStateChange }: 
 
   return (
     <>
-      <Marker position={position}>
+      <Marker 
+        position={position} 
+        icon={getMarkerIcon()}
+        ref={markerRef}
+      >
         <Popup ref={popupRef}>
           <div className="plot-popup">
             <h3>Plot {plot.id}</h3>

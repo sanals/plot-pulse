@@ -8,7 +8,9 @@ import { PlotSubmissionForm } from '../Forms/PlotSubmissionForm';
 import MapLayerControl from './MapLayerControl';
 import LocationButton from './LocationButton';
 import UserLocationMarker from './UserLocationMarker';
-import PlotVisibilityControl from './PlotVisibilityControl';
+
+import MarkerDisplayToggle from './MarkerDisplayToggle';
+import { type MarkerDisplayMode } from './PlotMarker';
 import MapLongPressHandler from './MapLongPressHandler';
 import MapRecenterComponent from './MapRecenterComponent';
 import MapBoundsTracker from './MapBoundsTracker';
@@ -16,6 +18,7 @@ import CustomZoomControl from './CustomZoomControl';
 import GeolocationPermission from './GeolocationPermission';
 import LoadingSpinner from '../Common/LoadingSpinner';
 import 'leaflet/dist/leaflet.css';
+import '../../styles/map-markers.css';
 import type { MapPosition, MapBounds } from '../../types/plot.types';
 
 // Default center for the map (London)
@@ -98,6 +101,7 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
   const [showPopup, setShowPopup] = useState<boolean>(false);
   const [showPlotForm, setShowPlotForm] = useState<boolean>(false);
   const [plotsVisible, setPlotsVisible] = useState<boolean>(true);
+  const [markerDisplayMode, setMarkerDisplayMode] = useState<MarkerDisplayMode>('text');
   const [showUserLocation, setShowUserLocation] = useState<boolean>(true);
   // const [anyPlotModalOpen, setAnyPlotModalOpen] = useState<boolean>(false);
   const [debugMarker, setDebugMarker] = useState<MapPosition | null>(null);
@@ -173,9 +177,7 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
     setIsMapInteracting(false);
   }, []);
 
-  const handleTogglePlotVisibility = useCallback((visible: boolean) => {
-    setPlotsVisible(visible);
-  }, []);
+
 
   const handlePlotAdded = useCallback(async () => {
     console.log('%c[Map] Plot added, refreshing data', 'color: purple; font-weight: bold');
@@ -258,10 +260,11 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
         {/* Optimized plot markers with clustering */}
         <PlotMarkerCluster
           plots={plots}
+          mode={markerDisplayMode}
           onPlotUpdated={handlePlotUpdated}
           onPlotDeleted={handlePlotDeleted}
           onModalStateChange={handlePlotModalStateChange}
-          visible={plotsVisible}
+          visible={plotsVisible && markerDisplayMode !== 'none'}
         />
         
         {/* User location marker */}
@@ -341,10 +344,10 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
       )}
 
       {/* Map controls that don't need map context */}
-      <PlotVisibilityControl 
+      <MarkerDisplayToggle 
         position="topright"
-        visible={plotsVisible}
-        onToggle={handleTogglePlotVisibility}
+        mode={markerDisplayMode}
+        onModeChange={setMarkerDisplayMode}
       />
       
       {/* Modals */}
