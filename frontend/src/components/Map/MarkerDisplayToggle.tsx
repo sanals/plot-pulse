@@ -51,7 +51,8 @@ const MarkerDisplayToggle: React.FC<MarkerDisplayToggleProps> = ({
             borderRight: index < modes.length - 1 ? '1px solid #e2e8f0' : 'none',
             cursor: 'pointer',
             minWidth: '60px',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            outline: 'none'
           }}
           onClick={() => onModeChange(modeOption.value)}
           title={`Show plots as ${modeOption.label.toLowerCase()}`}

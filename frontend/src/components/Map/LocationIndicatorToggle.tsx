@@ -24,7 +24,7 @@ const LocationIndicatorToggle: React.FC<LocationIndicatorToggleProps> = ({
       return (
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          style={{ width: '20px', height: '20px' }}
+          style={{ width: '32px', height: '32px' }}
           viewBox="0 0 24 24" 
           fill="none" 
           stroke="currentColor" 
@@ -45,7 +45,7 @@ const LocationIndicatorToggle: React.FC<LocationIndicatorToggleProps> = ({
       return (
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          style={{ width: '20px', height: '20px' }}
+          style={{ width: '32px', height: '32px' }}
           viewBox="0 0 24 24" 
           fill="none" 
           stroke="currentColor" 

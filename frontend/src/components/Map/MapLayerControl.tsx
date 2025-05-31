@@ -109,7 +109,8 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          outline: 'none'
         }}
         onClick={() => setIsOpen(!isOpen)}
         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
@@ -147,7 +148,8 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
                 border: 'none',
                 textAlign: 'left',
                 cursor: 'pointer',
-                fontSize: '14px'
+                fontSize: '14px',
+                outline: 'none'
               }}
               onClick={() => updateMapLayer(layer)}
               onMouseEnter={(e) => {
