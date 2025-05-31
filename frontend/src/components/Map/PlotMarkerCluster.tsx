@@ -121,9 +121,12 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       if (avgPrice > 0) {
         const displayPrice = `₹${Math.round(avgPrice).toLocaleString()}`;
         return new (window as any).L.DivIcon({
-          html: `<div class="${className} cluster-price"><span>${displayPrice}</span><small>${count} plots</small></div>`,
+          html: `<div class="${className} cluster-price">
+                   <div class="price-main">${displayPrice}</div>
+                   <div class="price-count">${count} plots</div>
+                 </div>`,
           className: 'custom-marker-cluster price-cluster',
-          iconSize: new (window as any).L.Point(80, 50, true),
+          iconSize: null, // Let CSS handle dynamic sizing
         });
       } else {
         // Fallback to regular count display when no valid prices found

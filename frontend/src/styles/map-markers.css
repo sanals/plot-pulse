@@ -2,6 +2,8 @@
 .plot-price-marker {
   background: transparent !important;
   border: none !important;
+  /* Enable pointer events for hover to work */
+  pointer-events: auto !important;
 }
 
 .plot-price-marker .price-label {
@@ -45,7 +47,8 @@
   
   /* Smooth transitions */
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   /* Reduced backdrop blur to show more background */
   backdrop-filter: blur(2px);
@@ -61,19 +64,23 @@
     rgba(29, 78, 216, 0.03) 90%, 
     rgba(29, 78, 216, 0.01) 100%);
   
-  box-shadow: none;
+  /* Balanced red shadow effect - stronger than half but softer than original */
+  box-shadow: 
+    0 3px 9px rgba(255, 0, 0, 0.22),
+    0 1px 4px rgba(255, 0, 0, 0.15);
   
-  transform: translateY(-1px) scale(1.02);
+  /* Only lift to prevent text blurriness */
+  transform: translateY(-2px);
 }
 
 /* Alternative color schemes for variety */
 .plot-price-marker.price-high .price-label {
   background: radial-gradient(ellipse at center, 
-    rgba(239, 68, 68, 0.15) 0%, 
-    rgba(239, 68, 68, 0.1) 40%, 
-    rgba(220, 38, 38, 0.05) 70%, 
-    rgba(185, 28, 28, 0.02) 90%, 
-    rgba(185, 28, 28, 0.005) 100%);
+    rgba(255, 235, 59, 0.15) 0%, 
+    rgba(255, 235, 59, 0.1) 40%, 
+    rgba(255, 223, 0, 0.05) 70%, 
+    rgba(255, 215, 0, 0.02) 90%, 
+    rgba(255, 215, 0, 0.005) 100%);
   
   box-shadow: none;
   
@@ -81,6 +88,24 @@
   text-shadow: 
     0 1px 2px rgba(0, 0, 0, 0.2),
     0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Hover effect for high price markers */
+.plot-price-marker.price-high:hover .price-label {
+  background: radial-gradient(ellipse at center, 
+    rgba(255, 235, 59, 0.2) 0%, 
+    rgba(255, 235, 59, 0.15) 40%, 
+    rgba(255, 223, 0, 0.08) 70%, 
+    rgba(255, 215, 0, 0.03) 90%, 
+    rgba(255, 215, 0, 0.01) 100%);
+  
+  /* Balanced red shadow effect - stronger than half but softer than original */
+  box-shadow: 
+    0 3px 9px rgba(255, 0, 0, 0.22),
+    0 1px 4px rgba(255, 0, 0, 0.15);
+  
+  /* Only lift to prevent text blurriness */
+  transform: translateY(-2px);
 }
 
 .plot-price-marker.price-medium .price-label {
@@ -99,13 +124,31 @@
     0 0 1px rgba(0, 0, 0, 0.3);
 }
 
+/* Hover effect for medium price markers */
+.plot-price-marker.price-medium:hover .price-label {
+  background: radial-gradient(ellipse at center, 
+    rgba(245, 158, 11, 0.2) 0%, 
+    rgba(245, 158, 11, 0.15) 40%, 
+    rgba(217, 119, 6, 0.08) 70%, 
+    rgba(180, 83, 9, 0.03) 90%, 
+    rgba(180, 83, 9, 0.01) 100%);
+  
+  /* Balanced red shadow effect - stronger than half but softer than original */
+  box-shadow: 
+    0 3px 9px rgba(255, 0, 0, 0.22),
+    0 1px 4px rgba(255, 0, 0, 0.15);
+  
+  /* Only lift to prevent text blurriness */
+  transform: translateY(-2px);
+}
+
 .plot-price-marker.price-low .price-label {
   background: radial-gradient(ellipse at center, 
-    rgba(239, 68, 68, 0.15) 0%, 
-    rgba(239, 68, 68, 0.1) 40%, 
-    rgba(220, 38, 38, 0.05) 70%, 
-    rgba(185, 28, 28, 0.02) 90%, 
-    rgba(185, 28, 28, 0.005) 100%);
+    rgba(255, 235, 59, 0.15) 0%, 
+    rgba(255, 235, 59, 0.1) 40%, 
+    rgba(255, 223, 0, 0.05) 70%, 
+    rgba(255, 215, 0, 0.02) 90%, 
+    rgba(255, 215, 0, 0.005) 100%);
   
   box-shadow: none;
   
@@ -115,15 +158,28 @@
     0 0 1px rgba(0, 0, 0, 0.3);
 }
 
+/* Hover effect for low price markers */
+.plot-price-marker.price-low:hover .price-label {
+  background: radial-gradient(ellipse at center, 
+    rgba(255, 235, 59, 0.2) 0%, 
+    rgba(255, 235, 59, 0.15) 40%, 
+    rgba(255, 223, 0, 0.08) 70%, 
+    rgba(255, 215, 0, 0.03) 90%, 
+    rgba(255, 215, 0, 0.01) 100%);
+  
+  /* Balanced red shadow effect - stronger than half but softer than original */
+  box-shadow: 
+    0 3px 9px rgba(255, 0, 0, 0.22),
+    0 1px 4px rgba(255, 0, 0, 0.15);
+  
+  /* Only lift to prevent text blurriness */
+  transform: translateY(-2px);
+}
+
 /* Cluster Price Styles - Modern Design matching individual markers */
 .custom-marker-cluster.price-cluster .cluster-price {
-  /* More visible purple radial gradient - increased opacity */
-  background: radial-gradient(ellipse at center, 
-    rgba(99, 102, 241, 0.25) 0%, 
-    rgba(99, 102, 241, 0.18) 40%, 
-    rgba(79, 70, 229, 0.12) 70%, 
-    rgba(67, 56, 202, 0.06) 90%, 
-    rgba(67, 56, 202, 0.02) 100%);
+  /* Solid uniform background - no gradients */
+  background: rgba(99, 102, 241, 0.18);
   
   color: #000000 !important; /* Force black text */
   border-radius: 16px;
@@ -136,51 +192,71 @@
   /* Thin purple border matching the background color scheme */
   border: 0.5px solid rgba(99, 102, 241, 0.4);
   
-  /* Reduced backdrop blur to show more background */
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  /* Remove backdrop blur completely */
+  /* backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px); */
+  
+  /* Dynamic sizing based on content */
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  
+  /* Allow natural sizing */
+  width: auto;
+  height: auto;
+  min-width: 60px; /* Smaller minimum for short text */
+  
+  /* Positioning for Leaflet - removed problematic transform */
+  position: relative;
   
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.custom-marker-cluster.price-cluster .cluster-price span {
-  display: block;
+/* Main price text styling */
+.custom-marker-cluster.price-cluster .cluster-price .price-main {
   font-weight: 800;
   font-size: 12px;
   line-height: 1.2;
   color: #000000 !important; /* Force black text */
   
-  /* Crisp black text shadows - reduced blur for clarity */
-  text-shadow: 
-    0 1px 2px rgba(0, 0, 0, 0.2),
-    0 0 1px rgba(0, 0, 0, 0.3);
+  /* Minimal text shadow */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
   
-  /* Purple text stroke matching the color scheme */
-  -webkit-text-stroke: 0.5px rgba(99, 102, 241, 0.4);
-  text-stroke: 0.5px rgba(99, 102, 241, 0.4);
+  /* Remove text stroke completely */
+  /* -webkit-text-stroke: 0.5px rgba(99, 102, 241, 0.4);
+  text-stroke: 0.5px rgba(99, 102, 241, 0.4); */
   
   letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+/* Plot count text styling */
+.custom-marker-cluster.price-cluster .cluster-price .price-count {
+  font-size: 10px;
+  opacity: 0.9;
+  font-weight: 800; /* Match main text font weight */
+  color: #000000 !important; /* Force black text */
+  
+  /* Minimal text shadow */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  
+  /* Remove text stroke completely */
+  /* -webkit-text-stroke: 0.5px rgba(99, 102, 241, 0.4);
+  text-stroke: 0.5px rgba(99, 102, 241, 0.4); */
+  
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+/* Remove old span and small styles that are no longer used */
+.custom-marker-cluster.price-cluster .cluster-price span {
+  display: none; /* Hide old structure */
 }
 
 .custom-marker-cluster.price-cluster .cluster-price small {
-  display: block;
-  font-size: 10px;
-  opacity: 0.9;
-  margin-top: 2px;
-  font-weight: 800; /* Match main text font weight */
-  color: #000000 !important; /* Force black text to override .custom-marker-cluster div white color */
-  
-  /* Crisp black text shadows - reduced blur for clarity */
-  text-shadow: 
-    0 1px 2px rgba(0, 0, 0, 0.2),
-    0 0 1px rgba(0, 0, 0, 0.3);
-  
-  /* Purple text stroke matching main text thickness */
-  -webkit-text-stroke: 0.5px rgba(99, 102, 241, 0.4);
-  text-stroke: 0.5px rgba(99, 102, 241, 0.4);
-  
-  /* Letter spacing matching main text */
-  letter-spacing: 0.025em;
+  display: none; /* Hide old structure */
 }
 
 /* Enhanced cluster styles with modern gradients */
@@ -235,26 +311,41 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Override base cluster div styles for price clusters */
+.custom-marker-cluster.price-cluster div {
+  width: auto !important;
+  height: auto !important;
+  border-radius: 16px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  text-shadow: none !important;
+  color: #000000 !important;
+}
+
+/* Hover effect for cluster price boxes */
+.custom-marker-cluster.price-cluster:hover .cluster-price {
+  /* Solid background on hover - slightly more opaque */
+  background: rgba(99, 102, 241, 0.25);
+  
+  /* Remove the translateY to prevent positioning issues */
+  transform: none;
+  
+  /* Enhanced purple shadow */
+  box-shadow: 
+    0 3px 9px rgba(99, 102, 241, 0.3),
+    0 1px 4px rgba(99, 102, 241, 0.2);
+}
+
+/* Ensure hover effects work on the new text elements */
+.custom-marker-cluster.price-cluster:hover .cluster-price .price-main,
+.custom-marker-cluster.price-cluster:hover .cluster-price .price-count {
+  /* Maintain text styling on hover */
+  color: #000000 !important;
+}
+
 /* Enhanced hover effects */
 .custom-marker-cluster:hover {
-  transform: scale(1.1);
+  /* Remove scale to prevent affecting price box text */
+  transform: none;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.custom-marker-cluster:hover .cluster-small {
-  box-shadow: 
-    0 6px 20px rgba(34, 197, 94, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.custom-marker-cluster:hover .cluster-medium {
-  box-shadow: 
-    0 6px 20px rgba(245, 158, 11, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.custom-marker-cluster:hover .cluster-large {
-  box-shadow: 
-    0 6px 20px rgba(239, 68, 68, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.2);
 } 
