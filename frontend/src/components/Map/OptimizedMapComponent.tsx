@@ -393,7 +393,7 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
         }}>
           <div>Plots: {plotStats.total}</div>
           <div>For Sale: {plotStats.forSale}</div>
-          <div>Avg Price: ${plotStats.averagePrice.toLocaleString()}</div>
+          <div>Avg Price: ₹{plotStats.averagePrice.toLocaleString()}</div>
         </div>
       )}
     </div>

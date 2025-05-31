@@ -127,7 +127,7 @@ const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted, onModalStateChan
         <Popup ref={popupRef}>
           <div className="plot-popup">
             <h3>Plot {plot.id}</h3>
-            <p><strong>Price:</strong> ${plot.price.toLocaleString()}</p>
+            <p><strong>Price:</strong> ₹{plot.price.toLocaleString()}</p>
             <p><strong>Status:</strong> {plot.isForSale ? 'For Sale' : 'Not For Sale'}</p>
             {plot.description && <p><strong>Description:</strong> {plot.description}</p>}
             
