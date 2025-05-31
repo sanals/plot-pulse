@@ -24,7 +24,7 @@ const LocationIndicatorToggle: React.FC<LocationIndicatorToggleProps> = ({
       return (
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          style={{ width: '32px', height: '32px' }}
+          style={{ width: '28px', height: '28px' }}
           viewBox="0 0 24 24" 
           fill="none" 
           stroke="currentColor" 
@@ -45,7 +45,7 @@ const LocationIndicatorToggle: React.FC<LocationIndicatorToggleProps> = ({
       return (
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          style={{ width: '32px', height: '32px' }}
+          style={{ width: '28px', height: '28px' }}
           viewBox="0 0 24 24" 
           fill="none" 
           stroke="currentColor" 
@@ -82,8 +82,8 @@ const LocationIndicatorToggle: React.FC<LocationIndicatorToggleProps> = ({
     >
       <button
         style={{
-          width: '40px',
-          height: '40px',
+          width: '48px',
+          height: '48px',
           borderRadius: '6px',
           backgroundColor: visible ? '#3b82f6' : 'white',
           color: visible ? 'white' : '#374151',
