@@ -13,7 +13,7 @@
   /* Force black text color */
   color: #000000 !important;
   font-weight: 800;
-  padding: 6px 12px;
+  padding: 3px 6px;
   border-radius: 12px;
   font-size: 13px;
   
@@ -26,12 +26,6 @@
   
   /* Simple minimal text shadow */
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) !important;
-  
-  /* No text stroke at all */
-  -webkit-text-stroke: none !important;
-  text-stroke: none !important;
-  -webkit-text-stroke-width: 0 !important;
-  -webkit-text-stroke-color: transparent !important;
   
   letter-spacing: 0.025em;
   
@@ -138,7 +132,7 @@
   
   color: #000000 !important; /* Force black text */
   border-radius: 16px;
-  padding: 8px 12px;
+  padding: 3px 6px;
   text-align: center;
   
   /* Clean border */
@@ -157,7 +151,12 @@
   /* Allow natural sizing */
   width: auto;
   height: auto;
-  min-width: 60px; /* Smaller minimum for short text */
+  min-width: 60px; /* Smaller minimum for short prices */
+  max-width: 200px; /* Prevent extremely wide boxes */
+  
+  /* Prevent text overflow */
+  overflow: hidden;
+  text-overflow: ellipsis;
   
   /* Positioning for Leaflet - removed problematic transform */
   position: relative;
