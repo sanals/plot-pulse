@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo, useEffect, useRef, useCallback } from 'react';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import PlotMarker, { type MarkerDisplayMode } from './PlotMarker';
 import type { PlotDto } from '../../types/plot.types';
@@ -8,7 +8,6 @@ interface PlotMarkerClusterProps {
   mode: MarkerDisplayMode;
   onPlotUpdated?: () => void;
   onPlotDeleted?: () => void;
-  onModalStateChange?: (isOpen: boolean) => void;
   visible: boolean;
 }
 
@@ -26,7 +25,6 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
   mode,
   onPlotUpdated,
   onPlotDeleted,
-  onModalStateChange,
   visible
 }) => {
   const clusterGroupRef = useRef<any>(null);
@@ -46,6 +44,25 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
     animateAddingMarkers: false,
     disableClusteringAtZoom: 18,
   }), []);
+
+  // Helper function to find plot by coordinates with fallback precision levels
+  const findPlotByCoordinates = useCallback((lat: number, lng: number): PlotDto | undefined => {
+    // Try high precision first
+    let plot = plots.find(p => 
+      Math.abs(p.latitude - lat) < 0.000001 && 
+      Math.abs(p.longitude - lng) < 0.000001
+    );
+    
+    // Fallback to lower precision for floating point errors
+    if (!plot) {
+      plot = plots.find(p => 
+        Math.abs(p.latitude - lat) < 0.00001 && 
+        Math.abs(p.longitude - lng) < 0.00001
+      );
+    }
+    
+    return plot;
+  }, [plots]);
 
   // Custom cluster icon creation with improved plot data matching
   const createClusterCustomIcon = useMemo(() => (cluster: any) => {
@@ -74,24 +91,11 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
           plot = plots.find(p => p.id === plotId);
         }
         
-        // If no plotId or plot not found, try coordinate matching with higher precision
+        // If no plotId or plot not found, try coordinate matching
         if (!plot) {
           const lat = marker.getLatLng().lat;
           const lng = marker.getLatLng().lng;
-          plot = plots.find(p => 
-            Math.abs(p.latitude - lat) < 0.000001 && 
-            Math.abs(p.longitude - lng) < 0.000001
-          );
-        }
-        
-        // If still no plot found, try with slightly lower precision (for floating point errors)
-        if (!plot) {
-          const lat = marker.getLatLng().lat;
-          const lng = marker.getLatLng().lng;
-          plot = plots.find(p => 
-            Math.abs(p.latitude - lat) < 0.00001 && 
-            Math.abs(p.longitude - lng) < 0.00001
-          );
+          plot = findPlotByCoordinates(lat, lng);
         }
         
         if (plot && plot.price > 0) {
@@ -102,22 +106,6 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       
       const avgPrice = validPrices > 0 ? totalPrice / validPrices : 0;
       
-      // Debug logging for development
-      if (import.meta.env.DEV && validPrices === 0 && count > 0) {
-        console.log(`[PlotMarkerCluster] Cluster with ${count} markers: No valid prices found.`, {
-          markersData: markers.map((m: any) => ({
-            plotId: m.options?.plotId,
-            lat: m.getLatLng().lat,
-            lng: m.getLatLng().lng,
-            foundPlot: plots.find(p => 
-              Math.abs(p.latitude - m.getLatLng().lat) < 0.00001 && 
-              Math.abs(p.longitude - m.getLatLng().lng) < 0.00001
-            )
-          })),
-          totalPlots: plots.length
-        });
-      }
-      
       if (avgPrice > 0) {
         const displayPrice = `₹${Math.round(avgPrice).toLocaleString()}`;
         return new (window as any).L.DivIcon({
@@ -126,7 +114,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
                    <div class="price-count">${count} plots</div>
                  </div>`,
           className: 'custom-marker-cluster price-cluster',
-          iconSize: null, // Let CSS handle dynamic sizing
+          iconSize: null,
         });
       } else {
         // Fallback to regular count display when no valid prices found
@@ -143,12 +131,11 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       className: 'custom-marker-cluster',
       iconSize: new (window as any).L.Point(40, 40, true),
     });
-  }, [mode, plots]);
+  }, [mode, plots, findPlotByCoordinates]);
 
-  // Force cluster refresh when plots change (especially after adding new plots)
+  // Force cluster refresh when plots change
   useEffect(() => {
-    if (clusterGroupRef.current && clusterGroupRef.current.refreshClusters) {
-      // Small delay to ensure markers have been added and their plotId set
+    if (clusterGroupRef.current?.refreshClusters) {
       const timeoutId = setTimeout(() => {
         clusterGroupRef.current.refreshClusters();
       }, 100);
@@ -157,7 +144,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
     }
   }, [plots, mode]);
 
-  // Add a style to the document for smooth fade animations
+  // Add smooth animations for map interactions
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
@@ -191,7 +178,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
   return (
     <MarkerClusterGroup
       ref={clusterGroupRef}
-      key={`cluster-${mode}-${plots.length}`} // Force re-render when mode or plot count changes
+      key={`cluster-${mode}-${plots.length}`}
       {...clusterOptions}
       iconCreateFunction={createClusterCustomIcon}
     >
@@ -202,7 +189,6 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
           mode={mode}
           onPlotUpdated={onPlotUpdated}
           onPlotDeleted={onPlotDeleted}
-          onModalStateChange={onModalStateChange}
         />
       ))}
     </MarkerClusterGroup>

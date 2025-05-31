@@ -1,11 +1,12 @@
 import { useMap } from 'react-leaflet';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { TileLayer } from 'leaflet';
 import L from 'leaflet';
+import { useMapLayer, type MapLayerType } from '../../contexts/MapLayerContext';
 
 interface MapLayer {
-  name: string;
+  name: MapLayerType;
   url: string;
   attribution: string;
 }
@@ -14,7 +15,7 @@ interface MapLayerControlProps {
   position?: 'topleft' | 'topright' | 'bottomleft' | 'bottomright';
 }
 
-const mapLayers: MapLayer[] = [
+const MAP_LAYERS: MapLayer[] = [
   {
     name: 'Standard',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -36,66 +37,69 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
   position = 'topright' 
 }) => {
   const map = useMap();
-  const [activeLayer, setActiveLayer] = useState<string>(mapLayers[0].name);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const { activeLayer, setActiveLayer } = useMapLayer();
+  const [isOpen, setIsOpen] = useState(false);
   const customLayerRef = useRef<TileLayer | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   
-  // Prevent double-click zoom and map drag on the dropdown button
+  // Prevent map interactions on the dropdown button
   useEffect(() => {
     if (buttonRef.current) {
       L.DomEvent.disableClickPropagation(buttonRef.current);
       L.DomEvent.disableScrollPropagation(buttonRef.current);
     }
-  }, [buttonRef.current]);
+  }, []);
   
-  const updateMapLayer = (layer: MapLayer) => {
-    // Only remove our custom layer, not the default one
+  const updateMapLayer = useCallback((layer: MapLayer) => {
+    // Remove existing custom layer
     if (customLayerRef.current) {
       map.removeLayer(customLayerRef.current);
+      customLayerRef.current = null;
     }
     
-    // Don't add a new layer if it's the default "Standard" layer
+    // Add new layer if not the default "Standard" layer
     if (layer.name !== 'Standard') {
       const tileLayer = new TileLayer(layer.url, { 
         attribution: layer.attribution 
       });
       tileLayer.addTo(map);
       customLayerRef.current = tileLayer;
-    } else {
-      customLayerRef.current = null;
     }
     
     setActiveLayer(layer.name);
     setIsOpen(false);
-  };
-  
-  // const getPositionClass = () => {
-  //   switch(position) {
-  //     case 'topright': return 'top-4 right-4';
-  //     case 'topleft': return 'top-4 left-4';
-  //     case 'bottomright': return 'bottom-20 right-4';
-  //     case 'bottomleft': return 'bottom-20 left-4';
-  //     default: return 'top-4 right-4';
-  //   }
-  // };
+  }, [map, setActiveLayer]);
+
+  const toggleDropdown = useCallback(() => {
+    setIsOpen(prev => !prev);
+  }, []);
+
+  const getDropdownPosition = useCallback(() => {
+    if (!buttonRef.current) return {};
+    
+    const rect = buttonRef.current.getBoundingClientRect();
+    return {
+      position: 'fixed' as const,
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    };
+  }, []);
   
   return (
-    <div 
-      style={{ 
-        position: 'absolute',
-        top: position === 'topright' || position === 'topleft' ? '16px' : 'auto',
-        right: position === 'topright' || position === 'bottomright' ? '16px' : 'auto',
-        left: position === 'topleft' || position === 'bottomleft' ? '16px' : 'auto',
-        bottom: position === 'bottomright' || position === 'bottomleft' ? '80px' : 'auto',
-        backgroundColor: 'white',
-        borderRadius: '6px',
-        boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
-        zIndex: 1000,
-        minWidth: '120px',
-        border: '1px solid #e2e8f0'
-      }}
-    >
+    <div className="map-layer-control" style={{ 
+      position: 'absolute',
+      top: position === 'topright' || position === 'topleft' ? '16px' : 'auto',
+      right: position === 'topright' || position === 'bottomright' ? '16px' : 'auto',
+      left: position === 'topleft' || position === 'bottomleft' ? '16px' : 'auto',
+      bottom: position === 'bottomright' || position === 'bottomleft' ? '80px' : 'auto',
+      backgroundColor: 'white',
+      borderRadius: '6px',
+      boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
+      zIndex: 1000,
+      minWidth: '120px',
+      border: '1px solid #e2e8f0'
+    }}>
       <button 
         ref={buttonRef}
         style={{
@@ -112,32 +116,31 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
           justifyContent: 'space-between',
           outline: 'none'
         }}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleDropdown}
         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+        aria-label="Select map layer"
+        aria-expanded={isOpen}
       >
         <span>{activeLayer}</span>
-        <span style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+        <span style={{ 
+          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
+          transition: 'transform 0.2s' 
+        }}>
           ▼
         </span>
       </button>
       
       {isOpen && buttonRef.current && createPortal(
-        <div 
-          style={{
-            position: 'fixed',
-            top: buttonRef.current.getBoundingClientRect().bottom + 4,
-            left: buttonRef.current.getBoundingClientRect().left,
-            width: buttonRef.current.getBoundingClientRect().width,
-            backgroundColor: 'white',
-            border: '1px solid #e2e8f0',
-            borderRadius: '6px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            zIndex: 9999
-          }}
-
-        >
-          {mapLayers.map((layer) => (
+        <div style={{
+          ...getDropdownPosition(),
+          backgroundColor: 'white',
+          border: '1px solid #e2e8f0',
+          borderRadius: '6px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          zIndex: 9999
+        }}>
+          {MAP_LAYERS.map((layer) => (
             <button
               key={layer.name}
               style={{
@@ -162,6 +165,7 @@ const MapLayerControl: React.FC<MapLayerControlProps> = ({
                   e.currentTarget.style.backgroundColor = 'white';
                 }
               }}
+              aria-label={`Switch to ${layer.name} layer`}
             >
               {layer.name}
             </button>

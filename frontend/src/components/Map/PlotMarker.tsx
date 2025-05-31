@@ -1,6 +1,5 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Marker, Popup } from 'react-leaflet';
-import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { PlotDto, MapPosition } from '../../types/plot.types';
 import { PlotEditForm } from '../Forms/PlotEditForm';
@@ -14,16 +13,20 @@ interface PlotMarkerProps {
   mode: MarkerDisplayMode;
   onPlotUpdated?: () => void;
   onPlotDeleted?: () => void;
-  onModalStateChange?: (isOpen: boolean) => void;
 }
 
-const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted, onModalStateChange }: PlotMarkerProps) => {
+// Price thresholds for color coding
+const PRICE_THRESHOLDS = {
+  HIGH: 5000000, // 50 lakh and above
+  MEDIUM: 2000000, // 20 lakh to 50 lakh
+} as const;
+
+const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted }: PlotMarkerProps) => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const popupRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
-  const map = useMap();
 
   const position: MapPosition = {
     lat: plot.latitude,
@@ -35,87 +38,79 @@ const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted, onModalStateChan
     return null;
   }
 
-  // Set plotId in marker options immediately when marker ref is available
+  // Set plotId in marker options when marker ref is available
   useEffect(() => {
-    if (markerRef.current) {
-      const leafletMarker = markerRef.current;
-      if (leafletMarker.options) {
-        leafletMarker.options.plotId = plot.id;
-      }
+    if (markerRef.current?.options) {
+      markerRef.current.options.plotId = plot.id;
     }
   }, [plot.id]);
 
+  // Get price category for color coding
+  const getPriceCategory = useCallback((price: number): string => {
+    if (price >= PRICE_THRESHOLDS.HIGH) return 'price-high';
+    if (price >= PRICE_THRESHOLDS.MEDIUM) return 'price-medium';
+    return 'price-low';
+  }, []);
+
   // Create custom icon for text mode
-  const getMarkerIcon = () => {
+  const getMarkerIcon = useCallback(() => {
     if (mode === 'text') {
       const price = plot.price ? `₹${plot.price.toLocaleString()}` : 'N/A';
+      const priceClass = plot.price ? getPriceCategory(plot.price) : '';
       
-      // Determine price category for color coding
-      let priceClass = '';
-      if (plot.price) {
-        if (plot.price >= 5000000) { // 50 lakh and above - high price (red)
-          priceClass = 'price-high';
-        } else if (plot.price >= 2000000) { // 20 lakh to 50 lakh - medium price (orange)
-          priceClass = 'price-medium';
-        } else { // Below 20 lakh - low price (green)
-          priceClass = 'price-low';
-        }
-      }
+      // Calculate dynamic width based on text length
+      // Approximate 8px per character + padding
+      const textWidth = price.length * 8 + 24; // 24px for padding (12px each side)
+      const minWidth = 60; // Minimum width
+      const maxWidth = 200; // Maximum width to prevent extremely long boxes
+      const dynamicWidth = Math.max(minWidth, Math.min(maxWidth, textWidth));
       
       return L.divIcon({
         className: `plot-price-marker ${priceClass}`,
         html: `<span class="price-label">${price}</span>`,
-        iconSize: [80, 28],
-        iconAnchor: [40, 14],
+        iconSize: [dynamicWidth, 28],
+        iconAnchor: [dynamicWidth / 2, 14], // Center the anchor point
       });
     }
-    // Return default icon for icon mode
     return new L.Icon.Default();
-  };
+  }, [mode, plot.price, getPriceCategory]);
 
-  const handleEdit = () => {
-    // Close the popup immediately when edit modal opens
-    if (popupRef.current) {
-      popupRef.current.close();
-    }
+  const handleEdit = useCallback(() => {
+    popupRef.current?.close();
     setShowEditForm(true);
-    if (onModalStateChange) onModalStateChange(true);
-  };
+  }, []);
 
-  const handleDelete = () => {
-    // Close the popup immediately when delete confirmation opens
-    if (popupRef.current) {
-      popupRef.current.close();
-    }
+  const handleDelete = useCallback(() => {
+    popupRef.current?.close();
     setShowDeleteConfirm(true);
-    if (onModalStateChange) onModalStateChange(true);
-  };
+  }, []);
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     setDeleting(true);
     try {
       await deletePlot(plot.id!);
-      console.log('Plot deleted successfully:', plot.id);
       setShowDeleteConfirm(false);
-      if (onModalStateChange) onModalStateChange(false);
-      if (onPlotDeleted) {
-        onPlotDeleted();
-      }
+      onPlotDeleted?.();
     } catch (error) {
       console.error('Error deleting plot:', error);
       alert('Failed to delete plot. Please try again.');
     } finally {
       setDeleting(false);
     }
-  };
+  }, [plot.id, onPlotDeleted]);
 
-  const handlePlotUpdated = () => {
+  const handlePlotUpdated = useCallback(() => {
     setShowEditForm(false);
-    if (onModalStateChange) onModalStateChange(false);
-    if (onPlotUpdated) {
-      onPlotUpdated();
-    }
-  };
+    onPlotUpdated?.();
+  }, [onPlotUpdated]);
+
+  const handleEditClose = useCallback(() => {
+    setShowEditForm(false);
+  }, []);
+
+  const handleDeleteCancel = useCallback(() => {
+    setShowDeleteConfirm(false);
+  }, []);
 
   return (
     <>
@@ -151,18 +146,13 @@ const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted, onModalStateChan
         </Popup>
       </Marker>
 
-      {/* Edit Form Modal */}
       <PlotEditForm
         isOpen={showEditForm}
         plot={plot}
-        onClose={() => {
-          setShowEditForm(false);
-          if (onModalStateChange) onModalStateChange(false);
-        }}
+        onClose={handleEditClose}
         onPlotUpdated={handlePlotUpdated}
       />
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={showDeleteConfirm}
         title="Delete Plot"
@@ -172,10 +162,7 @@ const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted, onModalStateChan
         isDestructive={true}
         loading={deleting}
         onConfirm={confirmDelete}
-        onCancel={() => {
-          setShowDeleteConfirm(false);
-          if (onModalStateChange) onModalStateChange(false);
-        }}
+        onCancel={handleDeleteCancel}
       />
     </>
   );
