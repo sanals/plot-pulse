@@ -28,7 +28,7 @@ const DEFAULT_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 export const useGeolocation = (options: GeolocationOptions = {}) => {
   const {
     enableHighAccuracy = true,
-    timeout = 10000,
+    timeout = 20000,
     maximumAge = 0,
     cacheDuration = DEFAULT_CACHE_DURATION,
     watchPosition = true,
@@ -151,8 +151,41 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
           errorMessage = 'Location information is unavailable. Please try again later.';
           break;
         case error.TIMEOUT:
-          errorMessage = 'The request to get location timed out. Please check your connection and try again.';
-          break;
+          errorMessage = 'Location request timed out. Trying with lower accuracy...';
+          // Show loading state during retry
+          setState(prev => ({
+            ...prev,
+            error: errorMessage,
+            loading: true, // Keep loading state during retry
+            permissionState: 'prompt',
+          }));
+          
+          // Try again with lower accuracy and longer timeout
+          setTimeout(() => {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                geoSuccess({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude,
+                  accuracy: position.coords.accuracy,
+                });
+              },
+              (retryError) => {
+                setState(prev => ({
+                  ...prev,
+                  error: 'Unable to get your location. Please check your device settings and try again.',
+                  loading: false,
+                  permissionState: 'prompt',
+                }));
+              },
+              {
+                enableHighAccuracy: false, // Lower accuracy
+                timeout: 30000, // Longer timeout (30 seconds)
+                maximumAge: 60000, // Accept cached position up to 1 minute old
+              }
+            );
+          }, 1000);
+          return; // Don't set error state immediately, let retry happen
       }
 
       setState(prev => ({

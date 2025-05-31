@@ -112,8 +112,8 @@ const MapComponentInner: React.FC = React.memo(() => {
   const [plotsVisible, setPlotsVisible] = useState(true);
   const [markerDisplayMode, setMarkerDisplayMode] = useState<MarkerDisplayMode>('text');
   const [showUserLocation, setShowUserLocation] = useState(true);
-  const [hasInitiallyRecentered, setHasInitiallyRecentered] = useState(false);
   const [isMapInteracting, setIsMapInteracting] = useState(false);
+  const [hasInitiallyRecentered, setHasInitiallyRecentered] = useState(false);
 
   // Modal state for plot edit and delete
   const [editingPlot, setEditingPlot] = useState<PlotDto | null>(null);
@@ -270,7 +270,7 @@ const MapComponentInner: React.FC = React.memo(() => {
           />
         )}
         
-        <MapContainer {...mapContainerProps}>
+        <MapContainer key="main-map" {...mapContainerProps}>
           <TileLayer {...tileLayerProps} />
           
           <MapInteractionController disabled={isAnyModalOpen} />
@@ -293,13 +293,13 @@ const MapComponentInner: React.FC = React.memo(() => {
             onInteractionEnd={handleInteractionEnd}
           />
           
-          {centerPosition && !geoLoading && !hasInitiallyRecentered && (
-            <MapRecenterComponent 
-              position={centerPosition} 
-              onlyOnce={true}
-              onRecenter={() => setHasInitiallyRecentered(true)}
-            />
-          )}
+          <MapRecenterComponent 
+            position={centerPosition && !geoLoading && !hasInitiallyRecentered ? centerPosition : null}
+            onlyOnce={true}
+            onRecenter={() => {
+              setHasInitiallyRecentered(true);
+            }}
+          />
           
           <MapLayerControl position="topright" />
           <CustomZoomControl position="bottomright" />
