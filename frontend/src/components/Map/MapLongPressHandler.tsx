@@ -13,12 +13,22 @@ const MapLongPressHandler: React.FC<MapLongPressHandlerProps> = ({ onLongPress }
     if (event && event.originalEvent) {
       const target = event.originalEvent.target as HTMLElement;
       
-      // Skip if clicking on a control
+      // Skip if clicking on a control, form element, or modal
       if (target.closest('.leaflet-control') || 
           target.closest('.leaflet-bar') || 
           target.closest('button') ||
-          target.closest('.map-control')) {
-        console.log('%c[LONG PRESS] Ignored on control:', 'color: orange; font-weight: bold', target);
+          target.closest('.map-control') ||
+          target.closest('select') ||
+          target.closest('input') ||
+          target.closest('textarea') ||
+          target.closest('form') ||
+          target.closest('.modal') ||
+          target.closest('.long-press-modal') ||
+          target.closest('.plot-submission-form') ||
+          target.closest('[role="dialog"]') ||
+          target.closest('.dropdown') ||
+          target.closest('.popup')) {
+        console.log('%c[LONG PRESS] Ignored on control/form element:', 'color: orange; font-weight: bold', target);
         return;
       }
     }
@@ -54,16 +64,26 @@ const MapLongPressHandler: React.FC<MapLongPressHandlerProps> = ({ onLongPress }
     contextmenu: (event) => {
       event.originalEvent.preventDefault();
       
-      // Check if the click is on a UI control element
+      // Check if the click is on a UI control element or form element
       if (event && event.originalEvent) {
         const target = event.originalEvent.target as HTMLElement;
         
-        // Skip if clicking on a control
+        // Skip if clicking on a control, form element, or modal
         if (target.closest('.leaflet-control') || 
             target.closest('.leaflet-bar') || 
             target.closest('button') ||
-            target.closest('.map-control')) {
-          console.log('%c[RIGHT-CLICK] Ignored on control:', 'color: orange; font-weight: bold', target);
+            target.closest('.map-control') ||
+            target.closest('select') ||
+            target.closest('input') ||
+            target.closest('textarea') ||
+            target.closest('form') ||
+            target.closest('.modal') ||
+            target.closest('.long-press-modal') ||
+            target.closest('.plot-submission-form') ||
+            target.closest('[role="dialog"]') ||
+            target.closest('.dropdown') ||
+            target.closest('.popup')) {
+          console.log('%c[RIGHT-CLICK] Ignored on control/form element:', 'color: orange; font-weight: bold', target);
           return;
         }
       }

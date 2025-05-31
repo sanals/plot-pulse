@@ -2,9 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { PlotDto, MapPosition } from '../../types/plot.types';
-import { PlotEditForm } from '../Forms/PlotEditForm';
-import { ConfirmationDialog } from '../Common/ConfirmationDialog';
 import { deletePlot } from '../../services/plotService';
+import { useModalContext } from './OptimizedMapComponent';
 
 export type MarkerDisplayMode = 'none' | 'icon' | 'text';
 
@@ -22,11 +21,10 @@ const PRICE_THRESHOLDS = {
 } as const;
 
 const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted }: PlotMarkerProps) => {
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const popupRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const modalContext = useModalContext();
 
   const position: MapPosition = {
     lat: plot.latitude,
@@ -77,94 +75,60 @@ const PlotMarker = ({ plot, mode, onPlotUpdated, onPlotDeleted }: PlotMarkerProp
 
   const handleEdit = useCallback(() => {
     popupRef.current?.close();
-    setShowEditForm(true);
-  }, []);
+    modalContext.showEditForm(plot);
+  }, [modalContext, plot]);
 
   const handleDelete = useCallback(() => {
     popupRef.current?.close();
-    setShowDeleteConfirm(true);
-  }, []);
-
-  const confirmDelete = useCallback(async () => {
-    setDeleting(true);
-    try {
-      await deletePlot(plot.id!);
-      setShowDeleteConfirm(false);
-      onPlotDeleted?.();
-    } catch (error) {
-      console.error('Error deleting plot:', error);
-      alert('Failed to delete plot. Please try again.');
-    } finally {
-      setDeleting(false);
-    }
-  }, [plot.id, onPlotDeleted]);
-
-  const handlePlotUpdated = useCallback(() => {
-    setShowEditForm(false);
-    onPlotUpdated?.();
-  }, [onPlotUpdated]);
-
-  const handleEditClose = useCallback(() => {
-    setShowEditForm(false);
-  }, []);
-
-  const handleDeleteCancel = useCallback(() => {
-    setShowDeleteConfirm(false);
-  }, []);
+    
+    const confirmDelete = async () => {
+      setDeleting(true);
+      try {
+        await deletePlot(plot.id!);
+        onPlotDeleted?.();
+      } catch (error) {
+        console.error('Error deleting plot:', error);
+        alert('Failed to delete plot. Please try again.');
+      } finally {
+        setDeleting(false);
+      }
+    };
+    
+    modalContext.showDeleteConfirm(plot, confirmDelete);
+  }, [modalContext, plot, onPlotDeleted]);
 
   return (
-    <>
-      <Marker 
-        position={position} 
-        icon={getMarkerIcon()}
-        ref={markerRef}
-      >
-        <Popup ref={popupRef}>
-          <div className="plot-popup">
-            <h3>Plot {plot.id}</h3>
-            <p><strong>Price:</strong> ₹{plot.price.toLocaleString()}</p>
-            <p><strong>Status:</strong> {plot.isForSale ? 'For Sale' : 'Not For Sale'}</p>
-            {plot.description && <p><strong>Description:</strong> {plot.description}</p>}
-            
-            <div className="plot-actions">
-              <button 
-                className="btn btn-primary btn-small"
-                onClick={handleEdit}
-                title="Edit this plot"
-              >
-                ✏️ Edit
-              </button>
-              <button 
-                className="btn btn-danger btn-small"
-                onClick={handleDelete}
-                title="Delete this plot"
-              >
-                🗑️ Delete
-              </button>
-            </div>
+    <Marker 
+      position={position} 
+      icon={getMarkerIcon()}
+      ref={markerRef}
+    >
+      <Popup ref={popupRef}>
+        <div className="plot-popup">
+          <h3>Plot {plot.id}</h3>
+          <p><strong>Price:</strong> ₹{plot.price.toLocaleString()}</p>
+          <p><strong>Status:</strong> {plot.isForSale ? 'For Sale' : 'Not For Sale'}</p>
+          {plot.description && <p><strong>Description:</strong> {plot.description}</p>}
+          
+          <div className="plot-actions">
+            <button 
+              className="btn btn-primary btn-small"
+              onClick={handleEdit}
+              title="Edit this plot"
+            >
+              ✏️ Edit
+            </button>
+            <button 
+              className="btn btn-danger btn-small"
+              onClick={handleDelete}
+              title="Delete this plot"
+            >
+              🗑️ Delete
+            </button>
           </div>
-        </Popup>
-      </Marker>
-
-      <PlotEditForm
-        isOpen={showEditForm}
-        plot={plot}
-        onClose={handleEditClose}
-        onPlotUpdated={handlePlotUpdated}
-      />
-
-      <ConfirmationDialog
-        isOpen={showDeleteConfirm}
-        title="Delete Plot"
-        message={`Are you sure you want to delete Plot ${plot.id}? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        isDestructive={true}
-        loading={deleting}
-        onConfirm={confirmDelete}
-        onCancel={handleDeleteCancel}
-      />
-    </>
+        </div>
+      </Popup>
+    </Marker>
   );
 };
 
