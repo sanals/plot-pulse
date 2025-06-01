@@ -28,8 +28,8 @@ const DEFAULT_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 export const useGeolocation = (options: GeolocationOptions = {}) => {
   const {
     enableHighAccuracy = true,
-    timeout = 20000,
-    maximumAge = 0,
+    timeout = 30000, // Increased to 30 seconds
+    maximumAge = 60000, // Accept cached position up to 1 minute old
     cacheDuration = DEFAULT_CACHE_DURATION,
     watchPosition = true,
   } = options;

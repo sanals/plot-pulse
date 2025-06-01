@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Marker, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useGeolocation } from '../../hooks/useGeolocation';
@@ -26,14 +26,31 @@ const UserLocationMarker: React.FC<UserLocationMarkerProps> = ({
   zoomLevel = 16
 }) => {
   const map = useMap();
-  const { position, loading, error } = useGeolocation({
+  const { position, loading, error, refreshLocation } = useGeolocation({
     watchPosition: true,
     enableHighAccuracy: true
   });
   const [userIcon, setUserIcon] = useState<L.DivIcon | null>(null);
+  const mountedRef = useRef(true);
+  
+  // Refresh location when component mounts to ensure we have current data
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    // If we don't have a position and we're not loading, try to refresh
+    if (!position && !loading && !error) {
+      refreshLocation();
+    }
+    
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [position, loading, error, refreshLocation]);
   
   // Create custom icon for user location
   useEffect(() => {
+    if (!mountedRef.current) return;
+    
     const icon = L.divIcon({
       className: pulsatingMarker ? 'user-location-marker pulsating' : 'user-location-marker',
       html: `<div class="marker-inner"></div>`,
@@ -93,24 +110,17 @@ const UserLocationMarker: React.FC<UserLocationMarkerProps> = ({
       `;
       document.head.appendChild(style);
     }
-    
-    return () => {
-      // Clean up CSS if component unmounts
-      const styleElement = document.getElementById('user-marker-style');
-      if (styleElement) {
-        document.head.removeChild(styleElement);
-      }
-    };
   }, [pulsatingMarker, accuracyColor]);
   
   // Follow user if enabled
   useEffect(() => {
-    if (followUser && position && !loading && !error) {
+    if (followUser && position && !loading && !error && mountedRef.current) {
       map.setView([position.latitude, position.longitude], zoomLevel);
     }
   }, [position, followUser, loading, error, map, zoomLevel]);
   
-  if (!position || loading || error || !userIcon) {
+  // Don't render if we don't have the required data
+  if (!mountedRef.current || !position || loading || error || !userIcon) {
     return null;
   }
   

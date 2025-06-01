@@ -114,6 +114,7 @@ const MapComponentInner: React.FC = React.memo(() => {
   const [showUserLocation, setShowUserLocation] = useState(true);
   const [isMapInteracting, setIsMapInteracting] = useState(false);
   const [hasInitiallyRecentered, setHasInitiallyRecentered] = useState(false);
+  const [lastKnownPosition, setLastKnownPosition] = useState<MapPosition | null>(null);
 
   // Modal state for plot edit and delete
   const [editingPlot, setEditingPlot] = useState<PlotDto | null>(null);
@@ -124,7 +125,15 @@ const MapComponentInner: React.FC = React.memo(() => {
   const centerPosition = useMemo<MapPosition | null>(() => {
     return position 
       ? { lat: position.latitude, lng: position.longitude } 
-      : null;
+      : lastKnownPosition; // Return last known position if current position is lost
+  }, [position, lastKnownPosition]);
+
+  // Update last known position when we get a new position
+  useEffect(() => {
+    if (position) {
+      const newPos = { lat: position.latitude, lng: position.longitude };
+      setLastKnownPosition(newPos);
+    }
   }, [position]);
 
   const errorMessage = useMemo(() => {
@@ -146,10 +155,20 @@ const MapComponentInner: React.FC = React.memo(() => {
     });
   }, []);
 
-  // Auto-request location on component mount
+  // Auto-request location on component mount and retry on errors
   useEffect(() => {
     if (!position && !geoLoading && !geoError) {
       refreshLocation();
+    }
+    
+    // Auto-retry location if there's an error after 30 seconds
+    if (geoError && !geoLoading) {
+      const retryTimer = setTimeout(() => {
+        console.log('Auto-retrying location after error...');
+        refreshLocation();
+      }, 30000);
+      
+      return () => clearTimeout(retryTimer);
     }
   }, [position, geoLoading, geoError, refreshLocation]);
 
@@ -282,7 +301,7 @@ const MapComponentInner: React.FC = React.memo(() => {
             visible={plotsVisible && markerDisplayMode !== 'none'}
           />
           
-          {showUserLocation && <UserLocationMarker />}
+          {showUserLocation && <UserLocationMarker key={`user-location-${showUserLocation}`} />}
           
           <MapLongPressHandler onLongPress={handleLongPress} />
           
@@ -293,10 +312,13 @@ const MapComponentInner: React.FC = React.memo(() => {
           />
           
           <MapRecenterComponent 
-            position={centerPosition && !geoLoading && !hasInitiallyRecentered ? centerPosition : null}
-            onlyOnce={true}
+            position={centerPosition && !geoLoading ? centerPosition : null}
+            onlyOnce={false}
+            respectUserInteraction={true}
             onRecenter={() => {
-              setHasInitiallyRecentered(true);
+              if (!hasInitiallyRecentered) {
+                setHasInitiallyRecentered(true);
+              }
             }}
           />
           
@@ -309,6 +331,21 @@ const MapComponentInner: React.FC = React.memo(() => {
           <div className="loading-indicator">
             <div className="loading-spinner" />
             Loading plots...
+          </div>
+        )}
+
+        {geoLoading && (
+          <div className="loading-indicator" style={{ top: '60px' }}>
+            <div className="loading-spinner" />
+            Getting your location...
+          </div>
+        )}
+
+        {geoError && (
+          <div className="error-display" style={{ top: '60px' }}>
+            <div className="error-message">
+              📍 Location unavailable - using last known position
+            </div>
           </div>
         )}
 

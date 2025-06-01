@@ -28,13 +28,11 @@ const MapLongPressHandler: React.FC<MapLongPressHandlerProps> = ({ onLongPress }
           target.closest('[role="dialog"]') ||
           target.closest('.dropdown') ||
           target.closest('.popup')) {
-        console.log('%c[LONG PRESS] Ignored on control/form element:', 'color: orange; font-weight: bold', target);
         return;
       }
     }
     
-    console.log('%c[LONG PRESS] Detected at:', 'color: red; font-weight: bold', { lat, lng });
-    console.log('[LONG PRESS] Event details:', event);
+    console.log('Long press detected at:', { lat, lng });
     onLongPress({ lat, lng });
   };
 
@@ -46,20 +44,6 @@ const MapLongPressHandler: React.FC<MapLongPressHandlerProps> = ({ onLongPress }
   } = useMapLongPress(handleLongPress, 500);
 
   useMapEvents({
-    // Debug: Add simple click handler to compare coordinates
-    click: (event) => {
-      console.log('%c[CLICK] Simple click at:', 'color: blue; font-weight: bold', {
-        lat: event.latlng.lat,
-        lng: event.latlng.lng
-      });
-      console.log('[CLICK] Event details:', event);
-      console.log('[CLICK] Container point:', event.containerPoint);
-      console.log('[CLICK] Layer point:', event.layerPoint);
-      
-      // Also trigger the long press handler for comparison
-      handleMapClick(event);
-    },
-    
     // Handle right-click (context menu) as immediate long press
     contextmenu: (event) => {
       event.originalEvent.preventDefault();
@@ -83,28 +67,26 @@ const MapLongPressHandler: React.FC<MapLongPressHandlerProps> = ({ onLongPress }
             target.closest('[role="dialog"]') ||
             target.closest('.dropdown') ||
             target.closest('.popup')) {
-          console.log('%c[RIGHT-CLICK] Ignored on control/form element:', 'color: orange; font-weight: bold', target);
           return;
         }
       }
       
       const { lat, lng } = event.latlng;
-      console.log('%c[RIGHT-CLICK] Detected at:', 'color: green; font-weight: bold', { lat, lng });
-      console.log('[RIGHT-CLICK] Event details:', event);
+      console.log('Right-click detected at:', { lat, lng });
       onLongPress({ lat, lng });
     },
     
     // Handle mouse events for long press detection
     mousedown: (event) => {
-      console.log('%c[MOUSEDOWN] At:', 'color: orange; font-weight: bold', {
-        lat: event.latlng.lat,
-        lng: event.latlng.lng
-      });
+      // Only handle left mouse button for long press
+      if (event.originalEvent.button !== 0) {
+        return;
+      }
+      
       handleMapClick(event);
     },
     
     mouseup: () => {
-      console.log('[MOUSEUP] Detected');
       handleMapMouseUp();
     },
     
