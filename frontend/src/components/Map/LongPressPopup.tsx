@@ -45,12 +45,14 @@ export const LongPressPopup: React.FC<LongPressPopupProps> = ({
           <button 
             className="btn btn-primary"
             onClick={handleAddPlot}
+            style={{ width: "120px" }}
           >
             Add Plot Here
           </button>
           <button 
             className="btn btn-secondary"
             onClick={onClose}
+            style={{ width: "120px" }}
           >
             Cancel
           </button>

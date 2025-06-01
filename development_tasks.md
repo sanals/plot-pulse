@@ -28,7 +28,7 @@ Expected output: Working React TypeScript project with build system ready
 Create a Spring Boot project with the following specifications:
 1. Initialize Spring Boot 3.x project with dependencies: Spring Web, Spring Data JPA, PostgreSQL, Lombok
 2. Add hibernate-spatial dependency for PostGIS support
-3. Configure application.properties for PostgreSQL connection with PostGIS
+3. Configure application.yaml for PostgreSQL connection with PostGIS
 4. Set up basic project structure with controller, service, repository, entity packages
 5. Create a basic health check endpoint
 6. Configure CORS for frontend communication

@@ -1,0 +1,214 @@
+/* User Profile Container */
+.user-profile {
+  position: relative;
+  display: inline-block;
+}
+
+/* User Profile Button */
+.user-profile-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-profile-button:hover {
+  background-color: #f8f9fa;
+  border-color: #2196F3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Legacy profile button for backward compatibility */
+.profile-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-button:hover {
+  background-color: #f8f9fa;
+  border-color: #2196F3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* User Avatar */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* User Name */
+.user-name {
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dropdown Arrow */
+.dropdown-arrow {
+  transition: transform 0.2s ease;
+  color: #666;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* User Dropdown */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 200px;
+  overflow: hidden;
+}
+
+/* Legacy profile dropdown for backward compatibility */
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 250px;
+  overflow: hidden;
+}
+
+/* User Info Section */
+.user-info {
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Username display */
+.username {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #333;
+}
+
+/* User role display */
+.user-role {
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Legacy user info styles for backward compatibility */
+.user-full-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #333;
+}
+
+.user-email {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.user-username {
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
+}
+
+/* Dropdown Divider */
+.dropdown-divider {
+  height: 1px;
+  background-color: #e9ecef;
+}
+
+/* Dropdown Actions */
+.dropdown-actions {
+  padding: 0;
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
+}
+
+/* Logout Button */
+.logout-button {
+  color: #dc3545;
+}
+
+.logout-button:hover {
+  background-color: #fff5f5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .user-name {
+    display: none;
+  }
+  
+  .user-dropdown,
+  .profile-dropdown {
+    min-width: 180px;
+  }
+  
+  .user-info {
+    padding: 0.75rem;
+  }
+} 

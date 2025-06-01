@@ -125,17 +125,28 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
           <div className="plot-actions">
             <button 
               className="btn btn-primary btn-small"
+              style={{ 
+                marginTop: 0, 
+                transition: 'background-color 0.2s',
+                transform: 'none'
+              }}
               onClick={handleEdit}
               title="Edit this plot"
             >
-              ✏️ Edit
+              <span className="btn-icon">✏️</span>
+              <span>Edit</span>
             </button>
             <button 
               className="btn btn-danger btn-small"
+              style={{ 
+                transition: 'background-color 0.2s',
+                transform: 'none'
+              }}
               onClick={handleDelete}
               title="Delete this plot"
             >
-              🗑️ Delete
+              <span className="btn-icon">🗑️</span>
+              <span>Delete</span>
             </button>
           </div>
         </div>

@@ -122,7 +122,7 @@ public class SecurityConfig {
 
     /**
      * Configures CORS settings for cross-origin requests
-     * Uses values from application.properties through CorsProperties
+     * Uses values from application.yaml through CorsProperties
      * 
      * @return CORS configuration source
      */
@@ -130,7 +130,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Apply configuration from application.properties using CorsProperties
+        // Apply configuration from application.yaml using CorsProperties
         configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
         configuration.setAllowedMethods(corsProperties.getAllowedMethods());
         configuration.setAllowedHeaders(corsProperties.getAllowedHeaders());

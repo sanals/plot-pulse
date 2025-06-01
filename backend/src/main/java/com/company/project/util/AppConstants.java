@@ -11,13 +11,6 @@ public final class AppConstants {
         // Private constructor to prevent instantiation
     }
 
-    // API versioning
-    public static final String API_V1 = "/api/v1";
-
-    // Server settings
-    public static final int DEFAULT_SERVER_PORT = 8090;
-    public static final String DEFAULT_CONTEXT_PATH = "/api/v1";
-
     // Pagination defaults
     public static final int MAX_PAGE_SIZE = 50;
     public static final String DEFAULT_PAGE_SIZE = "10";

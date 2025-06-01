@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, createContext, useContext } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { useAuth } from '../../contexts/AuthContext';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useOptimizedPlotData } from '../../hooks/useOptimizedPlotData';
 import { MapLayerProvider } from '../../contexts/MapLayerContext';
@@ -22,6 +23,8 @@ import GeolocationPermission from './GeolocationPermission';
 import 'leaflet/dist/leaflet.css';
 import '../../styles/map-markers.css';
 import type { MapPosition, MapBounds, PlotDto } from '../../types/plot.types';
+import { UserProfile } from '../Auth/UserProfile';
+import { AuthModal } from '../Auth/AuthModal';
 
 // Constants
 const DEFAULT_CENTER: MapPosition = { lat: 51.505, lng: -0.09 };
@@ -88,6 +91,7 @@ const MapInteractionController: React.FC<{ disabled: boolean }> = ({ disabled })
  * Inner map component that uses the map layer context
  */
 const MapComponentInner: React.FC = React.memo(() => {
+  const { isAuthenticated } = useAuth();
   const { position, loading: geoLoading, error: geoError, refreshLocation } = useGeolocation();
   
   // Use optimized plot data hook
@@ -116,6 +120,10 @@ const MapComponentInner: React.FC = React.memo(() => {
   const [hasInitiallyRecentered, setHasInitiallyRecentered] = useState(false);
   const [lastKnownPosition, setLastKnownPosition] = useState<MapPosition | null>(null);
 
+  // Authentication modal state
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+
   // Modal state for plot edit and delete
   const [editingPlot, setEditingPlot] = useState<PlotDto | null>(null);
   const [deletingPlot, setDeletingPlot] = useState<PlotDto | null>(null);
@@ -142,8 +150,8 @@ const MapComponentInner: React.FC = React.memo(() => {
 
   // Check if any modal is open to disable map interactions
   const isAnyModalOpen = useMemo(() => {
-    return showPopup || showPlotForm || !!editingPlot || !!deletingPlot;
-  }, [showPopup, showPlotForm, editingPlot, deletingPlot]);
+    return showPopup || showPlotForm || !!editingPlot || !!deletingPlot || showAuthModal;
+  }, [showPopup, showPlotForm, editingPlot, deletingPlot, showAuthModal]);
 
   // Fix for leaflet marker icons in production
   useEffect(() => {
@@ -172,11 +180,33 @@ const MapComponentInner: React.FC = React.memo(() => {
     }
   }, [position, geoLoading, geoError, refreshLocation]);
 
+  // Authentication handlers
+  const handleShowLogin = useCallback(() => {
+    setAuthModalMode('login');
+    setShowAuthModal(true);
+  }, []);
+
+  const handleShowRegister = useCallback(() => {
+    setAuthModalMode('register');
+    setShowAuthModal(true);
+  }, []);
+
+  const handleCloseAuthModal = useCallback(() => {
+    setShowAuthModal(false);
+  }, []);
+
   // Event handlers
   const handleLongPress = useCallback((position: MapPosition) => {
+    // Check if user is authenticated before allowing plot creation
+    if (!isAuthenticated) {
+      setAuthModalMode('login');
+      setShowAuthModal(true);
+      return;
+    }
+    
     setLongPressPosition(position);
     setShowPopup(true);
-  }, []);
+  }, [isAuthenticated]);
 
   const handleClosePopup = useCallback(() => {
     setShowPopup(false);
@@ -360,6 +390,70 @@ const MapComponentInner: React.FC = React.memo(() => {
           visible={showUserLocation}
           onToggle={handleLocationIndicatorToggle}
         />
+
+        {/* Authentication UI */}
+        <div className="auth-controls" style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          zIndex: 1000,
+          display: 'flex',
+          gap: '10px',
+          alignItems: 'center'
+        }}>
+          {isAuthenticated ? (
+            <UserProfile />
+          ) : (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                className="auth-button login-button"
+                onClick={handleShowLogin}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1976D2'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2196F3'}
+              >
+                Login
+              </button>
+              <button 
+                className="auth-button register-button"
+                onClick={handleShowRegister}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: 'white',
+                  color: '#2196F3',
+                  border: '1px solid #2196F3',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2196F3';
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.color = '#2196F3';
+                }}
+              >
+                Register
+              </button>
+            </div>
+          )}
+        </div>
         
         {import.meta.env.DEV && (
           <div className="dev-stats">
@@ -415,6 +509,13 @@ const MapComponentInner: React.FC = React.memo(() => {
           modalContextValue.hideModals();
         }}
         onCancel={modalContextValue.hideModals}
+      />
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={handleCloseAuthModal}
+        initialMode={authModalMode}
       />
     </ModalContext.Provider>
   );

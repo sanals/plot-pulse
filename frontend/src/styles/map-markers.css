@@ -680,7 +680,6 @@
 
 .btn-primary:hover {
   background-color: #0056b3;
-  transform: translateY(-1px);
 }
 
 .btn-danger {
@@ -690,5 +689,4 @@
 
 .btn-danger:hover {
   background-color: #c82333;
-  transform: translateY(-1px);
 } 

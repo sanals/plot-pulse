@@ -77,6 +77,8 @@ html {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 *, *:before, *:after {
@@ -88,6 +90,8 @@ html {
   height: 100%;
   overflow: hidden;
   position: relative;
+  margin: 0;
+  padding: 0;
 }
 
 /* Fix Leaflet default icon paths issue */
@@ -101,6 +105,8 @@ html {
 
 /* Prevent blue highlight when interacting with the map on mobile */
 .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
   outline: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -308,6 +314,26 @@ html {
   justify-content: flex-end;
 }
 
+.popup-actions .btn {
+  min-width: 120px;
+  width: 120px;
+  text-align: center;
+  justify-content: center;
+  margin-top: 0 !important;
+  transition: background-color 0.2s !important;
+  transform: none !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+.popup-actions .btn:hover {
+  transform: none !important;
+}
+
+.popup-actions .btn:active {
+  transform: none !important;
+}
+
 .btn {
   padding: 8px 16px;
   border-radius: 4px;
@@ -446,6 +472,24 @@ html {
   justify-content: flex-end;
 }
 
+.modal-footer .btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0 !important;
+  transition: background-color 0.2s !important;
+  transform: none !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+.modal-footer .btn:hover {
+  transform: none !important;
+}
+
+.modal-footer .btn:active {
+  transform: none !important;
+}
+
 /* Form styles */
 .form-group {
   margin-bottom: 16px;
@@ -523,6 +567,7 @@ html {
   .modal-footer .btn {
     width: 100%;
     justify-content: center;
+    margin-top: 0 !important;
   }
   
   .form-group input,
@@ -541,14 +586,70 @@ html {
   }
 }
 
-/* Plot action buttons */
+/* Plot actions */
 .plot-actions {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
-  justify-content: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e9ecef;
 }
 
+.plot-actions .btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  min-height: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.plot-actions .btn:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.plot-actions .btn:active {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.plot-actions .btn-primary {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.plot-actions .btn-primary:hover {
+  background: linear-gradient(135deg, #4338ca, #6d28d9);
+  box-shadow: 0 3px 8px rgba(79, 70, 229, 0.3);
+}
+
+.plot-actions .btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.plot-actions .btn-danger:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  box-shadow: 0 3px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Icon styles for buttons */
+.plot-actions .btn .btn-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Legacy button styles for compatibility */
 .btn-small {
   padding: 4px 8px;
   font-size: 12px;
@@ -849,4 +950,26 @@ html {
   .leaflet-control-container .leaflet-bottom {
     bottom: 5px;
   }
+}
+
+/* Ensure map container takes full space */
+.map-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+/* Global button transform override to prevent modal resizing */
+.btn:hover, .btn:active, .btn:focus {
+  transform: none !important;
+}
+
+.modal-footer .btn:hover, .modal-footer .btn:active, .modal-footer .btn:focus {
+  transform: none !important;
+}
+
+.popup-actions .btn:hover, .popup-actions .btn:active, .popup-actions .btn:focus {
+  transform: none !important;
 }

@@ -238,7 +238,7 @@ public class Plot {
     private Point location;
     
     // Use org.locationtech.jts.geom.Point
-    // Configure in application.properties: spring.jpa.database-platform=org.hibernate.spatial.dialect.postgis.PostgisPG95Dialect
+    // Configure in application.yaml: spring.jpa.database-platform=org.hibernate.spatial.dialect.postgis.PostgisPG95Dialect
 }
 ```
 
