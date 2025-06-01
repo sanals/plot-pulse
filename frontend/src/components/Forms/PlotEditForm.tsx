@@ -2,6 +2,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import { updatePlot } from '../../services/plotService';
 import type { PlotDto } from '../../types/plot.types';
+import { PRICE_UNIT_OPTIONS } from '../../types/plot.types';
 
 interface PlotEditFormProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ const PlotEditForm = memo(function PlotEditForm({
   // Initialize state only when component mounts
   const [formState, setFormState] = useState({
     price: '',
+    priceUnit: 'per_sqft', // Default to per square foot
     isForSale: true,
     description: '',
     submitting: false,
@@ -31,6 +33,7 @@ const PlotEditForm = memo(function PlotEditForm({
     if (plot && isOpen) {
       setFormState({
         price: plot.price?.toString() || '',
+        priceUnit: plot.priceUnit || 'per_sqft', // Use existing priceUnit or default to per square foot
         isForSale: plot.isForSale || true,
         description: plot.description || '',
         submitting: false,
@@ -44,6 +47,10 @@ const PlotEditForm = memo(function PlotEditForm({
   // Handle input changes
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormState(prev => ({ ...prev, price: e.target.value }));
+  };
+
+  const handlePriceUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormState(prev => ({ ...prev, priceUnit: e.target.value }));
   };
 
   const handleIsForSaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -68,6 +75,7 @@ const PlotEditForm = memo(function PlotEditForm({
       const updatedPlotData: PlotDto = {
         ...plot,
         price: Number(formState.price),
+        priceUnit: formState.priceUnit,
         isForSale: formState.isForSale,
         description: formState.description || undefined,
       };
@@ -98,7 +106,7 @@ const PlotEditForm = memo(function PlotEditForm({
   };
 
   // Destructure for easier access in render
-  const { price, isForSale, description, submitting, error } = formState;
+  const { price, priceUnit, isForSale, description, submitting, error } = formState;
   
   return (
     <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
@@ -131,7 +139,7 @@ const PlotEditForm = memo(function PlotEditForm({
             )}
 
             <div className="form-group">
-              <label htmlFor="edit-price">Price ($)</label>
+              <label htmlFor="edit-price">Price (₹)</label>
               <input
                 type="number"
                 id="edit-price"
@@ -145,17 +153,35 @@ const PlotEditForm = memo(function PlotEditForm({
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-isForSale">Status</label>
-              <select
-                id="edit-isForSale"
-                value={isForSale ? 'true' : 'false'}
-                onChange={handleIsForSaleChange}
-                disabled={submitting}
-              >
-                <option value="true">For Sale</option>
-                <option value="false">Not For Sale</option>
-              </select>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="edit-priceUnit">Price Unit</label>
+                <select
+                  id="edit-priceUnit"
+                  value={priceUnit}
+                  onChange={handlePriceUnitChange}
+                  disabled={submitting}
+                >
+                  {PRICE_UNIT_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-isForSale">Status</label>
+                <select
+                  id="edit-isForSale"
+                  value={isForSale ? 'true' : 'false'}
+                  onChange={handleIsForSaleChange}
+                  disabled={submitting}
+                >
+                  <option value="true">For Sale</option>
+                  <option value="false">Not For Sale</option>
+                </select>
+              </div>
             </div>
 
             <div className="form-group">

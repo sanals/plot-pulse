@@ -28,6 +28,10 @@ public class PlotDto {
     @PositiveOrZero(message = "Price must be zero or positive")
     private BigDecimal price;
     
+    @NotNull(message = "Price unit cannot be null")
+    @Size(max = 50, message = "Price unit cannot exceed 50 characters")
+    private String priceUnit;
+    
     private Boolean isForSale;
     
     @Size(max = 500, message = "Description cannot exceed 500 characters")

@@ -28,6 +28,7 @@ public class PlotMapper {
         return PlotDto.builder()
                 .id(plot.getId())
                 .price(plot.getPrice())
+                .priceUnit(plot.getPriceUnit())
                 .isForSale(plot.getIsForSale())
                 .description(plot.getDescription())
                 .latitude(plot.getLatitude())
@@ -64,6 +65,7 @@ public class PlotMapper {
         Plot plot = new Plot();
         plot.setId(plotDto.getId());
         plot.setPrice(plotDto.getPrice());
+        plot.setPriceUnit(plotDto.getPriceUnit());
         plot.setIsForSale(plotDto.getIsForSale());
         plot.setDescription(plotDto.getDescription());
         
@@ -96,6 +98,10 @@ public class PlotMapper {
         
         if (plotDto.getPrice() != null) {
             plot.setPrice(plotDto.getPrice());
+        }
+        
+        if (plotDto.getPriceUnit() != null) {
+            plot.setPriceUnit(plotDto.getPriceUnit());
         }
         
         if (plotDto.getIsForSale() != null) {

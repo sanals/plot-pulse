@@ -545,6 +545,7 @@ const generateMockPlots = (): PlotDto[] => {
     generatedPlots.push({
       id,
       price,
+      priceUnit: 'per_sqft',
       isForSale,
       description: `Mock plot #${id} in London area${isForSale ? ' (For Sale)' : ''}`,
       latitude: centerLat + latOffset,

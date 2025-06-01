@@ -2,11 +2,11 @@ import React, { useMemo, useEffect, useRef, useCallback } from 'react';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import PlotMarker, { type MarkerDisplayMode } from './PlotMarker';
 import type { PlotDto } from '../../types/plot.types';
+import { convertToPricePerSqft, formatPrice } from '../../utils/priceConversions';
 
 interface PlotMarkerClusterProps {
   plots: PlotDto[];
   mode: MarkerDisplayMode;
-  onPlotUpdated?: () => void;
   onPlotDeleted?: () => void;
   visible: boolean;
 }
@@ -23,7 +23,6 @@ interface PlotMarkerClusterProps {
 const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
   plots,
   mode,
-  onPlotUpdated,
   onPlotDeleted,
   visible
 }) => {
@@ -75,13 +74,13 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       className = 'cluster-medium';
     }
 
-    // If in text mode, show average price instead of count
+    // If in text mode, show average price per sqft instead of count
     if (mode === 'text') {
       const markers = cluster.getAllChildMarkers();
-      let totalPrice = 0;
+      let totalPricePerSqft = 0;
       let validPrices = 0;
       
-      // Calculate average price from the cluster markers
+      // Calculate average price per sqft from the cluster markers
       markers.forEach((marker: any) => {
         let plot: PlotDto | undefined;
         
@@ -99,15 +98,17 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
         }
         
         if (plot && plot.price > 0) {
-          totalPrice += plot.price;
+          // Convert all prices to per sqft for averaging
+          const pricePerSqft = convertToPricePerSqft(plot.price, plot.priceUnit || 'per_sqft');
+          totalPricePerSqft += pricePerSqft;
           validPrices++;
         }
       });
       
-      const avgPrice = validPrices > 0 ? totalPrice / validPrices : 0;
+      const avgPricePerSqft = validPrices > 0 ? totalPricePerSqft / validPrices : 0;
       
-      if (avgPrice > 0) {
-        const displayPrice = `₹${Math.round(avgPrice).toLocaleString()}`;
+      if (avgPricePerSqft > 0) {
+        const displayPrice = `₹${formatPrice(avgPricePerSqft)}/sqft`;
         return new (window as any).L.DivIcon({
           html: `<div class="${className} cluster-price">
                    <div class="price-main">${displayPrice}</div>
@@ -187,7 +188,6 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
           key={`plot-${plot.id}`}
           plot={plot}
           mode={mode}
-          onPlotUpdated={onPlotUpdated}
           onPlotDeleted={onPlotDeleted}
         />
       ))}

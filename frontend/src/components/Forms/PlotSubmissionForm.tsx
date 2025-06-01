@@ -2,6 +2,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import { createPlot } from '../../services/plotService';
 import type { PlotDto } from '../../types/plot.types';
+import { PRICE_UNIT_OPTIONS } from '../../types/plot.types';
 
 interface PlotSubmissionFormProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
   // Initialize state only when component mounts
   const [formState, setFormState] = useState({
     price: '',
+    priceUnit: 'per_sqft', // Default to per square foot
     isForSale: true,
     description: '',
     submitting: false,
@@ -31,6 +33,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
     if (!isOpen) {
       setFormState({
         price: '',
+        priceUnit: 'per_sqft',
         isForSale: true,
         description: '',
         submitting: false,
@@ -44,6 +47,10 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
   // Handle input changes
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormState(prev => ({ ...prev, price: e.target.value }));
+  };
+
+  const handlePriceUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormState(prev => ({ ...prev, priceUnit: e.target.value }));
   };
 
   const handleIsForSaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -67,6 +74,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
     try {
       const plotData: PlotDto = {
         price: Number(formState.price),
+        priceUnit: formState.priceUnit,
         isForSale: formState.isForSale,
         description: formState.description || undefined,
         latitude: position.lat,
@@ -80,6 +88,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
       // Reset form and notify parent
       setFormState({
         price: '',
+        priceUnit: 'per_sqft',
         isForSale: true,
         description: '',
         submitting: false,
@@ -116,7 +125,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
   };
 
   // Destructure for easier access in render
-  const { price, isForSale, description, submitting, error } = formState;
+  const { price, priceUnit, isForSale, description, submitting, error } = formState;
 
   return (
     <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
@@ -148,7 +157,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
             )}
 
             <div className="form-group">
-              <label htmlFor="price">Price ($)</label>
+              <label htmlFor="price">Price (₹)</label>
               <input
                 type="number"
                 id="price"
@@ -162,17 +171,35 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="isForSale">Status</label>
-              <select
-                id="isForSale"
-                value={isForSale ? 'true' : 'false'}
-                onChange={handleIsForSaleChange}
-                disabled={submitting}
-              >
-                <option value="true">For Sale</option>
-                <option value="false">Not For Sale</option>
-              </select>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="priceUnit">Price Unit</label>
+                <select
+                  id="priceUnit"
+                  value={priceUnit}
+                  onChange={handlePriceUnitChange}
+                  disabled={submitting}
+                >
+                  {PRICE_UNIT_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="isForSale">Status</label>
+                <select
+                  id="isForSale"
+                  value={isForSale ? 'true' : 'false'}
+                  onChange={handleIsForSaleChange}
+                  disabled={submitting}
+                >
+                  <option value="true">For Sale</option>
+                  <option value="false">Not For Sale</option>
+                </select>
+              </div>
             </div>
 
             <div className="form-group">

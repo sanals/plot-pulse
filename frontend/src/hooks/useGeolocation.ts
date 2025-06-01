@@ -170,7 +170,7 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
                   accuracy: position.coords.accuracy,
                 });
               },
-              (retryError) => {
+              (_retryError) => {
                 setState(prev => ({
                   ...prev,
                   error: 'Unable to get your location. Please check your device settings and try again.',

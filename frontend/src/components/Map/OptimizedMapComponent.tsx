@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, createContext, useCon
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useOptimizedPlotData } from '../../hooks/useOptimizedPlotData';
-import { MapLayerProvider, useMapLayer } from '../../contexts/MapLayerContext';
+import { MapLayerProvider } from '../../contexts/MapLayerContext';
 import PlotMarkerCluster from './PlotMarkerCluster';
 import { LongPressModal } from './LongPressPopup';
 import { PlotSubmissionForm } from '../Forms/PlotSubmissionForm';
@@ -109,7 +109,7 @@ const MapComponentInner: React.FC = React.memo(() => {
   const [longPressPosition, setLongPressPosition] = useState<MapPosition | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [showPlotForm, setShowPlotForm] = useState(false);
-  const [plotsVisible, setPlotsVisible] = useState(true);
+  const plotsVisible = true; // Constant value since we don't need to toggle this
   const [markerDisplayMode, setMarkerDisplayMode] = useState<MarkerDisplayMode>('text');
   const [showUserLocation, setShowUserLocation] = useState(true);
   const [isMapInteracting, setIsMapInteracting] = useState(false);
@@ -278,7 +278,6 @@ const MapComponentInner: React.FC = React.memo(() => {
           <PlotMarkerCluster
             plots={plots}
             mode={markerDisplayMode}
-            onPlotUpdated={handlePlotUpdated}
             onPlotDeleted={handlePlotDeleted}
             visible={plotsVisible && markerDisplayMode !== 'none'}
           />

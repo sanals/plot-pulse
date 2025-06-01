@@ -451,6 +451,17 @@ html {
   margin-bottom: 16px;
 }
 
+.form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 6px;
@@ -518,6 +529,15 @@ html {
   .form-group select,
   .form-group textarea {
     font-size: 16px; /* Prevent zoom on mobile */
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 16px;
   }
 }
 
