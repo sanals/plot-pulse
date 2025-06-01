@@ -36,11 +36,9 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
       <div className="long-press-modal confirmation-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>{title}</h3>
-          {!loading && (
-            <button className="close-button" onClick={onCancel}>
-              ×
-            </button>
-          )}
+          <button className="plot-modal-close-button" onClick={onCancel}>
+            ×
+          </button>
         </div>
         
         <div className="modal-body">

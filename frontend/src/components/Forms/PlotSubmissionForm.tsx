@@ -132,7 +132,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
       <div className="long-press-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Add New Plot</h3>
-          <button className="close-button" onClick={onClose}>
+          <button className="plot-modal-close-button" onClick={onClose}>
             ×
           </button>
         </div>
@@ -156,22 +156,22 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
               </div>
             )}
 
-            <div className="form-group">
-              <label htmlFor="price">Price (₹)</label>
-              <input
-                type="number"
-                id="price"
-                value={price}
-                onChange={handlePriceChange}
-                required
-                min="1"
-                step="any"
-                disabled={submitting}
-                placeholder="Enter plot price"
-              />
-            </div>
-
             <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="price">Price (₹)</label>
+                <input
+                  type="number"
+                  id="price"
+                  value={price}
+                  onChange={handlePriceChange}
+                  required
+                  min="1"
+                  step="any"
+                  disabled={submitting}
+                  placeholder="Enter plot price"
+                />
+              </div>
+
               <div className="form-group">
                 <label htmlFor="priceUnit">Price Unit</label>
                 <select
@@ -187,7 +187,9 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
                   ))}
                 </select>
               </div>
+            </div>
 
+            <div className="form-row">
               <div className="form-group">
                 <label htmlFor="isForSale">Status</label>
                 <select
@@ -200,19 +202,20 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
                   <option value="false">Not For Sale</option>
                 </select>
               </div>
-            </div>
 
-            <div className="form-group">
-              <label htmlFor="description">Description (optional)</label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={handleDescriptionChange}
-                maxLength={500}
-                rows={3}
-                disabled={submitting}
-                placeholder="Enter plot description..."
-              />
+              <div className="form-group">
+                <label htmlFor="description">Description (optional)</label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={handleDescriptionChange}
+                  maxLength={500}
+                  rows={1}
+                  disabled={submitting}
+                  placeholder="Enter plot description..."
+                />
+                <small>{description.length}/500 characters</small>
+              </div>
             </div>
           </div>
 

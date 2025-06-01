@@ -113,7 +113,7 @@ const PlotEditForm = memo(function PlotEditForm({
       <div className="long-press-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Edit Plot {plot.id}</h3>
-          <button className="close-button" onClick={onClose}>
+          <button className="plot-modal-close-button" onClick={onClose}>
             ×
           </button>
         </div>
@@ -138,22 +138,22 @@ const PlotEditForm = memo(function PlotEditForm({
               </div>
             )}
 
-            <div className="form-group">
-              <label htmlFor="edit-price">Price (₹)</label>
-              <input
-                type="number"
-                id="edit-price"
-                value={price}
-                onChange={handlePriceChange}
-                required
-                min="1"
-                step="any"
-                disabled={submitting}
-                placeholder="Enter plot price"
-              />
-            </div>
-
             <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="edit-price">Price (₹)</label>
+                <input
+                  type="number"
+                  id="edit-price"
+                  value={price}
+                  onChange={handlePriceChange}
+                  required
+                  min="1"
+                  step="any"
+                  disabled={submitting}
+                  placeholder="Enter plot price"
+                />
+              </div>
+
               <div className="form-group">
                 <label htmlFor="edit-priceUnit">Price Unit</label>
                 <select
@@ -169,7 +169,9 @@ const PlotEditForm = memo(function PlotEditForm({
                   ))}
                 </select>
               </div>
+            </div>
 
+            <div className="form-row">
               <div className="form-group">
                 <label htmlFor="edit-isForSale">Status</label>
                 <select
@@ -182,20 +184,20 @@ const PlotEditForm = memo(function PlotEditForm({
                   <option value="false">Not For Sale</option>
                 </select>
               </div>
-            </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-description">Description (optional)</label>
-              <textarea
-                id="edit-description"
-                value={description}
-                onChange={handleDescriptionChange}
-                maxLength={500}
-                rows={3}
-                disabled={submitting}
-                placeholder="Enter plot description..."
-              />
-              <small>{description.length}/500 characters</small>
+              <div className="form-group">
+                <label htmlFor="edit-description">Description (optional)</label>
+                <textarea
+                  id="edit-description"
+                  value={description}
+                  onChange={handleDescriptionChange}
+                  maxLength={500}
+                  rows={1}
+                  disabled={submitting}
+                  placeholder="Enter plot description..."
+                />
+                <small>{description.length}/500 characters</small>
+              </div>
             </div>
           </div>
 

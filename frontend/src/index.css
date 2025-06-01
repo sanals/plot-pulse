@@ -382,19 +382,23 @@ html {
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  max-width: 400px;
-  width: 100%;
-  max-height: 90vh;
+  max-width: 600px;
+  width: 95%;
+  max-height: 75vh;
   overflow-y: auto;
+  position: relative;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 20px 0 20px;
+  padding: 12px 20px 0 20px;
   border-bottom: 1px solid #eee;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .modal-header h3 {
@@ -402,9 +406,11 @@ html {
   color: #2196F3;
   font-size: 20px;
   font-weight: 600;
+  flex: 1;
+  min-width: 0;
 }
 
-.close-button {
+.plot-modal-close-button {
   background: none;
   border: none;
   font-size: 24px;
@@ -418,28 +424,32 @@ html {
   justify-content: center;
   border-radius: 50%;
   transition: background-color 0.2s;
+  flex-shrink: 0;
+  position: relative;
+  top: -8px;
+  right: -8px;
 }
 
-.close-button:hover {
+.plot-modal-close-button:hover {
   background-color: #f5f5f5;
 }
 
 .modal-body {
-  padding: 0 20px 20px 20px;
+  padding: 0 20px 12px 20px;
 }
 
 .coordinates-display {
   background-color: #f8f9fa;
   border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 10px;
+  margin-bottom: 10px;
 }
 
 .coordinate-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .coordinate-item:last-child {
@@ -465,7 +475,7 @@ html {
 }
 
 .modal-footer {
-  padding: 20px;
+  padding: 12px 20px;
   border-top: 1px solid #eee;
   display: flex;
   gap: 12px;
@@ -492,13 +502,17 @@ html {
 
 /* Form styles */
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .form-row {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
 }
 
 .form-row .form-group {
@@ -541,7 +555,8 @@ html {
 
 .form-group textarea {
   resize: vertical;
-  min-height: 80px;
+  height: auto;
+  line-height: 1.4;
 }
 
 .error-message {
@@ -556,8 +571,10 @@ html {
 /* Mobile optimizations for modal */
 @media (max-width: 480px) {
   .long-press-modal {
-    margin: 10px;
+    margin: 5px;
     max-width: none;
+    width: calc(100vw - 10px);
+    max-height: 90vh;
   }
   
   .modal-footer {
@@ -568,12 +585,23 @@ html {
     width: 100%;
     justify-content: center;
     margin-top: 0 !important;
+    transition: background-color 0.2s !important;
+    transform: none !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
   }
   
   .form-group input,
   .form-group select,
   .form-group textarea {
     font-size: 16px; /* Prevent zoom on mobile */
+  }
+  
+  /* On mobile, keep single column layout */
+  .modal-body .form-group:not(.full-width) {
+    display: block;
+    width: 100%;
+    margin-right: 0;
   }
   
   .form-row {
@@ -972,4 +1000,23 @@ html {
 
 .popup-actions .btn:hover, .popup-actions .btn:active, .popup-actions .btn:focus {
   transform: none !important;
+}
+
+/* Make most form fields display in two columns */
+.modal-body .form-group:not(.full-width) {
+  display: block;
+  width: 100%;
+  margin-right: 0;
+  vertical-align: top;
+}
+
+.modal-body .form-group:nth-child(even):not(.full-width) {
+  margin-right: 0;
+}
+
+/* Full width for certain fields */
+.modal-body .form-group.full-width,
+.modal-body .form-group textarea {
+  width: 100%;
+  margin-right: 0;
 }
