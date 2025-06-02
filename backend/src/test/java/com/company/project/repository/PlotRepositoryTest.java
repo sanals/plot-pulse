@@ -3,6 +3,7 @@ package com.company.project.repository;
 import com.company.project.entity.Plot;
 import com.company.project.util.GeometryUtil;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Point;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -52,7 +53,7 @@ public class PlotRepositoryTest {
         // Then
         assertThat(savedPlot).isNotNull();
         assertThat(savedPlot.getId()).isNotNull();
-        assertThat(savedPlot.getLocation()).isNotNull();
+        assertThat(savedPlot.getLocation() != null).isTrue();
         assertThat(savedPlot.getLatitude()).isEqualTo(latitude);
         assertThat(savedPlot.getLongitude()).isEqualTo(longitude);
     }

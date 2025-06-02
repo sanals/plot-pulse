@@ -197,16 +197,10 @@ const MapComponentInner: React.FC = React.memo(() => {
 
   // Event handlers
   const handleLongPress = useCallback((position: MapPosition) => {
-    // Check if user is authenticated before allowing plot creation
-    if (!isAuthenticated) {
-      setAuthModalMode('login');
-      setShowAuthModal(true);
-      return;
-    }
-    
+    // Always show the plot creation modal, regardless of authentication status
     setLongPressPosition(position);
     setShowPopup(true);
-  }, [isAuthenticated]);
+  }, []);
 
   const handleClosePopup = useCallback(() => {
     setShowPopup(false);

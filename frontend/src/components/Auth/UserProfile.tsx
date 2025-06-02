@@ -71,10 +71,8 @@ export const UserProfile: React.FC = () => {
               className="dropdown-item logout-button"
               onClick={handleLogout}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M6 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H6zM5 3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V3z"/>
-                <path d="M11.5 8a.5.5 0 0 1-.5.5H8a.5.5 0 0 1 0-1h3a.5.5 0 0 1 .5.5z"/>
-                <path d="M10.146 7.146a.5.5 0 0 1 .708.708L9.707 9l1.147 1.146a.5.5 0 0 1-.708.708L9 9.707l-1.146 1.147a.5.5 0 0 1-.708-.708L8.293 9 7.146 7.854a.5.5 0 1 1 .708-.708L9 8.293l1.146-1.147z"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
               </svg>
               Logout
             </button>

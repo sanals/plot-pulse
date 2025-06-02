@@ -1,3 +1,9 @@
+/* Import Inter font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Import Varela Round for prices and numbers */
+@import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
+
 /* Import leaflet CSS */
 @import url('https://unpkg.com/leaflet@1.7.1/dist/leaflet.css');
 
@@ -5,7 +11,7 @@
 @import url('https://unpkg.com/react-leaflet-markercluster/dist/styles.min.css');
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -34,6 +40,7 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
 }
 
 h1 {
@@ -57,7 +64,9 @@ button:hover {
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
 }
 
 @media (prefers-color-scheme: light) {
@@ -83,6 +92,7 @@ html {
 
 *, *:before, *:after {
   box-sizing: inherit;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
 }
 
 #root {
@@ -950,8 +960,8 @@ html {
 
 /* Optimize font loading */
 @font-face {
-  font-family: 'System';
-  src: local('system-ui'), local('-apple-system'), local('BlinkMacSystemFont');
+  font-family: 'Inter-fallback';
+  src: local('Inter'), local('-apple-system'), local('BlinkMacSystemFont'), local('Segoe UI');
   font-display: swap;
 }
 
@@ -1007,7 +1017,6 @@ html {
   display: block;
   width: 100%;
   margin-right: 0;
-  vertical-align: top;
 }
 
 .modal-body .form-group:nth-child(even):not(.full-width) {

@@ -147,8 +147,12 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
 
     // Set new timer
     debounceTimerRef.current = setTimeout(async () => {
-      if (!boundsChanged(bounds, lastBounds)) {
-        return; // Skip if bounds haven't changed significantly
+      const boundsSignificantlyChanged = boundsChanged(bounds, lastBounds);
+      
+      if (!boundsSignificantlyChanged) {
+        // Still update lastBounds for accurate plot statistics even if we don't refetch
+        setLastBounds(bounds);
+        return;
       }
 
       setLoading(true);
@@ -157,11 +161,8 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
       try {
         const plotsData = await getCachedOrFetchPlots(bounds);
         
-        // Don't update state if no plots were found and we already have plots
-        // This prevents "flash of empty content" when moving between areas
-        if (!(plotsData.length === 0 && plots.length > 0)) {
-          setPlots(plotsData);
-        }
+        // Always update plots with new viewport data to ensure stats are accurate
+        setPlots(plotsData);
         
         setLastBounds(bounds);
       } catch (error) {
@@ -173,7 +174,7 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
         setLoading(false);
       }
     }, debounceDelay);
-  }, [debounceDelay, boundsChanged, lastBounds, getCachedOrFetchPlots, plots.length]);
+  }, [debounceDelay, boundsChanged, lastBounds, getCachedOrFetchPlots]);
 
   // Load plots for viewport
   const loadPlotsInViewport = useCallback((bounds: MapBounds) => {
@@ -265,21 +266,33 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     }
   }, []);
 
-  // Memoized plot statistics
+  // Memoized plot statistics - only for currently visible plots in viewport
   const plotStats = useMemo(() => {
-    const forSale = plots.filter(p => p.isForSale).length;
-    const notForSale = plots.length - forSale;
-    const avgPrice = plots.length > 0 
-      ? plots.reduce((sum, p) => sum + p.price, 0) / plots.length 
+    // If we have bounds, filter plots to only those within the current viewport
+    let visiblePlots = plots;
+    
+    if (lastBounds) {
+      visiblePlots = plots.filter(plot => {
+        return plot.latitude >= lastBounds.south &&
+               plot.latitude <= lastBounds.north &&
+               plot.longitude >= lastBounds.west &&
+               plot.longitude <= lastBounds.east;
+      });
+    }
+    
+    const forSale = visiblePlots.filter(p => p.isForSale).length;
+    const notForSale = visiblePlots.length - forSale;
+    const avgPrice = visiblePlots.length > 0 
+      ? visiblePlots.reduce((sum, p) => sum + p.price, 0) / visiblePlots.length 
       : 0;
 
     return {
-      total: plots.length,
+      total: visiblePlots.length,
       forSale,
       notForSale,
       averagePrice: avgPrice
     };
-  }, [plots]);
+  }, [plots, lastBounds]);
 
   // Cleanup on unmount
   useEffect(() => {
