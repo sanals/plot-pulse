@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect } from 'react';
-import { Marker, Popup } from 'react-leaflet';
+import { Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { PlotDto, MapPosition } from '../../types/plot.types';
 import { deletePlot } from '../../services/plotService';
@@ -24,6 +24,7 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
   const popupRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
   const modalContext = useModalContext();
+  const map = useMap();
 
   const position: MapPosition = {
     lat: plot.latitude,
@@ -41,6 +42,32 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
       markerRef.current.options.plotId = plot.id;
     }
   }, [plot.id]);
+
+  // Close popup when user interacts with the map
+  useEffect(() => {
+    if (!popupRef.current) return;
+
+    const popup = popupRef.current;
+
+    const handleMapInteraction = () => {
+      if (popup.isOpen()) {
+        popup.close();
+      }
+    };
+
+    // Close popup on any map interaction
+    map.on('movestart', handleMapInteraction);
+    map.on('zoomstart', handleMapInteraction);
+    map.on('dragstart', handleMapInteraction);
+    map.on('click', handleMapInteraction);
+
+    return () => {
+      map.off('movestart', handleMapInteraction);
+      map.off('zoomstart', handleMapInteraction);
+      map.off('dragstart', handleMapInteraction);
+      map.off('click', handleMapInteraction);
+    };
+  }, [map]);
 
   // Get price category for color coding (based on per sqft price)
   const getPriceCategory = useCallback((pricePerSqft: number): string => {
@@ -106,7 +133,13 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
       icon={getMarkerIcon()}
       ref={markerRef}
     >
-      <Popup ref={popupRef}>
+      <Popup 
+        ref={popupRef}
+        autoPan={false}
+        keepInView={false}
+        closeOnEscapeKey={true}
+        closeOnClick={false}
+      >
         <div className="plot-popup">
           <h3>Plot {plot.id}</h3>
           
