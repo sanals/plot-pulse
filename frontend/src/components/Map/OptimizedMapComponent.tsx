@@ -20,8 +20,11 @@ import MapRecenterComponent from './MapRecenterComponent';
 import MapBoundsTracker from './MapBoundsTracker';
 import CustomZoomControl from './CustomZoomControl';
 import GeolocationPermission from './GeolocationPermission';
+import MapSearch from './MapSearch';
+import MapNavbar from '../Navigation/MapNavbar';
 import 'leaflet/dist/leaflet.css';
 import '../../styles/map-markers.css';
+import '../../styles/navbar.css';
 import type { MapPosition, MapBounds, PlotDto } from '../../types/plot.types';
 import { UserProfile } from '../Auth/UserProfile';
 import { AuthModal } from '../Auth/AuthModal';
@@ -87,6 +90,17 @@ const MapInteractionController: React.FC<{ disabled: boolean }> = ({ disabled })
   return null;
 };
 
+// Component to capture map instance for external navigation
+const MapInstanceCapture: React.FC<{ onMapReady: (map: any) => void }> = ({ onMapReady }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    onMapReady(map);
+  }, [map, onMapReady]);
+  
+  return null;
+};
+
 /**
  * Inner map component that uses the map layer context
  */
@@ -119,6 +133,7 @@ const MapComponentInner: React.FC = React.memo(() => {
   const [isMapInteracting, setIsMapInteracting] = useState(false);
   const [hasInitiallyRecentered, setHasInitiallyRecentered] = useState(false);
   const [lastKnownPosition, setLastKnownPosition] = useState<MapPosition | null>(null);
+  const [mapInstance, setMapInstance] = useState<any>(null);
 
   // Authentication modal state
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -242,6 +257,13 @@ const MapComponentInner: React.FC = React.memo(() => {
     setShowUserLocation(visible);
   }, []);
 
+  // Handle navigation from search
+  const handleNavigateToLocation = useCallback((lat: number, lng: number, zoom: number = 16) => {
+    if (mapInstance) {
+      mapInstance.setView([lat, lng], zoom);
+    }
+  }, [mapInstance]);
+
   // Modal context functions
   const modalContextValue = useMemo<ModalContextType>(() => ({
     showEditForm: (plot: PlotDto) => {
@@ -297,6 +319,17 @@ const MapComponentInner: React.FC = React.memo(() => {
         
         <GeolocationPermission onPermissionChange={handlePermissionChange} />
         
+        {/* New Responsive Navigation */}
+        <MapNavbar
+          markerDisplayMode={markerDisplayMode}
+          onMarkerDisplayModeChange={setMarkerDisplayMode}
+          showUserLocation={showUserLocation}
+          onLocationToggle={handleLocationIndicatorToggle}
+          onShowLogin={handleShowLogin}
+          onShowRegister={handleShowRegister}
+          onNavigateToLocation={handleNavigateToLocation}
+        />
+        
         {/* Visual overlay when map interactions are disabled */}
         {isAnyModalOpen && (
           <div 
@@ -317,6 +350,7 @@ const MapComponentInner: React.FC = React.memo(() => {
           <TileLayer {...tileLayerProps} />
           
           <MapInteractionController disabled={isAnyModalOpen} />
+          <MapInstanceCapture onMapReady={setMapInstance} />
           
           <PlotMarkerCluster
             plots={plots}
@@ -385,82 +419,6 @@ const MapComponentInner: React.FC = React.memo(() => {
           </div>
         )}
 
-        <MarkerDisplayToggle 
-          position="topright"
-          mode={markerDisplayMode}
-          onModeChange={setMarkerDisplayMode}
-        />
-        
-        <LocationIndicatorToggle
-          position="topright"
-          visible={showUserLocation}
-          onToggle={handleLocationIndicatorToggle}
-        />
-
-        {/* Authentication UI */}
-        <div className="auth-controls" style={{
-          position: 'absolute',
-          top: '10px',
-          left: '10px',
-          zIndex: 1000,
-          display: 'flex',
-          gap: '10px',
-          alignItems: 'center'
-        }}>
-          {isAuthenticated ? (
-            <UserProfile />
-          ) : (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                className="auth-button login-button"
-                onClick={handleShowLogin}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#2196F3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1976D2'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2196F3'}
-              >
-                Login
-              </button>
-              <button 
-                className="auth-button register-button"
-                onClick={handleShowRegister}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: 'white',
-                  color: '#2196F3',
-                  border: '1px solid #2196F3',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#2196F3';
-                  e.currentTarget.style.color = 'white';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.color = '#2196F3';
-                }}
-              >
-                Register
-              </button>
-            </div>
-          )}
-        </div>
-        
         {import.meta.env.DEV && (
           <div className="dev-stats">
             <div>Plots: {plotStats.total}</div>
