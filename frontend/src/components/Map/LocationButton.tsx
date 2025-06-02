@@ -32,8 +32,8 @@ const LocationButton: React.FC<LocationButtonProps> = ({
     refreshLocation 
   } = useGeolocation({
     watchPosition: false, // Only get location when button is clicked
-    enableHighAccuracy: true,
-    timeout: 7000
+    enableHighAccuracy: false, // WiFi-based location for laptops
+    timeout: 8000 // Shorter timeout for laptops
   });
   
   // Center map when position changes and active is true

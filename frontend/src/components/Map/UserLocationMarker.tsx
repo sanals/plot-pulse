@@ -28,7 +28,7 @@ const UserLocationMarker: React.FC<UserLocationMarkerProps> = ({
   const map = useMap();
   const { position, loading, error, refreshLocation } = useGeolocation({
     watchPosition: true,
-    enableHighAccuracy: true
+    enableHighAccuracy: false // WiFi-based location for laptops
   });
   const [userIcon, setUserIcon] = useState<L.DivIcon | null>(null);
   const mountedRef = useRef(true);
