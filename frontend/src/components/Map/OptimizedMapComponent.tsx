@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, createContext, useContext } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { useAuth } from '../../contexts/AuthContext';
-import { useGeolocation } from '../../hooks/useGeolocation';
+import { useGeolocationContext } from '../../contexts/GeolocationContext';
 import { useOptimizedPlotData } from '../../hooks/useOptimizedPlotData';
 import { MapLayerProvider } from '../../contexts/MapLayerContext';
 import PlotMarkerCluster from './PlotMarkerCluster';
@@ -92,7 +92,7 @@ const MapInteractionController: React.FC<{ disabled: boolean }> = ({ disabled })
  */
 const MapComponentInner: React.FC = React.memo(() => {
   const { isAuthenticated } = useAuth();
-  const { position, loading: geoLoading, error: geoError, refreshLocation } = useGeolocation();
+  const { position, loading: geoLoading, error: geoError, refreshLocation } = useGeolocationContext();
   
   // Use optimized plot data hook
   const {
@@ -367,8 +367,20 @@ const MapComponentInner: React.FC = React.memo(() => {
 
         {geoError && (
           <div className="error-display" style={{ top: '60px' }}>
-            <div className="error-message">
-              📍 Location unavailable - using last known position
+            <div 
+              className="error-message"
+              style={{
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontWeight: '500',
+                fontSize: '14px',
+                border: '1px solid #b91c1c',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              {geoError}
             </div>
           </div>
         )}

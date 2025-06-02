@@ -44,7 +44,6 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
 
   // Try to get cached position on initial load
   useEffect(() => {
-    console.log('💾 [GEOLOCATION] Checking cache...');
     try {
       const cachedData = localStorage.getItem(CACHE_KEY);
       if (cachedData) {
@@ -53,11 +52,6 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
         // Check if cached data is still valid
         const now = Date.now();
         const cacheAge = now - timestamp;
-        console.log('💾 [GEOLOCATION] Found cached data:', {
-          position,
-          cacheAge: `${Math.round(cacheAge / 1000)}s old`,
-          isValid: cacheAge < cacheDuration
-        });
         
         if (cacheAge < cacheDuration) {
           setState(prev => ({
@@ -66,17 +60,13 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
             timestamp,
             loading: false,
           }));
-          console.log('✅ [GEOLOCATION] Using valid cached position');
         } else {
           // Clear expired cache
           localStorage.removeItem(CACHE_KEY);
-          console.log('🗑️ [GEOLOCATION] Cleared expired cache');
         }
-      } else {
-        console.log('❌ [GEOLOCATION] No cached position found');
       }
     } catch (error) {
-      console.error('❌ [GEOLOCATION] Error reading cached location:', error);
+      console.error('Error reading cached location:', error);
     }
   }, [cacheDuration]);
 
@@ -110,14 +100,6 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
 
   // Get current position or watch for position updates
   useEffect(() => {
-    console.log('🔄 [GEOLOCATION] Starting with options:', {
-      enableHighAccuracy,
-      timeout,
-      maximumAge,
-      watchPosition,
-      hasNavigatorGeolocation: !!navigator.geolocation
-    });
-    
     if (!navigator.geolocation) {
       setState(prev => ({
         ...prev,
@@ -129,14 +111,6 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
     }
 
     const geoSuccess = (position: GeolocationPosition) => {
-      const accuracy = position.accuracy || 999999;
-      console.log('🌍 [GEOLOCATION] Success:', {
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracy: accuracy,
-        source: accuracy < 50 ? 'GPS/WiFi' : accuracy < 1000 ? 'WiFi' : 'IP/Network'
-      });
-      
       const newPosition = {
         latitude: position.latitude,
         longitude: position.longitude,
@@ -166,16 +140,6 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
     };
 
     const geoError = (error: GeolocationPositionError) => {
-      console.log('❌ [GEOLOCATION] Error:', {
-        code: error.code,
-        message: error.message,
-        codes: {
-          1: 'PERMISSION_DENIED',
-          2: 'POSITION_UNAVAILABLE', 
-          3: 'TIMEOUT'
-        }
-      });
-      
       let permissionState: PermissionState = 'prompt';
       let errorMessage = error.message;
       
@@ -223,7 +187,7 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
                     (_finalError) => {
                       setState(prev => ({
                         ...prev,
-                        error: '📍 Location unavailable. Try: 1) Enabling WiFi 2) Allowing location in browser 3) Refreshing page',
+                        error: '📍 Location unavailable. Try: 1) Moving outdoors 2) Enabling location in browser 3) Refreshing the page',
                         loading: false,
                         permissionState: 'prompt',
                       }));

@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { Marker, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { useGeolocation } from '../../hooks/useGeolocation';
+import { useGeolocationContext } from '../../contexts/GeolocationContext';
 
 interface UserLocationMarkerProps {
-  showAccuracy?: boolean;
+  showAccuracyCircle?: boolean;
   accuracyColor?: string;
   accuracyFillColor?: string;
   accuracyFillOpacity?: number;
@@ -17,7 +17,7 @@ interface UserLocationMarkerProps {
  * Component to display the user's current location on the map
  */
 const UserLocationMarker: React.FC<UserLocationMarkerProps> = ({
-  showAccuracy = true,
+  showAccuracyCircle = true,
   accuracyColor = '#4285F4',
   accuracyFillColor = '#4285F4',
   accuracyFillOpacity = 0.15,
@@ -26,10 +26,7 @@ const UserLocationMarker: React.FC<UserLocationMarkerProps> = ({
   zoomLevel = 16
 }) => {
   const map = useMap();
-  const { position, loading, error, refreshLocation } = useGeolocation({
-    watchPosition: true,
-    enableHighAccuracy: false // WiFi-based location for laptops
-  });
+  const { position, loading, error, refreshLocation } = useGeolocationContext();
   const [userIcon, setUserIcon] = useState<L.DivIcon | null>(null);
   const mountedRef = useRef(true);
   
@@ -126,7 +123,7 @@ const UserLocationMarker: React.FC<UserLocationMarkerProps> = ({
   
   return (
     <>
-      {showAccuracy && position.accuracy && (
+      {showAccuracyCircle && position.accuracy && (
         <Circle
           center={[position.latitude, position.longitude]}
           radius={position.accuracy}

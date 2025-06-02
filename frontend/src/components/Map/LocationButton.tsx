@@ -1,56 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { useGeolocation } from '../../hooks/useGeolocation';
+import { useGeolocationContext } from '../../contexts/GeolocationContext';
 import LoadingSpinner from '../Common/LoadingSpinner';
 
 interface LocationButtonProps {
-  position?: 'topleft' | 'topright' | 'bottomleft' | 'bottomright';
-  zoomLevel?: number;
-  flyTo?: boolean;
-  flyDuration?: number;
-  showAccuracy?: boolean;
+  position?: 'topright' | 'topleft' | 'bottomright' | 'bottomleft';
+  className?: string;
 }
 
 /**
- * A button component that centers the map on the user's location
+ * LocationButton component that uses centralized geolocation context
+ * and centers the map on user's location when clicked
  */
-const LocationButton: React.FC<LocationButtonProps> = ({
-  position = 'bottomright',
-  zoomLevel = 16,
-  flyTo = true,
-  flyDuration = 1.5,
-  showAccuracy = true
+const LocationButton: React.FC<LocationButtonProps> = ({ 
+  position = 'topright',
+  className = ''
 }) => {
   const map = useMap();
-  const [active, setActive] = useState<boolean>(false);
   const { 
     position: geoPosition, 
     loading, 
     error, 
     permissionState, 
     refreshLocation 
-  } = useGeolocation({
-    watchPosition: false, // Only get location when button is clicked
-    enableHighAccuracy: false, // WiFi-based location for laptops
-    timeout: 8000 // Shorter timeout for laptops
-  });
+  } = useGeolocationContext();
+  const [active, setActive] = useState<boolean>(false);
   
   // Center map when position changes and active is true
   useEffect(() => {
     if (geoPosition && active && !loading) {
       const { latitude, longitude, accuracy } = geoPosition;
       
-      if (flyTo) {
-        map.flyTo([latitude, longitude], zoomLevel, {
-          duration: flyDuration
-        });
-      } else {
-        map.setView([latitude, longitude], zoomLevel);
-      }
+      map.setView([latitude, longitude], 16);
       
       // Show accuracy circle if enabled
-      if (showAccuracy && accuracy) {
+      if (accuracy) {
         // Remove any existing accuracy circles
         map.eachLayer(layer => {
           if ((layer as any).options && (layer as any).options.className === 'accuracy-circle') {
@@ -79,7 +64,7 @@ const LocationButton: React.FC<LocationButtonProps> = ({
       // Reset active state after navigation
       setActive(false);
     }
-  }, [geoPosition, active, loading, map, zoomLevel, flyTo, flyDuration, showAccuracy]);
+  }, [geoPosition, active, loading, map]);
   
   const handleClick = () => {
     setActive(true);
