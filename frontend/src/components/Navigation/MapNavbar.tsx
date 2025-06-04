@@ -320,6 +320,7 @@ interface MapNavbarProps {
   onShowLogin: () => void;
   onShowRegister: () => void;
   onNavigateToLocation: (lat: number, lng: number, zoom?: number) => void;
+  onNavbarExpandChange?: (expanded: boolean) => void;
 }
 
 /**
@@ -334,7 +335,8 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
   onLocationToggle,
   onShowLogin,
   onShowRegister,
-  onNavigateToLocation
+  onNavigateToLocation,
+  onNavbarExpandChange
 }) => {
   const { isAuthenticated } = useAuth();
   const { position, refreshLocation, loading: geoLoading } = useGeolocationContext();
@@ -597,6 +599,13 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
   const toggleMobileMenu = () => setShowMobileMenu(!showMobileMenu);
   const toggleSearch = () => setSearchExpanded(!searchExpanded);
 
+  // Notify parent about navbar expansion changes
+  useEffect(() => {
+    if (onNavbarExpandChange && !isMobile) {
+      onNavbarExpandChange(isExpanded);
+    }
+  }, [isExpanded, isMobile, onNavbarExpandChange]);
+
   // Desktop Side Navbar
   if (!isMobile) {
     return (
@@ -619,9 +628,68 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
 
         {/* Navbar Content */}
         <div className="navbar-content">
+          {/* Profile Icon Section - Shows when collapsed */}
+          <div className="navbar-section">
+            {!isExpanded && (
+              <div 
+                className="section-header profile-icon-header clickable"
+                onClick={() => {
+                  if (isAuthenticated) {
+                    // For authenticated users, expand navbar to show profile
+                    setIsExpanded(true);
+                  } else {
+                    // For guests, show login modal
+                    onShowLogin();
+                  }
+                }}
+              >
+                {isAuthenticated ? (
+                  <div className="navbar-profile-avatar-small">
+                    {/* TODO: Replace with actual user initials/avatar */}
+                    👤
+                  </div>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Authentication Section - Shows when expanded */}
+          <div className="navbar-section">
+            {isExpanded && (
+              <div className="auth-section-flush">
+                {isAuthenticated ? (
+                  <NavbarProfile />
+                ) : (
+                  <div className="auth-buttons">
+                    <button className="nav-btn primary" onClick={onShowLogin}>
+                      Login
+                    </button>
+                    <button className="nav-btn secondary" onClick={onShowRegister}>
+                      Register
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Search Section */}
           <div className="navbar-section">
-            <div className="section-header search-header">
+            <div 
+              className="section-header search-header clickable"
+              onClick={() => {
+                if (!isExpanded) {
+                  setIsExpanded(true);
+                  // Focus search input after expansion
+                  setTimeout(() => searchInputRef.current?.focus(), 100);
+                }
+              }}
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8"/>
                 <path d="m21 21-4.35-4.35"/>
@@ -652,35 +720,20 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                     </div>
                   )}
                 </div>
-              ) : (
-                <span>Search</span>
-              )}
+              ) : null}
             </div>
-          </div>
-
-          {/* Authentication Section */}
-          <div className="navbar-section">
-            {isExpanded && (
-              <div className="auth-section-flush">
-                {isAuthenticated ? (
-                  <NavbarProfile />
-                ) : (
-                  <div className="auth-buttons">
-                    <button className="nav-btn primary" onClick={onShowLogin}>
-                      Login
-                    </button>
-                    <button className="nav-btn secondary" onClick={onShowRegister}>
-                      Register
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Map Controls Section */}
           <div className="navbar-section">
-            <div className="section-header">
+            <div 
+              className="section-header clickable"
+              onClick={() => {
+                if (!isExpanded) {
+                  setIsExpanded(true);
+                }
+              }}
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polygon points="12 2 2 7 12 12 22 7 12 2"/>
                 <polyline points="2,17 12,22 22,17"/>
@@ -699,21 +752,30 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                       onClick={() => onMarkerDisplayModeChange('none')}
                       title="Hide markers"
                     >
-                      🚫
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
                     </button>
                     <button 
                       className={`toggle-btn ${markerDisplayMode === 'icon' ? 'active' : ''}`}
                       onClick={() => onMarkerDisplayModeChange('icon')}
                       title="Show icons"
                     >
-                      📍
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                      </svg>
                     </button>
                     <button 
                       className={`toggle-btn ${markerDisplayMode === 'text' ? 'active' : ''}`}
                       onClick={() => onMarkerDisplayModeChange('text')}
                       title="Show prices"
                     >
-                      💰
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -725,7 +787,23 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                     className={`nav-btn ${showUserLocation ? 'active' : ''}`}
                     onClick={() => onLocationToggle(!showUserLocation)}
                   >
-                    {showUserLocation ? '🌍 Visible' : '📍 Hidden'}
+                    {showUserLocation ? (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        Visible
+                      </>
+                    ) : (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                        Hidden
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -737,7 +815,21 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                     onClick={handleLocationClick}
                     disabled={geoLoading}
                   >
-                    {geoLoading ? '⏳ Loading...' : '🎯 Refresh Location'}
+                    {geoLoading ? (
+                      <>
+                        <div className="loading-spinner-tiny" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="23 4 23 10 17 10"/>
+                          <polyline points="1 20 1 14 7 14"/>
+                          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                        </svg>
+                        Refresh Location
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -837,7 +929,15 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
             disabled={geoLoading}
             title="Get location"
           >
-            {geoLoading ? '⏳' : '🎯'}
+            {geoLoading ? (
+              <div className="loading-spinner-tiny" />
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+              </svg>
+            )}
           </button>
         </div>
       </div>
@@ -889,7 +989,11 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                       setShowMobileMenu(false);
                     }}
                   >
-                    🚫 Hidden
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                    Hidden
                   </button>
                   <button 
                     className={`mobile-toggle-btn ${markerDisplayMode === 'icon' ? 'active' : ''}`}
@@ -898,7 +1002,11 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                       setShowMobileMenu(false);
                     }}
                   >
-                    📍 Icons
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    Icons
                   </button>
                   <button 
                     className={`mobile-toggle-btn ${markerDisplayMode === 'text' ? 'active' : ''}`}
@@ -907,7 +1015,11 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                       setShowMobileMenu(false);
                     }}
                   >
-                    💰 Prices
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="12" y1="1" x2="12" y2="23"/>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Prices
                   </button>
                 </div>
               </div>
@@ -921,7 +1033,23 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                     setShowMobileMenu(false);
                   }}
                 >
-                  {showUserLocation ? '🌍 Visible' : '📍 Hidden'}
+                  {showUserLocation ? (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      Visible
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
+                      Hidden
+                    </>
+                  )}
                 </button>
               </div>
             </div>

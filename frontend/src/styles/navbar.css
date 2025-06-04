@@ -78,18 +78,29 @@
   color: #4a5568;
   font-weight: 500;
   font-size: 14px;
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: visible;
+  transition: all 0.2s ease;
+}
+
+.section-header.clickable {
+  cursor: pointer;
+}
+
+.section-header.clickable:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
 .section-header.search-header {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
 }
 
 .section-header.search-header:hover {
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
 .search-header-input {
@@ -138,17 +149,17 @@
 }
 
 .auth-section-flush {
-  padding: 8px 16px;
+  padding: 4px 16px;
 }
 
 .auth-buttons {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .nav-btn {
-  padding: 10px 16px;
+  padding: 8px 16px;
   border-radius: 8px;
   border: none;
   font-size: 14px;
@@ -612,6 +623,7 @@
 .map-container {
   padding-left: 0;
   padding-top: 0;
+  transition: padding-left 0.3s ease; /* Smooth transition */
 }
 
 @media (min-width: 768px) {
@@ -622,11 +634,30 @@
   .map-container.navbar-expanded {
     padding-left: 320px; /* Expanded width */
   }
+  
+  /* Ensure map content (including plot stats) respects navbar space */
+  .leaflet-container {
+    margin-left: 0;
+  }
+  
+  /* Specific padding for plot stats overlay */
+  .plot-stats-overlay {
+    left: 60px !important; /* Adjust for collapsed navbar */
+    transition: left 0.3s ease;
+  }
+  
+  .navbar-expanded .plot-stats-overlay {
+    left: 320px !important; /* Adjust for expanded navbar */
+  }
 }
 
 @media (max-width: 767px) {
   .map-container {
     padding-top: 60px; /* Mobile navbar height */
+  }
+  
+  .plot-stats-overlay {
+    top: 70px !important; /* Below mobile navbar */
   }
 }
 
@@ -949,6 +980,8 @@
   overflow: hidden;
   animation: slideInRight 0.2s ease;
   backdrop-filter: blur(12px);
+  z-index: 999999; /* Increased z-index */
+  pointer-events: auto; /* Ensure clickable */
 }
 
 .navbar-profile-dropdown-header {
@@ -1012,6 +1045,9 @@
   font-size: 14px;
   font-weight: 500;
   outline: none;
+  pointer-events: auto; /* Ensure clickable */
+  position: relative; /* Ensure proper stacking */
+  z-index: 1; /* Ensure above other elements */
 }
 
 .navbar-profile-dropdown-btn:hover {
@@ -1282,4 +1318,33 @@
   .search-suggestion-item:hover {
     background: rgba(59, 130, 246, 0.2);
   }
+}
+
+/* Profile icon styling for collapsed navbar */
+.profile-icon-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.profile-icon-header:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.navbar-profile-avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
 } 

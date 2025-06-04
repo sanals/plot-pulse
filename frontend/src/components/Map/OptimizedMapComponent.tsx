@@ -144,6 +144,9 @@ const MapComponentInner: React.FC = React.memo(() => {
   const [deletingPlot, setDeletingPlot] = useState<PlotDto | null>(null);
   const [deleteConfirmCallback, setDeleteConfirmCallback] = useState<(() => void) | null>(null);
 
+  // Navigation state for proper map padding
+  const [isNavbarExpanded, setIsNavbarExpanded] = useState(false);
+
   // Memoized calculations
   const centerPosition = useMemo<MapPosition | null>(() => {
     return position 
@@ -314,7 +317,7 @@ const MapComponentInner: React.FC = React.memo(() => {
 
   return (
     <ModalContext.Provider value={modalContextValue}>
-      <div className="map-container">
+      <div className={`map-container ${isNavbarExpanded ? 'navbar-expanded' : ''}`}>
         {errorMessage && <ErrorDisplay error={errorMessage} />}
         
         <GeolocationPermission onPermissionChange={handlePermissionChange} />
@@ -328,6 +331,7 @@ const MapComponentInner: React.FC = React.memo(() => {
           onShowLogin={handleShowLogin}
           onShowRegister={handleShowRegister}
           onNavigateToLocation={handleNavigateToLocation}
+          onNavbarExpandChange={setIsNavbarExpanded}
         />
         
         {/* Visual overlay when map interactions are disabled */}

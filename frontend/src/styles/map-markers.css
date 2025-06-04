@@ -368,7 +368,7 @@
 .dev-stats {
   position: absolute;
   bottom: 10px;
-  left: 10px;
+  left: 70px; /* Adjust for collapsed navbar */
   background: rgba(0, 0, 0, 0.7);
   color: white;
   padding: 8px;
@@ -376,6 +376,25 @@
   font-size: 12px;
   font-family: 'Varela Round', 'Inter', sans-serif;
   z-index: 1000;
+  transition: left 0.3s ease; /* Smooth transition when navbar expands */
+}
+
+/* Adjust for expanded navbar */
+.navbar-expanded .dev-stats {
+  left: 330px; /* Adjust for expanded navbar */
+}
+
+/* Mobile - position below navbar */
+@media (max-width: 767px) {
+  .dev-stats {
+    top: 70px; /* Below mobile navbar */
+    left: 10px;
+    bottom: auto;
+  }
+  
+  .navbar-expanded .dev-stats {
+    left: 10px; /* Reset for mobile */
+  }
 }
 
 /* Map interaction disabled overlay */

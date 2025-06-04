@@ -19,14 +19,25 @@ const NavbarProfile: React.FC<NavbarProfileProps> = ({ isMobile = false }) => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      
+      // Don't close if clicking on logout button
+      if (target && (target as Element).closest?.('.logout-btn')) {
+        console.log('Click on logout button detected, not closing dropdown');
+        return;
+      }
+      
+      if (profileRef.current && !profileRef.current.contains(target)) {
+        console.log('Click outside detected, closing dropdown');
         setShowDropdown(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showDropdown]);
 
   // Calculate dropdown position when opening
   useEffect(() => {
@@ -44,8 +55,14 @@ const NavbarProfile: React.FC<NavbarProfileProps> = ({ isMobile = false }) => {
   };
 
   const handleLogout = () => {
-    logout();
-    setShowDropdown(false);
+    console.log('Logout button clicked'); // Debug log
+    try {
+      logout();
+      setShowDropdown(false);
+      console.log('Logout function called successfully'); // Debug log
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   // Get user initials for avatar
@@ -69,7 +86,12 @@ const NavbarProfile: React.FC<NavbarProfileProps> = ({ isMobile = false }) => {
         </div>
         <button 
           className="mobile-logout-btn"
-          onClick={handleLogout}
+          onClick={(e) => {
+            console.log('Mobile logout button clicked', e); // Debug log
+            e.preventDefault();
+            e.stopPropagation();
+            handleLogout();
+          }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -132,7 +154,21 @@ const NavbarProfile: React.FC<NavbarProfileProps> = ({ isMobile = false }) => {
           <div className="navbar-profile-dropdown-divider"></div>
           <button 
             className="navbar-profile-dropdown-btn logout-btn"
-            onClick={handleLogout}
+            onMouseUp={(e) => {
+              console.log('Logout button mouse up', e); // Debug log
+              e.preventDefault();
+              e.stopPropagation();
+              handleLogout();
+            }}
+            onClick={(e) => {
+              console.log('Logout dropdown button clicked', e); // Debug log
+              e.preventDefault();
+              e.stopPropagation();
+              handleLogout();
+            }}
+            onMouseDown={(e) => {
+              console.log('Logout button mouse down'); // Debug log
+            }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
