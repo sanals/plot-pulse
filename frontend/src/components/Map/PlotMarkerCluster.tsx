@@ -3,6 +3,10 @@ import MarkerClusterGroup from 'react-leaflet-cluster';
 import PlotMarker, { type MarkerDisplayMode } from './PlotMarker';
 import type { PlotDto } from '../../types/plot.types';
 import { convertToPricePerSqft, formatPrice } from '../../utils/priceConversions';
+import { useSettings } from '../../contexts/SettingsContext';
+import { formatCurrency } from '../../utils/currencyUtils';
+import { convertCurrency } from '../../utils/currencyUtils';
+import { getAllCurrencies } from '../../utils/currencyUtils';
 
 interface PlotMarkerClusterProps {
   plots: PlotDto[];
@@ -27,6 +31,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
   visible
 }) => {
   const clusterGroupRef = useRef<any>(null);
+  const { currency } = useSettings();
 
   // Memoize cluster options for performance
   const clusterOptions = useMemo(() => ({
@@ -108,7 +113,20 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       const avgPricePerSqft = validPrices > 0 ? totalPricePerSqft / validPrices : 0;
       
       if (avgPricePerSqft > 0) {
-        const displayPrice = `₹${formatPrice(avgPricePerSqft)}/sqft`;
+        // Simple formatting for cluster prices - no crore/lakh for per sqft
+        const convertedPrice = convertCurrency(avgPricePerSqft, 'INR', currency);
+        const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
+        
+        let displayPrice: string;
+        if (convertedPrice >= 1000000) {
+          displayPrice = `${currencySymbol}${(convertedPrice / 1000000).toFixed(1)}M/sqft`;
+        } else if (convertedPrice >= 1000) {
+          displayPrice = `${currencySymbol}${(convertedPrice / 1000).toFixed(1)}K/sqft`;
+        } else {
+          displayPrice = `${currencySymbol}${Math.round(convertedPrice)}/sqft`;
+        }
+        
+        console.log('🏘️ Cluster price display:', { avgPricePerSqft, currency, displayPrice, count });
         return new (window as any).L.DivIcon({
           html: `<div class="${className} cluster-price">
                    <div class="price-main">${displayPrice}</div>
@@ -132,7 +150,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       className: 'custom-marker-cluster',
       iconSize: new (window as any).L.Point(40, 40, true),
     });
-  }, [mode, plots, findPlotByCoordinates]);
+  }, [mode, plots, findPlotByCoordinates, currency]);
 
   // Force cluster refresh when plots change
   useEffect(() => {
@@ -143,7 +161,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       
       return () => clearTimeout(timeoutId);
     }
-  }, [plots, mode]);
+  }, [plots, mode, currency]);
 
   // Add smooth animations for map interactions
   useEffect(() => {
@@ -179,7 +197,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
   return (
     <MarkerClusterGroup
       ref={clusterGroupRef}
-      key={`cluster-${mode}-${plots.length}`}
+      key={`cluster-${mode}-${plots.length}-${currency}`}
       {...clusterOptions}
       iconCreateFunction={createClusterCustomIcon}
     >

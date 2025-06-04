@@ -4,7 +4,9 @@ import L from 'leaflet';
 import type { PlotDto, MapPosition } from '../../types/plot.types';
 import { deletePlot } from '../../services/plotService';
 import { useModalContext } from './OptimizedMapComponent';
+import { useSettings } from '../../contexts/SettingsContext';
 import { convertToPricePerSqft, convertPriceToAllUnits, formatPrice } from '../../utils/priceConversions';
+import { formatCurrency, getCurrencySymbol, convertCurrency } from '../../utils/currencyUtils';
 
 export type MarkerDisplayMode = 'none' | 'icon' | 'text';
 
@@ -25,6 +27,7 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
   const markerRef = useRef<any>(null);
   const modalContext = useModalContext();
   const map = useMap();
+  const settings = useSettings();
 
   const position: MapPosition = {
     lat: plot.latitude,
@@ -81,7 +84,20 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
     if (mode === 'text') {
       // Always display price per square foot in markers
       const pricePerSqft = convertToPricePerSqft(plot.price, plot.priceUnit || 'per_sqft');
-      const displayPrice = `₹${formatPrice(pricePerSqft)}/sqft`;
+      
+      // Simple formatting for marker prices - no crore/lakh for per sqft
+      const convertedPrice = convertCurrency(pricePerSqft, 'INR', settings.currency);
+      const currencySymbol = getCurrencySymbol(settings.currency);
+      
+      let displayPrice: string;
+      if (convertedPrice >= 1000000) {
+        displayPrice = `${currencySymbol}${(convertedPrice / 1000000).toFixed(1)}M/sqft`;
+      } else if (convertedPrice >= 1000) {
+        displayPrice = `${currencySymbol}${(convertedPrice / 1000).toFixed(1)}K/sqft`;
+      } else {
+        displayPrice = `${currencySymbol}${Math.round(convertedPrice)}/sqft`;
+      }
+      
       const priceClass = getPriceCategory(pricePerSqft);
       
       // Calculate dynamic width based on text length
@@ -99,7 +115,7 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
       });
     }
     return new L.Icon.Default();
-  }, [mode, plot.price, plot.priceUnit, getPriceCategory]);
+  }, [mode, plot.price, plot.priceUnit, getPriceCategory, settings.currency]);
 
   const handleEdit = useCallback(() => {
     popupRef.current?.close();
@@ -147,13 +163,36 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
             <h4>Price in All Units:</h4>
             {getAllPriceConversions().map((conversion) => (
               <div key={conversion.unit} className="price-conversion-item">
-                <strong>₹{conversion.formattedPrice}</strong> {conversion.label}
+                <strong>{getCurrencySymbol(settings.currency)} {conversion.formattedPrice}</strong> {conversion.label}
               </div>
             ))}
           </div>
           
           <p><strong>Status:</strong> {plot.isForSale ? 'For Sale' : 'Not For Sale'}</p>
           {plot.description && <p><strong>Description:</strong> {plot.description}</p>}
+          
+          {(plot.createdAt || plot.updatedAt) && (
+            <div>
+              {plot.createdAt && (
+                <p><strong>Added on:</strong> {new Date(plot.createdAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</p>
+              )}
+              {plot.updatedAt && plot.updatedAt !== plot.createdAt && (
+                <p><strong>Last updated:</strong> {new Date(plot.updatedAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</p>
+              )}
+            </div>
+          )}
           
           <div className="plot-actions">
             <button 

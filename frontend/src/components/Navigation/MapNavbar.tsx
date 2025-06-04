@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGeolocationContext } from '../../contexts/GeolocationContext';
+import { useSettings } from '../../contexts/SettingsContext';
+import { getAllCurrencies, type CurrencyCode, getCurrencyInfo, refreshCurrencyRates } from '../../utils/currencyUtils';
+import type { AreaUnit } from '../../contexts/SettingsContext';
 import NavbarProfile from './NavbarProfile';
 import type { MarkerDisplayMode } from '../Map/PlotMarker';
 
@@ -344,6 +347,8 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
+  const [mapControlsExpanded, setMapControlsExpanded] = useState(false);
+  const [settingsExpanded, setSettingsExpanded] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{
@@ -358,6 +363,31 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
   const navRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<number | undefined>(undefined);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Settings state
+  const { currency, areaUnit, setCurrency, setAreaUnit } = useSettings();
+
+  // Currency rate information
+  const [currencyInfo, setCurrencyInfo] = useState(getCurrencyInfo());
+  const [refreshingRates, setRefreshingRates] = useState(false);
+
+  // Function to handle manual currency refresh
+  const handleRefreshRates = async () => {
+    setRefreshingRates(true);
+    try {
+      const success = await refreshCurrencyRates();
+      setCurrencyInfo(getCurrencyInfo());
+      if (success) {
+        console.log('✅ Currency rates refreshed successfully');
+      } else {
+        console.log('⚠️ Failed to refresh rates, using cached/fallback');
+      }
+    } catch (error) {
+      console.error('Error refreshing currency rates:', error);
+    } finally {
+      setRefreshingRates(false);
+    }
+  };
 
   // Detect mobile screen size
   useEffect(() => {
@@ -736,6 +766,9 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
               onClick={() => {
                 if (!isExpanded) {
                   setIsExpanded(true);
+                  setMapControlsExpanded(true);
+                } else {
+                  setMapControlsExpanded(!mapControlsExpanded);
                 }
               }}
             >
@@ -745,8 +778,25 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                 <polyline points="2,12 12,17 22,12"/>
               </svg>
               {isExpanded && <span>Map Controls</span>}
+              {isExpanded && (
+                <svg 
+                  width="12" 
+                  height="12" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2"
+                  style={{ 
+                    marginLeft: 'auto',
+                    transform: mapControlsExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }}
+                >
+                  <polyline points="9,18 15,12 9,6"/>
+                </svg>
+              )}
             </div>
-            {isExpanded && (
+            {isExpanded && mapControlsExpanded && (
               <div className="map-controls">
                 {/* Marker Display Mode */}
                 <div className="control-group">
@@ -836,6 +886,123 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                       </>
                     )}
                   </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Settings Section */}
+          <div className="navbar-section">
+            <div 
+              className="section-header clickable"
+              onClick={() => {
+                if (!isExpanded) {
+                  setIsExpanded(true);
+                  setSettingsExpanded(true);
+                } else {
+                  setSettingsExpanded(!settingsExpanded);
+                }
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              {isExpanded && <span>Settings</span>}
+              {isExpanded && (
+                <svg 
+                  width="12" 
+                  height="12" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2"
+                  style={{ 
+                    marginLeft: 'auto',
+                    transform: settingsExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }}
+                >
+                  <polyline points="9,18 15,12 9,6"/>
+                </svg>
+              )}
+            </div>
+            {isExpanded && settingsExpanded && (
+              <div className="settings-controls">
+                {/* Currency Selection */}
+                <div className="control-group">
+                  <label>Currency</label>
+                  <select className="settings-select" value={currency} onChange={(e) => setCurrency(e.target.value as CurrencyCode)}>
+                    {getAllCurrencies().map((currencyOption) => (
+                      <option key={currencyOption.code} value={currencyOption.code}>
+                        {currencyOption.symbol} {currencyOption.name} ({currencyOption.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Currency rate information */}
+                <div className="control-group">
+                  <label>Currency Rates</label>
+                  <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: '1.4' }}>
+                    <div>Source: {currencyInfo.source}</div>
+                    <div>Updated: {currencyInfo.lastUpdated}</div>
+                    {!currencyInfo.isLive && (
+                      <div style={{ color: '#f59e0b' }}>⚠️ Using cached/fallback rates</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Manual currency refresh */}
+                <div className="control-group">
+                  <button 
+                    className="nav-btn"
+                    onClick={handleRefreshRates}
+                    disabled={refreshingRates}
+                    style={{ fontSize: '13px' }}
+                  >
+                    {refreshingRates ? (
+                      <>
+                        <div className="loading-spinner-tiny" />
+                        Refreshing...
+                      </>
+                    ) : (
+                      <>
+                        🔄 Refresh Rates
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Area Unit Selection */}
+                <div className="control-group">
+                  <label>Area Unit</label>
+                  <div className="toggle-group">
+                    <button 
+                      className={`toggle-btn ${areaUnit === 'sqft' ? 'active' : ''}`}
+                      onClick={() => setAreaUnit('sqft')}
+                    >
+                      Sq Ft
+                    </button>
+                    <button 
+                      className={`toggle-btn ${areaUnit === 'sqm' ? 'active' : ''}`}
+                      onClick={() => setAreaUnit('sqm')}
+                    >
+                      Sq M
+                    </button>
+                    <button 
+                      className={`toggle-btn ${areaUnit === 'cent' ? 'active' : ''}`}
+                      onClick={() => setAreaUnit('cent')}
+                    >
+                      Cent
+                    </button>
+                    <button 
+                      className={`toggle-btn ${areaUnit === 'acre' ? 'active' : ''}`}
+                      onClick={() => setAreaUnit('acre')}
+                    >
+                      Acre
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1056,6 +1223,82 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                     </>
                   )}
                 </button>
+              </div>
+            </div>
+
+            {/* Settings Section */}
+            <div className="mobile-menu-section">
+              <h3>Settings</h3>
+              
+              <div className="mobile-control-group">
+                <label>Currency</label>
+                <select className="mobile-settings-select" value={currency} onChange={(e) => setCurrency(e.target.value as CurrencyCode)}>
+                  {getAllCurrencies().map((currencyOption) => (
+                    <option key={currencyOption.code} value={currencyOption.code}>
+                      {currencyOption.symbol} {currencyOption.name} ({currencyOption.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Currency rate information */}
+              <div className="mobile-control-group">
+                <label>Currency Rates</label>
+                <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: '1.4', marginBottom: '8px' }}>
+                  <div>Source: {currencyInfo.source}</div>
+                  <div>Updated: {currencyInfo.lastUpdated}</div>
+                  {!currencyInfo.isLive && (
+                    <div style={{ color: '#f59e0b' }}>⚠️ Using cached/fallback rates</div>
+                  )}
+                </div>
+                <button 
+                  className="mobile-nav-btn secondary"
+                  onClick={handleRefreshRates}
+                  disabled={refreshingRates}
+                  style={{ fontSize: '13px' }}
+                >
+                  {refreshingRates ? (
+                    <>
+                      <div className="loading-spinner-tiny" />
+                      Refreshing...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Refresh Rates
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Area Unit Selection */}
+              <div className="mobile-control-group">
+                <label>Area Unit</label>
+                <div className="mobile-toggle-group">
+                  <button 
+                    className={`mobile-toggle-btn ${areaUnit === 'sqft' ? 'active' : ''}`}
+                    onClick={() => setAreaUnit('sqft')}
+                  >
+                    Sq Ft
+                  </button>
+                  <button 
+                    className={`mobile-toggle-btn ${areaUnit === 'sqm' ? 'active' : ''}`}
+                    onClick={() => setAreaUnit('sqm')}
+                  >
+                    Sq M
+                  </button>
+                  <button 
+                    className={`mobile-toggle-btn ${areaUnit === 'cent' ? 'active' : ''}`}
+                    onClick={() => setAreaUnit('cent')}
+                  >
+                    Cent
+                  </button>
+                  <button 
+                    className={`mobile-toggle-btn ${areaUnit === 'acre' ? 'active' : ''}`}
+                    onClick={() => setAreaUnit('acre')}
+                  >
+                    Acre
+                  </button>
+                </div>
               </div>
             </div>
           </div>

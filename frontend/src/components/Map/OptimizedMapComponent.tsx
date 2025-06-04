@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGeolocationContext } from '../../contexts/GeolocationContext';
 import { useOptimizedPlotData } from '../../hooks/useOptimizedPlotData';
+import { useSettings } from '../../contexts/SettingsContext';
+import { formatCurrency, getAllCurrencies } from '../../utils/currencyUtils';
 import { MapLayerProvider } from '../../contexts/MapLayerContext';
 import PlotMarkerCluster from './PlotMarkerCluster';
 import { LongPressModal } from './LongPressPopup';
@@ -104,9 +106,10 @@ const MapInstanceCapture: React.FC<{ onMapReady: (map: any) => void }> = ({ onMa
 /**
  * Inner map component that uses the map layer context
  */
-const MapComponentInner: React.FC = React.memo(() => {
+const MapComponentInner: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { position, loading: geoLoading, error: geoError, refreshLocation } = useGeolocationContext();
+  const { currency } = useSettings();
   
   // Use optimized plot data hook
   const {
@@ -120,7 +123,8 @@ const MapComponentInner: React.FC = React.memo(() => {
     enableViewportLoading: true,
     debounceDelay: 500,
     cacheTimeout: 30 * 60 * 1000, // 30 minutes
-    maxCacheSize: 100
+    maxCacheSize: 100,
+    currency: currency
   });
 
   // State management
@@ -315,6 +319,15 @@ const MapComponentInner: React.FC = React.memo(() => {
     keepBuffer: 2
   }), []);
 
+  // Debug currency changes and force recalculation
+  useEffect(() => {
+    console.log('Currency changed to:', currency);
+    // Force a refresh of plot statistics when currency changes
+    if (plots.length > 0) {
+      console.log('Forcing plot stats recalculation for currency:', currency);
+    }
+  }, [currency, plots.length]);
+
   return (
     <ModalContext.Provider value={modalContextValue}>
       <div className={`map-container ${isNavbarExpanded ? 'navbar-expanded' : ''}`}>
@@ -427,7 +440,12 @@ const MapComponentInner: React.FC = React.memo(() => {
           <div className="dev-stats">
             <div>Plots: {plotStats.total}</div>
             <div>For Sale: {plotStats.forSale}</div>
-            <div>Avg Price: ₹{plotStats.averagePrice.toLocaleString()}</div>
+            <div>Avg Price: {(() => {
+              const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
+              const avgPrice = plotStats.averagePrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+              console.log('🎯 Rendering avg price:', { currency, currencySymbol, avgPrice, rawAvgPrice: plotStats.averagePrice });
+              return `${currencySymbol}${avgPrice}`;
+            })()}</div>
           </div>
         )}
       </div>
@@ -487,7 +505,7 @@ const MapComponentInner: React.FC = React.memo(() => {
       />
     </ModalContext.Provider>
   );
-});
+};
 
 MapComponentInner.displayName = 'MapComponentInner';
 

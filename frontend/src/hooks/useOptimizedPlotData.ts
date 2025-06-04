@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getPlotsInBounds, createPlot, updatePlot, deletePlot, getNearestPlot } from '../services/plotService';
 import type { PlotDto, MapBounds, NearestPlotRequest } from '../types/plot.types';
+import { convertCurrency, getCurrencyInfo, type CurrencyCode } from '../utils/currencyUtils';
 
 interface UseOptimizedPlotDataOptions {
   enableViewportLoading?: boolean;
   debounceDelay?: number;
   cacheTimeout?: number;
   maxCacheSize?: number;
+  currency?: CurrencyCode;
 }
 
 interface PlotCache {
@@ -31,8 +33,9 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
   const {
     enableViewportLoading = true,
     debounceDelay = 500,
-    cacheTimeout = 30 * 60 * 1000, // 30 minutes (increased from 5 minutes)
-    maxCacheSize = 100 // Increased cache size for better coverage
+    cacheTimeout = 30 * 60 * 1000, // 30 minutes
+    maxCacheSize = 50,
+    currency = 'INR'
   } = options;
 
   const [plots, setPlots] = useState<PlotDto[]>([]);
@@ -268,6 +271,8 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
 
   // Memoized plot statistics - only for currently visible plots in viewport
   const plotStats = useMemo(() => {
+    console.log('🔄 Recalculating plotStats with currency:', currency);
+    
     // If we have bounds, filter plots to only those within the current viewport
     let visiblePlots = plots;
     
@@ -282,17 +287,26 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     
     const forSale = visiblePlots.filter(p => p.isForSale).length;
     const notForSale = visiblePlots.length - forSale;
+    
+    // Convert each plot price to the selected currency before averaging
     const avgPrice = visiblePlots.length > 0 
-      ? visiblePlots.reduce((sum, p) => sum + p.price, 0) / visiblePlots.length 
+      ? visiblePlots.reduce((sum, p) => {
+          const convertedPrice = convertCurrency(p.price, 'INR', currency);
+          console.log(`💰 Converting ${p.price} INR → ${convertedPrice} ${currency}`);
+          return sum + convertedPrice;
+        }, 0) / visiblePlots.length 
       : 0;
 
-    return {
+    const result = {
       total: visiblePlots.length,
       forSale,
       notForSale,
       averagePrice: avgPrice
     };
-  }, [plots, lastBounds]);
+    
+    console.log('📊 New plotStats:', result);
+    return result;
+  }, [plots, lastBounds, currency]);
 
   // Cleanup on unmount
   useEffect(() => {
