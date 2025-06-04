@@ -44,8 +44,8 @@ const NavbarProfile: React.FC<NavbarProfileProps> = ({ isMobile = false }) => {
     if (showDropdown && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       setDropdownPosition({
-        top: rect.top,
-        left: rect.right + 8
+        top: 0,
+        left: rect.right + 16
       });
     }
   }, [showDropdown]);

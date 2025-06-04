@@ -26,6 +26,15 @@
   width: 320px;
 }
 
+/* Navbar Header with Toggle and Profile */
+.navbar-header {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  height: 60px;
+  transition: all 0.3s ease;
+}
+
 .navbar-toggle {
   width: 60px;
   height: 60px;
@@ -36,9 +45,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
   outline: none;
+  flex-shrink: 0;
 }
 
 .navbar-toggle:hover {
@@ -54,6 +63,133 @@
 .navbar-toggle:active {
   background: rgba(59, 130, 246, 0.1);
   color: #3b82f6;
+}
+
+/* Header Profile Section */
+.navbar-header-profile {
+  flex: 1;
+  padding: 0 16px 0 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.navbar-header-profile.expanded {
+  width: auto;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.header-profile-section {
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.header-auth-section {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Remove hover effect for authenticated profile section */
+.header-profile-section:hover {
+  transform: none;
+  background: transparent;
+}
+
+.header-auth-section:hover {
+  transform: translateY(-1px);
+}
+
+/* Make profile section non-interactive when expanded */
+.navbar-header-profile.expanded .header-profile-section {
+  cursor: default;
+  pointer-events: none;
+}
+
+.navbar-header-profile.expanded .header-profile-section .navbar-profile {
+  pointer-events: auto; /* Re-enable interactions for the actual profile component */
+}
+
+/* Remove all hover effects from profile when in header but keep cursor pointer */
+.navbar-header-profile .navbar-profile-btn {
+  background: transparent !important;
+  cursor: pointer !important;
+  transition: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+.navbar-header-profile .navbar-profile-btn:hover {
+  background: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.navbar-header-profile .navbar-profile-btn:focus {
+  background: transparent !important;
+  outline: none !important;
+}
+
+/* Profile icon styling for collapsed navbar - in main content area */
+.navbar-profile-avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.navbar-profile-avatar-small:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Profile icon styling in the header (when expanded) - removed as no longer used */
+
+/* Auth icon in collapsed state */
+.header-auth-section svg {
+  color: #6b7280;
+  transition: all 0.3s ease;
+}
+
+.header-auth-section:hover svg {
+  color: #3b82f6;
+  transform: scale(1.1);
+}
+
+/* Profile Animation Classes */
+.navbar-header-profile .navbar-profile {
+  animation: slideInFromBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar-header-profile .auth-buttons {
+  animation: slideInFromBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .navbar-content {
@@ -566,6 +702,10 @@
     border-color: rgba(75, 85, 99, 0.3);
   }
   
+  .navbar-header {
+    border-color: rgba(75, 85, 99, 0.3);
+  }
+  
   .section-header,
   .navbar-toggle,
   .mobile-menu-toggle {
@@ -597,6 +737,15 @@
   
   .toggle-btn.active {
     background: rgba(255, 255, 255, 0.1);
+    color: #60a5fa;
+  }
+
+  /* Dark mode for header profile section */
+  .header-auth-section svg {
+    color: #9ca3af;
+  }
+  
+  .header-auth-section:hover svg {
     color: #60a5fa;
   }
 }
@@ -964,16 +1113,17 @@
   flex-shrink: 0;
   transition: transform 0.2s ease;
   color: #6b7280;
+  transform: rotate(0deg); /* Start pointing right */
 }
 
 .navbar-profile-chevron.rotated {
-  transform: rotate(90deg);
+  transform: rotate(180deg); /* Point left when open */
 }
 
 /* Navbar Profile Dropdown */
 .navbar-profile-dropdown {
   background: white;
-  border-radius: 12px;
+  border-radius: 0 8px 8px 8px; /* Remove top-left rounded corner */
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.08);
   min-width: 240px;

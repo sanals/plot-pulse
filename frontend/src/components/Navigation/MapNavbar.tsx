@@ -613,58 +613,52 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
         ref={navRef}
         className={`desktop-navbar ${isExpanded ? 'expanded' : 'collapsed'}`}
       >
-        {/* Toggle Button */}
-        <button 
-          className="navbar-toggle"
-          onClick={toggleExpanded}
-          title={isExpanded ? 'Collapse menu' : 'Expand menu'}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
-        </button>
+        {/* Header with Toggle Button and Profile */}
+        <div className="navbar-header">
+          {/* Toggle Button */}
+          <button 
+            className="navbar-toggle"
+            onClick={toggleExpanded}
+            title={isExpanded ? 'Collapse menu' : 'Expand menu'}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+
+          {/* Profile Section in Header - Only when authenticated and expanded */}
+          {isAuthenticated && isExpanded && (
+            <div className="navbar-header-profile expanded">
+              <div className="header-profile-section">
+                <NavbarProfile />
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Navbar Content */}
         <div className="navbar-content">
-          {/* Profile Icon Section - Shows when collapsed */}
+          {/* Profile Icon Section - Shows when collapsed and authenticated */}
           <div className="navbar-section">
-            {!isExpanded && (
+            {!isExpanded && isAuthenticated && (
               <div 
                 className="section-header profile-icon-header clickable"
-                onClick={() => {
-                  if (isAuthenticated) {
-                    // For authenticated users, expand navbar to show profile
-                    setIsExpanded(true);
-                  } else {
-                    // For guests, show login modal
-                    onShowLogin();
-                  }
-                }}
+                onClick={() => setIsExpanded(true)}
               >
-                {isAuthenticated ? (
-                  <div className="navbar-profile-avatar-small">
-                    {/* TODO: Replace with actual user initials/avatar */}
-                    👤
-                  </div>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
-                )}
+                <div className="navbar-profile-avatar-small">
+                  👤
+                </div>
               </div>
             )}
           </div>
 
-          {/* Authentication Section - Shows when expanded */}
-          <div className="navbar-section">
-            {isExpanded && (
-              <div className="auth-section-flush">
-                {isAuthenticated ? (
-                  <NavbarProfile />
-                ) : (
+          {/* Authentication Section - Shows for non-authenticated users */}
+          {!isAuthenticated && (
+            <div className="navbar-section">
+              {isExpanded && (
+                <div className="auth-section-flush">
                   <div className="auth-buttons">
                     <button className="nav-btn primary" onClick={onShowLogin}>
                       Login
@@ -673,10 +667,21 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                       Register
                     </button>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+              {!isExpanded && (
+                <div 
+                  className="section-header profile-icon-header clickable"
+                  onClick={onShowLogin}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Search Section */}
           <div className="navbar-section">
