@@ -109,7 +109,7 @@ const MapInstanceCapture: React.FC<{ onMapReady: (map: any) => void }> = ({ onMa
 const MapComponentInner: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { position, loading: geoLoading, error: geoError, refreshLocation } = useGeolocationContext();
-  const { currency } = useSettings();
+  const { currency, areaUnit } = useSettings();
   
   // Use optimized plot data hook
   const {
@@ -124,7 +124,8 @@ const MapComponentInner: React.FC = () => {
     debounceDelay: 500,
     cacheTimeout: 30 * 60 * 1000, // 30 minutes
     maxCacheSize: 100,
-    currency: currency
+    currency: currency,
+    areaUnit: areaUnit
   });
 
   // State management
@@ -319,14 +320,14 @@ const MapComponentInner: React.FC = () => {
     keepBuffer: 2
   }), []);
 
-  // Debug currency changes and force recalculation
+  // Debug currency and area unit changes and force recalculation
   useEffect(() => {
-    console.log('Currency changed to:', currency);
-    // Force a refresh of plot statistics when currency changes
+    console.log('Currency or area unit changed to:', currency, areaUnit);
+    // Force a refresh of plot statistics when currency or area unit changes
     if (plots.length > 0) {
-      console.log('Forcing plot stats recalculation for currency:', currency);
+      console.log('Forcing plot stats recalculation for currency:', currency, 'and areaUnit:', areaUnit);
     }
-  }, [currency, plots.length]);
+  }, [currency, areaUnit, plots.length]);
 
   return (
     <ModalContext.Provider value={modalContextValue}>
@@ -443,8 +444,18 @@ const MapComponentInner: React.FC = () => {
             <div>Avg Price: {(() => {
               const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
               const avgPrice = plotStats.averagePrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-              console.log('🎯 Rendering avg price:', { currency, currencySymbol, avgPrice, rawAvgPrice: plotStats.averagePrice });
-              return `${currencySymbol}${avgPrice}`;
+              
+              // Get area unit label
+              const areaUnitLabels = {
+                sqft: '/sqft',
+                sqm: '/sqm', 
+                cent: '/cent',
+                acre: '/acre'
+              };
+              const areaLabel = areaUnitLabels[areaUnit] || '/sqft';
+              
+              console.log('🎯 Rendering avg price:', { currency, currencySymbol, avgPrice, rawAvgPrice: plotStats.averagePrice, areaUnit, areaLabel });
+              return `${currencySymbol}${avgPrice}${areaLabel}`;
             })()}</div>
           </div>
         )}

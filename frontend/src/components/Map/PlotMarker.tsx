@@ -5,7 +5,7 @@ import type { PlotDto, MapPosition } from '../../types/plot.types';
 import { deletePlot } from '../../services/plotService';
 import { useModalContext } from './OptimizedMapComponent';
 import { useSettings } from '../../contexts/SettingsContext';
-import { convertToPricePerSqft, convertPriceToAllUnits, formatPrice } from '../../utils/priceConversions';
+import { convertToPricePerSqft, convertPriceToAllUnits, formatPrice, convertToPreferredAreaUnit } from '../../utils/priceConversions';
 import { formatCurrency, getCurrencySymbol, convertCurrency } from '../../utils/currencyUtils';
 
 export type MarkerDisplayMode = 'none' | 'icon' | 'text';
@@ -82,22 +82,28 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
   // Create custom icon for text mode
   const getMarkerIcon = useCallback(() => {
     if (mode === 'text') {
-      // Always display price per square foot in markers
-      const pricePerSqft = convertToPricePerSqft(plot.price, plot.priceUnit || 'per_sqft');
+      // Convert to user's preferred area unit instead of always using sqft
+      const { price: convertedPrice, label: areaLabel } = convertToPreferredAreaUnit(
+        plot.price, 
+        plot.priceUnit || 'per_sqft', 
+        settings.areaUnit
+      );
       
-      // Simple formatting for marker prices - no crore/lakh for per sqft
-      const convertedPrice = convertCurrency(pricePerSqft, 'INR', settings.currency);
+      // Apply currency conversion
+      const finalPrice = convertCurrency(convertedPrice, 'INR', settings.currency);
       const currencySymbol = getCurrencySymbol(settings.currency);
       
       let displayPrice: string;
-      if (convertedPrice >= 1000000) {
-        displayPrice = `${currencySymbol}${(convertedPrice / 1000000).toFixed(1)}M/sqft`;
-      } else if (convertedPrice >= 1000) {
-        displayPrice = `${currencySymbol}${(convertedPrice / 1000).toFixed(1)}K/sqft`;
+      if (finalPrice >= 1000000) {
+        displayPrice = `${currencySymbol}${(finalPrice / 1000000).toFixed(1)}M${areaLabel}`;
+      } else if (finalPrice >= 1000) {
+        displayPrice = `${currencySymbol}${(finalPrice / 1000).toFixed(1)}K${areaLabel}`;
       } else {
-        displayPrice = `${currencySymbol}${Math.round(convertedPrice)}/sqft`;
+        displayPrice = `${currencySymbol}${Math.round(finalPrice)}${areaLabel}`;
       }
       
+      // Use per sqft price for color categorization (consistent baseline)
+      const pricePerSqft = convertToPricePerSqft(plot.price, plot.priceUnit || 'per_sqft');
       const priceClass = getPriceCategory(pricePerSqft);
       
       // Calculate dynamic width based on text length
@@ -115,7 +121,7 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
       });
     }
     return new L.Icon.Default();
-  }, [mode, plot.price, plot.priceUnit, getPriceCategory, settings.currency]);
+  }, [mode, plot.price, plot.priceUnit, getPriceCategory, settings.currency, settings.areaUnit]);
 
   const handleEdit = useCallback(() => {
     popupRef.current?.close();
@@ -140,8 +146,15 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
 
   // Get all price conversions for popup display
   const getAllPriceConversions = useCallback(() => {
-    return convertPriceToAllUnits(plot.price, plot.priceUnit || 'per_sqft');
-  }, [plot.price, plot.priceUnit]);
+    const conversions = convertPriceToAllUnits(plot.price, plot.priceUnit || 'per_sqft');
+    
+    // Apply currency conversion to each conversion
+    return conversions.map(conversion => ({
+      ...conversion,
+      formattedPrice: convertCurrency(conversion.price, 'INR', settings.currency)
+        .toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    }));
+  }, [plot.price, plot.priceUnit, settings.currency]);
 
   return (
     <Marker 

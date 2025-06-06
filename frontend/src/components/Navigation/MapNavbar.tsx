@@ -931,7 +931,89 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
               <div className="settings-controls">
                 {/* Currency Selection */}
                 <div className="control-group">
-                  <label>Currency</label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button 
+                      className="refresh-rates-btn"
+                      onClick={handleRefreshRates}
+                      disabled={refreshingRates}
+                      title={`Refresh currency exchange rates\nLast updated: ${currencyInfo.lastUpdated}\nSource: ${currencyInfo.source}`}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        cursor: refreshingRates ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#6b7280',
+                        transition: 'all 0.2s ease',
+                        opacity: refreshingRates ? 0.5 : 1,
+                        width: '20px',
+                        height: '20px',
+                        marginRight: '4px'
+                      }}
+                      onTouchStart={(e) => {
+                        if (!refreshingRates) {
+                          e.currentTarget.style.backgroundColor = '#f3f4f6';
+                          e.currentTarget.style.color = '#374151';
+                        }
+                      }}
+                      onTouchEnd={(e) => {
+                        setTimeout(() => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = '#6b7280';
+                        }, 150);
+                      }}
+                    >
+                      {refreshingRates ? (
+                        <div 
+                          className="loading-spinner-tiny" 
+                          style={{ 
+                            width: '12px', 
+                            height: '12px',
+                            border: '1.5px solid #e5e7eb',
+                            borderTop: '1.5px solid #6b7280'
+                          }} 
+                        />
+                      ) : (
+                        <svg 
+                          width="12" 
+                          height="12" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2.5"
+                        >
+                          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                          <path d="M21 3v5h-5"/>
+                          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                          <path d="M3 21v-5h5"/>
+                        </svg>
+                      )}
+                    </button>
+                    Currency
+                    <div 
+                      className="info-icon"
+                      title={`Currency Rates\nSource: ${currencyInfo.source}\nUpdated: ${currencyInfo.lastUpdated}${!currencyInfo.isLive ? '\n⚠️ Using cached/fallback rates' : ''}`}
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        border: '1px solid #6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        color: '#6b7280',
+                        cursor: 'help',
+                        userSelect: 'none'
+                      }}
+                    >
+                      i
+                    </div>
+                  </label>
                   <select className="settings-select" value={currency} onChange={(e) => setCurrency(e.target.value as CurrencyCode)}>
                     {getAllCurrencies().map((currencyOption) => (
                       <option key={currencyOption.code} value={currencyOption.code}>
@@ -939,39 +1021,6 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                       </option>
                     ))}
                   </select>
-                </div>
-
-                {/* Currency rate information */}
-                <div className="control-group">
-                  <label>Currency Rates</label>
-                  <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: '1.4' }}>
-                    <div>Source: {currencyInfo.source}</div>
-                    <div>Updated: {currencyInfo.lastUpdated}</div>
-                    {!currencyInfo.isLive && (
-                      <div style={{ color: '#f59e0b' }}>⚠️ Using cached/fallback rates</div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Manual currency refresh */}
-                <div className="control-group">
-                  <button 
-                    className="nav-btn"
-                    onClick={handleRefreshRates}
-                    disabled={refreshingRates}
-                    style={{ fontSize: '13px' }}
-                  >
-                    {refreshingRates ? (
-                      <>
-                        <div className="loading-spinner-tiny" />
-                        Refreshing...
-                      </>
-                    ) : (
-                      <>
-                        🔄 Refresh Rates
-                      </>
-                    )}
-                  </button>
                 </div>
 
                 {/* Area Unit Selection */}
@@ -1231,7 +1280,89 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
               <h3>Settings</h3>
               
               <div className="mobile-control-group">
-                <label>Currency</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button 
+                    className="refresh-rates-btn"
+                    onClick={handleRefreshRates}
+                    disabled={refreshingRates}
+                    title={`Refresh currency exchange rates\nLast updated: ${currencyInfo.lastUpdated}\nSource: ${currencyInfo.source}`}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: '4px',
+                      borderRadius: '4px',
+                      cursor: refreshingRates ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#6b7280',
+                      transition: 'all 0.2s ease',
+                      opacity: refreshingRates ? 0.5 : 1,
+                      width: '20px',
+                      height: '20px',
+                      marginRight: '4px'
+                    }}
+                    onTouchStart={(e) => {
+                      if (!refreshingRates) {
+                        e.currentTarget.style.backgroundColor = '#f3f4f6';
+                        e.currentTarget.style.color = '#374151';
+                      }
+                    }}
+                    onTouchEnd={(e) => {
+                      setTimeout(() => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = '#6b7280';
+                      }, 150);
+                    }}
+                  >
+                    {refreshingRates ? (
+                      <div 
+                        className="loading-spinner-tiny" 
+                        style={{ 
+                          width: '12px', 
+                          height: '12px',
+                          border: '1.5px solid #e5e7eb',
+                          borderTop: '1.5px solid #6b7280'
+                        }} 
+                      />
+                    ) : (
+                      <svg 
+                        width="12" 
+                        height="12" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2.5"
+                      >
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
+                      </svg>
+                    )}
+                  </button>
+                  Currency
+                  <div 
+                    className="info-icon"
+                    title={`Currency Rates\nSource: ${currencyInfo.source}\nUpdated: ${currencyInfo.lastUpdated}${!currencyInfo.isLive ? '\n⚠️ Using cached/fallback rates' : ''}`}
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      borderRadius: '50%',
+                      border: '1px solid #6b7280',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      color: '#6b7280',
+                      cursor: 'help',
+                      userSelect: 'none'
+                    }}
+                  >
+                    i
+                  </div>
+                </label>
                 <select className="mobile-settings-select" value={currency} onChange={(e) => setCurrency(e.target.value as CurrencyCode)}>
                   {getAllCurrencies().map((currencyOption) => (
                     <option key={currencyOption.code} value={currencyOption.code}>
@@ -1239,35 +1370,6 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                     </option>
                   ))}
                 </select>
-              </div>
-
-              {/* Currency rate information */}
-              <div className="mobile-control-group">
-                <label>Currency Rates</label>
-                <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: '1.4', marginBottom: '8px' }}>
-                  <div>Source: {currencyInfo.source}</div>
-                  <div>Updated: {currencyInfo.lastUpdated}</div>
-                  {!currencyInfo.isLive && (
-                    <div style={{ color: '#f59e0b' }}>⚠️ Using cached/fallback rates</div>
-                  )}
-                </div>
-                <button 
-                  className="mobile-nav-btn secondary"
-                  onClick={handleRefreshRates}
-                  disabled={refreshingRates}
-                  style={{ fontSize: '13px' }}
-                >
-                  {refreshingRates ? (
-                    <>
-                      <div className="loading-spinner-tiny" />
-                      Refreshing...
-                    </>
-                  ) : (
-                    <>
-                      🔄 Refresh Rates
-                    </>
-                  )}
-                </button>
               </div>
 
               {/* Area Unit Selection */}

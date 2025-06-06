@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useRef, useCallback } from 'react';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import PlotMarker, { type MarkerDisplayMode } from './PlotMarker';
 import type { PlotDto } from '../../types/plot.types';
-import { convertToPricePerSqft, formatPrice } from '../../utils/priceConversions';
+import { convertToPricePerSqft, formatPrice, convertToPreferredAreaUnit } from '../../utils/priceConversions';
 import { useSettings } from '../../contexts/SettingsContext';
 import { formatCurrency } from '../../utils/currencyUtils';
 import { convertCurrency } from '../../utils/currencyUtils';
@@ -31,7 +31,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
   visible
 }) => {
   const clusterGroupRef = useRef<any>(null);
-  const { currency } = useSettings();
+  const { currency, areaUnit } = useSettings();
 
   // Memoize cluster options for performance
   const clusterOptions = useMemo(() => ({
@@ -79,13 +79,13 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       className = 'cluster-medium';
     }
 
-    // If in text mode, show average price per sqft instead of count
+    // If in text mode, show average price in preferred area unit instead of count
     if (mode === 'text') {
       const markers = cluster.getAllChildMarkers();
-      let totalPricePerSqft = 0;
+      let totalPriceInPreferredUnit = 0;
       let validPrices = 0;
       
-      // Calculate average price per sqft from the cluster markers
+      // Calculate average price in preferred area unit from the cluster markers
       markers.forEach((marker: any) => {
         let plot: PlotDto | undefined;
         
@@ -103,30 +103,35 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
         }
         
         if (plot && plot.price > 0) {
-          // Convert all prices to per sqft for averaging
-          const pricePerSqft = convertToPricePerSqft(plot.price, plot.priceUnit || 'per_sqft');
-          totalPricePerSqft += pricePerSqft;
+          // Convert to user's preferred area unit
+          const { price: convertedPrice } = convertToPreferredAreaUnit(
+            plot.price,
+            plot.priceUnit || 'per_sqft',
+            areaUnit
+          );
+          totalPriceInPreferredUnit += convertedPrice;
           validPrices++;
         }
       });
       
-      const avgPricePerSqft = validPrices > 0 ? totalPricePerSqft / validPrices : 0;
+      const avgPriceInPreferredUnit = validPrices > 0 ? totalPriceInPreferredUnit / validPrices : 0;
       
-      if (avgPricePerSqft > 0) {
-        // Simple formatting for cluster prices - no crore/lakh for per sqft
-        const convertedPrice = convertCurrency(avgPricePerSqft, 'INR', currency);
+      if (avgPriceInPreferredUnit > 0) {
+        // Apply currency conversion and get area label
+        const convertedPrice = convertCurrency(avgPriceInPreferredUnit, 'INR', currency);
         const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
+        const { label: areaLabel } = convertToPreferredAreaUnit(0, 'per_sqft', areaUnit);
         
         let displayPrice: string;
         if (convertedPrice >= 1000000) {
-          displayPrice = `${currencySymbol}${(convertedPrice / 1000000).toFixed(1)}M/sqft`;
+          displayPrice = `${currencySymbol}${(convertedPrice / 1000000).toFixed(1)}M${areaLabel}`;
         } else if (convertedPrice >= 1000) {
-          displayPrice = `${currencySymbol}${(convertedPrice / 1000).toFixed(1)}K/sqft`;
+          displayPrice = `${currencySymbol}${(convertedPrice / 1000).toFixed(1)}K${areaLabel}`;
         } else {
-          displayPrice = `${currencySymbol}${Math.round(convertedPrice)}/sqft`;
+          displayPrice = `${currencySymbol}${Math.round(convertedPrice)}${areaLabel}`;
         }
         
-        console.log('🏘️ Cluster price display:', { avgPricePerSqft, currency, displayPrice, count });
+        console.log('🏘️ Cluster price display:', { avgPriceInPreferredUnit, currency, areaUnit, displayPrice, count });
         return new (window as any).L.DivIcon({
           html: `<div class="${className} cluster-price">
                    <div class="price-main">${displayPrice}</div>
@@ -150,7 +155,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       className: 'custom-marker-cluster',
       iconSize: new (window as any).L.Point(40, 40, true),
     });
-  }, [mode, plots, findPlotByCoordinates, currency]);
+  }, [mode, plots, findPlotByCoordinates, currency, areaUnit]);
 
   // Force cluster refresh when plots change
   useEffect(() => {
@@ -161,7 +166,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       
       return () => clearTimeout(timeoutId);
     }
-  }, [plots, mode, currency]);
+  }, [plots, mode, currency, areaUnit]);
 
   // Add smooth animations for map interactions
   useEffect(() => {
@@ -197,7 +202,7 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
   return (
     <MarkerClusterGroup
       ref={clusterGroupRef}
-      key={`cluster-${mode}-${plots.length}-${currency}`}
+      key={`cluster-${mode}-${plots.length}-${currency}-${areaUnit}`}
       {...clusterOptions}
       iconCreateFunction={createClusterCustomIcon}
     >

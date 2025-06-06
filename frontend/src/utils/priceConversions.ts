@@ -1,6 +1,7 @@
 /**
  * Price conversion utilities for different area units
  */
+import type { AreaUnit } from '../contexts/SettingsContext';
 
 // Conversion factors to square feet (base unit)
 const CONVERSION_TO_SQFT = {
@@ -9,6 +10,22 @@ const CONVERSION_TO_SQFT = {
   per_cent: 435.6, // 1 cent = 435.6 sqft
   per_acre: 43560, // 1 acre = 43,560 sqft
   per_hectare: 107639, // 1 hectare = 107,639 sqft
+};
+
+// Mapping from AreaUnit to price unit string
+const AREA_UNIT_TO_PRICE_UNIT: Record<AreaUnit, string> = {
+  sqft: 'per_sqft',
+  sqm: 'per_sqm',
+  cent: 'per_cent',
+  acre: 'per_acre',
+};
+
+// Mapping from AreaUnit to display label
+const AREA_UNIT_LABELS: Record<AreaUnit, string> = {
+  sqft: '/sqft',
+  sqm: '/sqm',
+  cent: '/cent',
+  acre: '/acre',
 };
 
 export interface ConvertedPrice {
@@ -80,6 +97,30 @@ export const convertToPricePerSqft = (
 ): number => {
   const conversionFactor = CONVERSION_TO_SQFT[originalUnit as keyof typeof CONVERSION_TO_SQFT] || 1;
   return originalPrice / conversionFactor;
+};
+
+/**
+ * Convert a price to the user's preferred area unit
+ */
+export const convertToPreferredAreaUnit = (
+  originalPrice: number,
+  originalUnit: string,
+  preferredAreaUnit: AreaUnit
+): { price: number; label: string } => {
+  // First convert to price per square foot (base unit)
+  const pricePerSqft = convertToPricePerSqft(originalPrice, originalUnit);
+  
+  // Get the target unit string
+  const targetUnit = AREA_UNIT_TO_PRICE_UNIT[preferredAreaUnit];
+  
+  // Convert to the preferred unit
+  const conversionFactor = CONVERSION_TO_SQFT[targetUnit as keyof typeof CONVERSION_TO_SQFT] || 1;
+  const convertedPrice = pricePerSqft * conversionFactor;
+  
+  return {
+    price: convertedPrice,
+    label: AREA_UNIT_LABELS[preferredAreaUnit]
+  };
 };
 
 /**

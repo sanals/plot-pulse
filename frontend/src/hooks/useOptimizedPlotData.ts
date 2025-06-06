@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getPlotsInBounds, createPlot, updatePlot, deletePlot, getNearestPlot } from '../services/plotService';
 import type { PlotDto, MapBounds, NearestPlotRequest } from '../types/plot.types';
 import { convertCurrency, getCurrencyInfo, type CurrencyCode } from '../utils/currencyUtils';
+import { convertToPreferredAreaUnit } from '../utils/priceConversions';
+import type { AreaUnit } from '../contexts/SettingsContext';
 
 interface UseOptimizedPlotDataOptions {
   enableViewportLoading?: boolean;
@@ -9,6 +11,7 @@ interface UseOptimizedPlotDataOptions {
   cacheTimeout?: number;
   maxCacheSize?: number;
   currency?: CurrencyCode;
+  areaUnit?: AreaUnit;
 }
 
 interface PlotCache {
@@ -35,7 +38,8 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     debounceDelay = 500,
     cacheTimeout = 30 * 60 * 1000, // 30 minutes
     maxCacheSize = 50,
-    currency = 'INR'
+    currency = 'INR',
+    areaUnit = 'sqft'
   } = options;
 
   const [plots, setPlots] = useState<PlotDto[]>([]);
@@ -271,7 +275,7 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
 
   // Memoized plot statistics - only for currently visible plots in viewport
   const plotStats = useMemo(() => {
-    console.log('🔄 Recalculating plotStats with currency:', currency);
+    console.log('🔄 Recalculating plotStats with currency:', currency, 'and areaUnit:', areaUnit);
     
     // If we have bounds, filter plots to only those within the current viewport
     let visiblePlots = plots;
@@ -288,11 +292,18 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     const forSale = visiblePlots.filter(p => p.isForSale).length;
     const notForSale = visiblePlots.length - forSale;
     
-    // Convert each plot price to the selected currency before averaging
+    // Convert each plot price to the selected currency and area unit before averaging
     const avgPrice = visiblePlots.length > 0 
       ? visiblePlots.reduce((sum, p) => {
-          const convertedPrice = convertCurrency(p.price, 'INR', currency);
-          console.log(`💰 Converting ${p.price} INR → ${convertedPrice} ${currency}`);
+          // First convert to preferred area unit
+          const { price: priceInAreaUnit } = convertToPreferredAreaUnit(
+            p.price, 
+            p.priceUnit || 'per_sqft', 
+            areaUnit
+          );
+          // Then convert currency
+          const convertedPrice = convertCurrency(priceInAreaUnit, 'INR', currency);
+          console.log(`💰 Converting ${p.price} ${p.priceUnit || 'per_sqft'} → ${priceInAreaUnit} ${areaUnit} → ${convertedPrice} ${currency}`);
           return sum + convertedPrice;
         }, 0) / visiblePlots.length 
       : 0;
@@ -306,7 +317,7 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     
     console.log('📊 New plotStats:', result);
     return result;
-  }, [plots, lastBounds, currency]);
+  }, [plots, lastBounds, currency, areaUnit]);
 
   // Cleanup on unmount
   useEffect(() => {
