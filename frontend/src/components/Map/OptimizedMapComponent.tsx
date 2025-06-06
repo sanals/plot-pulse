@@ -442,10 +442,16 @@ const MapComponentInner: React.FC = () => {
             <div>Plots: {plotStats.total}</div>
             <div>For Sale: {plotStats.forSale}</div>
             <div>Avg Price: {(() => {
-              const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
-              const avgPrice = plotStats.averagePrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+              // Use centralized price formatting for consistency
+              // Since averagePrice is already in preferred currency and area unit,
+              // we just need basic formatting
+              const avgPrice = plotStats.averagePrice.toLocaleString(undefined, { 
+                minimumFractionDigits: 0, 
+                maximumFractionDigits: 0 
+              });
               
-              // Get area unit label
+              // Get currency symbol and area unit label
+              const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
               const areaUnitLabels = {
                 sqft: '/sqft',
                 sqm: '/sqm', 

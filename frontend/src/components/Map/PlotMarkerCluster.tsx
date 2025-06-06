@@ -2,11 +2,8 @@ import React, { useMemo, useEffect, useRef, useCallback } from 'react';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import PlotMarker, { type MarkerDisplayMode } from './PlotMarker';
 import type { PlotDto } from '../../types/plot.types';
-import { convertToPricePerSqft, formatPrice, convertToPreferredAreaUnit } from '../../utils/priceConversions';
+import { convertToPricePerSqft, convertToPreferredAreaUnit, formatDisplayPrice } from '../../utils/priceConversions';
 import { useSettings } from '../../contexts/SettingsContext';
-import { formatCurrency } from '../../utils/currencyUtils';
-import { convertCurrency } from '../../utils/currencyUtils';
-import { getAllCurrencies } from '../../utils/currencyUtils';
 
 interface PlotMarkerClusterProps {
   plots: PlotDto[];
@@ -117,19 +114,16 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
       const avgPriceInPreferredUnit = validPrices > 0 ? totalPriceInPreferredUnit / validPrices : 0;
       
       if (avgPriceInPreferredUnit > 0) {
-        // Apply currency conversion and get area label
-        const convertedPrice = convertCurrency(avgPriceInPreferredUnit, 'INR', currency);
-        const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
-        const { label: areaLabel } = convertToPreferredAreaUnit(0, 'per_sqft', areaUnit);
-        
-        let displayPrice: string;
-        if (convertedPrice >= 1000000) {
-          displayPrice = `${currencySymbol}${(convertedPrice / 1000000).toFixed(1)}M${areaLabel}`;
-        } else if (convertedPrice >= 1000) {
-          displayPrice = `${currencySymbol}${(convertedPrice / 1000).toFixed(1)}K${areaLabel}`;
-        } else {
-          displayPrice = `${currencySymbol}${Math.round(convertedPrice)}${areaLabel}`;
-        }
+        // Use centralized formatting for cluster average price
+        // Create a dummy plot object to use formatDisplayPrice
+        const displayPrice = formatDisplayPrice(
+          avgPriceInPreferredUnit,
+          areaUnit === 'sqft' ? 'per_sqft' : 
+          areaUnit === 'sqm' ? 'per_sqm' :
+          areaUnit === 'cent' ? 'per_cent' : 'per_acre',
+          currency,
+          areaUnit
+        );
         
         console.log('🏘️ Cluster price display:', { avgPriceInPreferredUnit, currency, areaUnit, displayPrice, count });
         return new (window as any).L.DivIcon({

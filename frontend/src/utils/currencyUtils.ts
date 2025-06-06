@@ -201,10 +201,58 @@ export const initializeCurrency = async (): Promise<void> => {
 };
 
 /**
- * Manually refresh currency rates
+ * Refresh currency rates from live API
  */
 export const refreshCurrencyRates = async (): Promise<boolean> => {
-  return await fetchLiveCurrencyRates();
+  try {
+    console.log('🔄 Refreshing currency rates...');
+    
+    const response = await fetch(`${EXCHANGE_API_BASE}/${BASE_CURRENCY}`);
+    
+    if (!response.ok) {
+      console.warn('Failed to fetch live rates, using cached/static rates');
+      return false;
+    }
+
+    const data: ExchangeRateResponse = await response.json();
+    console.log('📊 Received exchange rate data:', data);
+
+    // Update live currencies with new rates
+    Object.keys(LIVE_CURRENCIES).forEach(code => {
+      if (data.rates[code]) {
+        LIVE_CURRENCIES[code as CurrencyCode] = {
+          ...LIVE_CURRENCIES[code as CurrencyCode],
+          exchangeRate: data.rates[code]
+        };
+      }
+    });
+
+    // Cache the results
+    const cacheData = {
+      rates: data.rates,
+      timestamp: Date.now(),
+      date: data.date
+    };
+    
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+      localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+      console.log('✅ Currency rates cached successfully');
+    } catch (error) {
+      console.warn('Failed to cache currency rates:', error);
+    }
+
+    // Clear price formatting cache since rates have changed
+    const { clearPriceFormatCache } = await import('./priceConversions');
+    clearPriceFormatCache();
+    console.log('🧹 Cleared price formatting cache due to rate update');
+
+    console.log('✅ Currency rates refreshed successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Error refreshing currency rates:', error);
+    return false;
+  }
 };
 
 /**

@@ -42,7 +42,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         </div>
         
         <div className="modal-body">
-          <p>{message}</p>
+          <p style={{ color: '#374151', fontSize: '16px', lineHeight: '1.5' }}>{message}</p>
         </div>
 
         <div className="modal-footer">

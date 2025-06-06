@@ -3,6 +3,8 @@ import React, { useState, useEffect, memo } from 'react';
 import { createPlot } from '../../services/plotService';
 import type { PlotDto } from '../../types/plot.types';
 import { PRICE_UNIT_OPTIONS } from '../../types/plot.types';
+import { useSettings } from '../../contexts/SettingsContext';
+import { getCurrencySymbol } from '../../utils/currencyUtils';
 
 interface PlotSubmissionFormProps {
   isOpen: boolean;
@@ -18,6 +20,8 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
   onClose,
   onPlotAdded
 }: PlotSubmissionFormProps) {
+  const { currency } = useSettings();
+  
   // Initialize state only when component mounts
   const [formState, setFormState] = useState({
     price: '',
@@ -142,11 +146,11 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
             <div className="coordinates-display">
               <div className="coordinate-item">
                 <label>Latitude:</label>
-                <span>{position.lat.toFixed(6)}</span>
+                <span style={{ color: '#374151', fontWeight: '500' }}>{position.lat.toFixed(6)}</span>
               </div>
               <div className="coordinate-item">
                 <label>Longitude:</label>
-                <span>{position.lng.toFixed(6)}</span>
+                <span style={{ color: '#374151', fontWeight: '500' }}>{position.lng.toFixed(6)}</span>
               </div>
             </div>
 
@@ -158,7 +162,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="price">Price (₹)</label>
+                <label htmlFor="price">Price ({getCurrencySymbol(currency)})</label>
                 <input
                   type="number"
                   id="price"

@@ -5,7 +5,7 @@ import type { PlotDto, MapPosition } from '../../types/plot.types';
 import { deletePlot } from '../../services/plotService';
 import { useModalContext } from './OptimizedMapComponent';
 import { useSettings } from '../../contexts/SettingsContext';
-import { convertToPricePerSqft, convertPriceToAllUnits, formatPrice, convertToPreferredAreaUnit } from '../../utils/priceConversions';
+import { convertToPricePerSqft, convertPriceToAllUnits, formatDisplayPrice } from '../../utils/priceConversions';
 import { formatCurrency, getCurrencySymbol, convertCurrency } from '../../utils/currencyUtils';
 
 export type MarkerDisplayMode = 'none' | 'icon' | 'text';
@@ -82,25 +82,13 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
   // Create custom icon for text mode
   const getMarkerIcon = useCallback(() => {
     if (mode === 'text') {
-      // Convert to user's preferred area unit instead of always using sqft
-      const { price: convertedPrice, label: areaLabel } = convertToPreferredAreaUnit(
-        plot.price, 
-        plot.priceUnit || 'per_sqft', 
+      // Use centralized price formatting
+      const displayPrice = formatDisplayPrice(
+        plot.price,
+        plot.priceUnit || 'per_sqft',
+        settings.currency,
         settings.areaUnit
       );
-      
-      // Apply currency conversion
-      const finalPrice = convertCurrency(convertedPrice, 'INR', settings.currency);
-      const currencySymbol = getCurrencySymbol(settings.currency);
-      
-      let displayPrice: string;
-      if (finalPrice >= 1000000) {
-        displayPrice = `${currencySymbol}${(finalPrice / 1000000).toFixed(1)}M${areaLabel}`;
-      } else if (finalPrice >= 1000) {
-        displayPrice = `${currencySymbol}${(finalPrice / 1000).toFixed(1)}K${areaLabel}`;
-      } else {
-        displayPrice = `${currencySymbol}${Math.round(finalPrice)}${areaLabel}`;
-      }
       
       // Use per sqft price for color categorization (consistent baseline)
       const pricePerSqft = convertToPricePerSqft(plot.price, plot.priceUnit || 'per_sqft');

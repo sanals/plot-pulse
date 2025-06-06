@@ -2,6 +2,11 @@
  * Price conversion utilities for different area units
  */
 import type { AreaUnit } from '../contexts/SettingsContext';
+import { convertCurrency, getCurrencySymbol, type CurrencyCode } from './currencyUtils';
+
+// Cache for formatted prices to avoid repeated calculations
+const priceFormatCache = new Map<string, string>();
+const CACHE_SIZE_LIMIT = 1000; // Prevent memory leaks
 
 // Conversion factors to square feet (base unit)
 const CONVERSION_TO_SQFT = {
@@ -121,6 +126,69 @@ export const convertToPreferredAreaUnit = (
     price: convertedPrice,
     label: AREA_UNIT_LABELS[preferredAreaUnit]
   };
+};
+
+/**
+ * CENTRALIZED: Format price with M/K notation and currency/area unit
+ * This replaces all the scattered M/K formatting logic across components
+ * MEMOIZED for better performance
+ */
+export const formatDisplayPrice = (
+  originalPrice: number,
+  originalUnit: string,
+  targetCurrency: CurrencyCode,
+  targetAreaUnit: AreaUnit
+): string => {
+  // Create cache key
+  const cacheKey = `${originalPrice}_${originalUnit}_${targetCurrency}_${targetAreaUnit}`;
+  
+  // Check cache first
+  if (priceFormatCache.has(cacheKey)) {
+    return priceFormatCache.get(cacheKey)!;
+  }
+  
+  // Convert to preferred area unit
+  const { price: priceInAreaUnit, label: areaLabel } = convertToPreferredAreaUnit(
+    originalPrice,
+    originalUnit,
+    targetAreaUnit
+  );
+  
+  // Apply currency conversion
+  const finalPrice = convertCurrency(priceInAreaUnit, 'INR', targetCurrency);
+  
+  // Get currency symbol (cached internally)
+  const currencySymbol = getCurrencySymbol(targetCurrency);
+  
+  // Apply M/K formatting
+  let result: string;
+  if (finalPrice >= 1000000) {
+    result = `${currencySymbol}${(finalPrice / 1000000).toFixed(1)}M${areaLabel}`;
+  } else if (finalPrice >= 1000) {
+    result = `${currencySymbol}${(finalPrice / 1000).toFixed(1)}K${areaLabel}`;
+  } else {
+    result = `${currencySymbol}${Math.round(finalPrice)}${areaLabel}`;
+  }
+  
+  // Cache the result (with size limit)
+  if (priceFormatCache.size >= CACHE_SIZE_LIMIT) {
+    // Clear half the cache when it gets too large
+    const entries = Array.from(priceFormatCache.entries());
+    priceFormatCache.clear();
+    entries.slice(entries.length / 2).forEach(([key, value]) => {
+      priceFormatCache.set(key, value);
+    });
+  }
+  priceFormatCache.set(cacheKey, result);
+  
+  return result;
+};
+
+/**
+ * Clear the price formatting cache (useful when exchange rates update)
+ */
+export const clearPriceFormatCache = (): void => {
+  priceFormatCache.clear();
 };
 
 /**

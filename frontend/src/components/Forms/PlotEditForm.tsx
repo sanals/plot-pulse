@@ -3,6 +3,8 @@ import React, { useState, useEffect, memo } from 'react';
 import { updatePlot } from '../../services/plotService';
 import type { PlotDto } from '../../types/plot.types';
 import { PRICE_UNIT_OPTIONS } from '../../types/plot.types';
+import { useSettings } from '../../contexts/SettingsContext';
+import { getCurrencySymbol } from '../../utils/currencyUtils';
 
 interface PlotEditFormProps {
   isOpen: boolean;
@@ -18,6 +20,8 @@ const PlotEditForm = memo(function PlotEditForm({
   onClose,
   onPlotUpdated
 }: PlotEditFormProps) {
+  const { currency } = useSettings();
+  
   // Initialize state only when component mounts
   const [formState, setFormState] = useState({
     price: '',
@@ -123,13 +127,13 @@ const PlotEditForm = memo(function PlotEditForm({
             <div className="coordinates-display">
               <div className="coordinate-item">
                 <label>Latitude:</label>
-                <span>{plot.latitude.toFixed(6)}</span>
+                <span style={{ color: '#374151', fontWeight: '500' }}>{plot.latitude.toFixed(6)}</span>
               </div>
               <div className="coordinate-item">
                 <label>Longitude:</label>
-                <span>{plot.longitude.toFixed(6)}</span>
+                <span style={{ color: '#374151', fontWeight: '500' }}>{plot.longitude.toFixed(6)}</span>
               </div>
-              <small>Location cannot be changed</small>
+              <small style={{ color: '#6B7280', fontStyle: 'italic' }}>Location cannot be changed</small>
             </div>
 
             {error && (
@@ -140,7 +144,7 @@ const PlotEditForm = memo(function PlotEditForm({
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="edit-price">Price (₹)</label>
+                <label htmlFor="edit-price">Price ({getCurrencySymbol(currency)})</label>
                 <input
                   type="number"
                   id="edit-price"
