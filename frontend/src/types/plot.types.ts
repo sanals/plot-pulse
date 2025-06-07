@@ -51,4 +51,35 @@ export const PRICE_UNIT_OPTIONS: PriceUnitOption[] = [
   { value: 'per_cent', label: 'Per Cent', shortLabel: '/cent' },
   { value: 'per_acre', label: 'Per Acre', shortLabel: '/acre' },
   { value: 'per_hectare', label: 'Per Hectare', shortLabel: '/hectare' },
-]; 
+];
+
+export interface PlotFilters {
+  priceRange: {
+    min: number | null;
+    max: number | null;
+  };
+  status: 'all' | 'for_sale' | 'not_for_sale';
+  dateAdded: 'all' | 'today' | 'week' | 'month' | 'quarter';
+  location: {
+    enabled: boolean;
+    radius: number; // in kilometers
+    center: {
+      lat: number;
+      lng: number;
+    } | null;
+    address: string;
+  };
+  searchQuery: string;
+}
+
+export interface PlotFilterParams {
+  minPrice?: number;
+  maxPrice?: number;
+  status?: 'for_sale' | 'not_for_sale';
+  dateFrom?: string;
+  dateTo?: string;
+  centerLat?: number;
+  centerLng?: number;
+  radius?: number;
+  search?: string;
+} 

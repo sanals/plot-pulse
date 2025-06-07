@@ -10,10 +10,9 @@ interface RegisterFormProps {
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onClose }) => {
   const { register } = useAuth();
   const [formData, setFormData] = useState<CreateUserRequest>({
-    username: '',
+    name: '',
     email: '',
-    password: '',
-    role: 'ADMIN', // Default role
+    password: ''
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -55,10 +54,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onC
       setSuccess('Registration successful! Please login with your credentials.');
       // Clear form
       setFormData({
-        username: '',
+        name: '',
         email: '',
         password: '',
-        role: 'ADMIN',
       });
       setConfirmPassword('');
       
@@ -91,16 +89,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onC
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="username">Username</label>
+          <label htmlFor="name">Name</label>
           <input
             type="text"
-            id="username"
-            name="username"
-            value={formData.username}
+            id="name"
+            name="name"
+            value={formData.name}
             onChange={handleChange}
             required
             disabled={isLoading}
-            placeholder="Enter your username"
+            placeholder="Enter your name"
           />
         </div>
 
@@ -146,21 +144,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onC
             disabled={isLoading}
             placeholder="Confirm your password"
           />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="role">Role</label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            required
-            disabled={isLoading}
-          >
-            <option value="ADMIN">Admin</option>
-            <option value="SUPER_ADMIN">Super Admin</option>
-          </select>
         </div>
 
         <button 

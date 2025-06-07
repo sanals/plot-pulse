@@ -1,35 +1,32 @@
 import React, { useState, useEffect, useCallback, useMemo, createContext, useContext } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { useAuth } from '../../contexts/AuthContext';
 import { useGeolocationContext } from '../../contexts/GeolocationContext';
 import { useOptimizedPlotData } from '../../hooks/useOptimizedPlotData';
 import { useSettings } from '../../contexts/SettingsContext';
-import { formatCurrency, getAllCurrencies } from '../../utils/currencyUtils';
+import { getAllCurrencies } from '../../utils/currencyUtils';
 import { MapLayerProvider } from '../../contexts/MapLayerContext';
 import PlotMarkerCluster from './PlotMarkerCluster';
 import { LongPressModal } from './LongPressPopup';
 import { PlotSubmissionForm } from '../Forms/PlotSubmissionForm';
 import { PlotEditForm } from '../Forms/PlotEditForm';
 import { ConfirmationDialog } from '../Common/ConfirmationDialog';
+import { FilterPanel } from '../Filters/FilterPanel';
 import MapLayerControl from './MapLayerControl';
 import LocationButton from './LocationButton';
 import UserLocationMarker from './UserLocationMarker';
-import LocationIndicatorToggle from './LocationIndicatorToggle';
-import MarkerDisplayToggle from './MarkerDisplayToggle';
 import { type MarkerDisplayMode } from './PlotMarker';
 import MapLongPressHandler from './MapLongPressHandler';
 import MapRecenterComponent from './MapRecenterComponent';
 import MapBoundsTracker from './MapBoundsTracker';
 import CustomZoomControl from './CustomZoomControl';
 import GeolocationPermission from './GeolocationPermission';
-import MapSearch from './MapSearch';
 import MapNavbar from '../Navigation/MapNavbar';
 import 'leaflet/dist/leaflet.css';
 import '../../styles/map-markers.css';
 import '../../styles/navbar.css';
 import type { MapPosition, MapBounds, PlotDto } from '../../types/plot.types';
-import { UserProfile } from '../Auth/UserProfile';
 import { AuthModal } from '../Auth/AuthModal';
+import { useFilters } from '../../contexts/FilterContext';
 
 // Constants
 const DEFAULT_CENTER: MapPosition = { lat: 51.505, lng: -0.09 };
@@ -107,9 +104,9 @@ const MapInstanceCapture: React.FC<{ onMapReady: (map: any) => void }> = ({ onMa
  * Inner map component that uses the map layer context
  */
 const MapComponentInner: React.FC = () => {
-  const { isAuthenticated } = useAuth();
   const { position, loading: geoLoading, error: geoError, refreshLocation } = useGeolocationContext();
   const { currency, areaUnit } = useSettings();
+  const { getFilterParams } = useFilters();
   
   // Use optimized plot data hook
   const {
@@ -125,7 +122,8 @@ const MapComponentInner: React.FC = () => {
     cacheTimeout: 30 * 60 * 1000, // 30 minutes
     maxCacheSize: 100,
     currency: currency,
-    areaUnit: areaUnit
+    areaUnit: areaUnit,
+    filters: getFilterParams()
   });
 
   // State management
@@ -168,8 +166,8 @@ const MapComponentInner: React.FC = () => {
   }, [position]);
 
   const errorMessage = useMemo(() => {
-    return plotsError || geoError;
-  }, [plotsError, geoError]);
+    return plotsError; // Only show plot errors here, geo errors have their own section
+  }, [plotsError]);
 
   // Check if any modal is open to disable map interactions
   const isAnyModalOpen = useMemo(() => {
@@ -329,6 +327,11 @@ const MapComponentInner: React.FC = () => {
     }
   }, [currency, areaUnit, plots.length]);
 
+  const hasActiveFilters = useMemo(() => {
+    const filterParams = getFilterParams();
+    return Object.keys(filterParams).length > 0;
+  }, [getFilterParams]);
+
   return (
     <ModalContext.Provider value={modalContextValue}>
       <div className={`map-container ${isNavbarExpanded ? 'navbar-expanded' : ''}`}>
@@ -460,9 +463,13 @@ const MapComponentInner: React.FC = () => {
               };
               const areaLabel = areaUnitLabels[areaUnit] || '/sqft';
               
-              console.log('🎯 Rendering avg price:', { currency, currencySymbol, avgPrice, rawAvgPrice: plotStats.averagePrice, areaUnit, areaLabel });
               return `${currencySymbol}${avgPrice}${areaLabel}`;
             })()}</div>
+            {hasActiveFilters && plotStats.total === 0 && (
+              <div style={{ color: '#dc2626', fontWeight: '600', marginTop: '8px' }}>
+                🔍 No plots match filters
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -520,6 +527,9 @@ const MapComponentInner: React.FC = () => {
         onClose={handleCloseAuthModal}
         initialMode={authModalMode}
       />
+
+      {/* Filter Panel */}
+      <FilterPanel />
     </ModalContext.Provider>
   );
 };

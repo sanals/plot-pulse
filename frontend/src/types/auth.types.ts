@@ -15,11 +15,13 @@ export interface LoginRequest {
 }
 
 export interface CreateUserRequest {
-  username: string;
+  name: string;
   email: string;
   password: string;
-  role: string;
 }
+
+// Alias for consistency with other parts of the codebase
+export type RegisterRequest = CreateUserRequest;
 
 export interface AuthResponse {
   token: string;

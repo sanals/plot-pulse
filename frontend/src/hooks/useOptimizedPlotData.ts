@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getPlotsInBounds, createPlot, updatePlot, deletePlot, getNearestPlot } from '../services/plotService';
-import type { PlotDto, MapBounds, NearestPlotRequest } from '../types/plot.types';
+import type { PlotDto, MapBounds, NearestPlotRequest, PlotFilterParams } from '../types/plot.types';
 import { convertCurrency, getCurrencyInfo, type CurrencyCode } from '../utils/currencyUtils';
 import { convertToPreferredAreaUnit } from '../utils/priceConversions';
 import type { AreaUnit } from '../contexts/SettingsContext';
@@ -12,6 +12,7 @@ interface UseOptimizedPlotDataOptions {
   maxCacheSize?: number;
   currency?: CurrencyCode;
   areaUnit?: AreaUnit;
+  filters?: PlotFilterParams;
 }
 
 interface PlotCache {
@@ -39,7 +40,8 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     cacheTimeout = 30 * 60 * 1000, // 30 minutes
     maxCacheSize = 50,
     currency = 'INR',
-    areaUnit = 'sqft'
+    areaUnit = 'sqft',
+    filters
   } = options;
 
   const [plots, setPlots] = useState<PlotDto[]>([]);
@@ -50,13 +52,19 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
   // Cache management
   const cacheRef = useRef<PlotCache>({});
   const debounceTimerRef = useRef<number | undefined>(undefined);
+  const filterDebounceTimerRef = useRef<number | undefined>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Generate cache key from bounds
+  // Generate cache key from bounds and filters
   const generateCacheKey = useCallback((bounds: MapBounds): string => {
     const precision = 4; // Reduce precision for better cache hits
-    return `${bounds.north.toFixed(precision)}_${bounds.south.toFixed(precision)}_${bounds.east.toFixed(precision)}_${bounds.west.toFixed(precision)}`;
-  }, []);
+    const boundsKey = `${bounds.north.toFixed(precision)}_${bounds.south.toFixed(precision)}_${bounds.east.toFixed(precision)}_${bounds.west.toFixed(precision)}`;
+    
+    // Include filter parameters in cache key to ensure different filters have separate cache entries
+    const filterKey = filters ? JSON.stringify(filters) : 'no-filters';
+    
+    return `${boundsKey}_${filterKey}`;
+  }, [filters]);
 
   // Check if bounds are significantly different (to avoid unnecessary requests)
   const boundsChanged = useCallback((newBounds: MapBounds, oldBounds: MapBounds | null): boolean => {
@@ -104,6 +112,80 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     }
   }, [cacheTimeout, maxCacheSize]);
 
+  // Apply client-side filters to plots
+  const applyFilters = useCallback((plotsData: PlotDto[], filterParams?: PlotFilterParams): PlotDto[] => {
+    if (!filterParams) return plotsData;
+
+    return plotsData.filter(plot => {
+      // Price range filter
+      if (filterParams.minPrice !== undefined || filterParams.maxPrice !== undefined) {
+        // Convert plot price to the current currency and area unit for comparison
+        const { price: priceInAreaUnit } = convertToPreferredAreaUnit(
+          plot.price, 
+          plot.priceUnit || 'per_sqft', 
+          areaUnit
+        );
+        const convertedPrice = convertCurrency(priceInAreaUnit, 'INR', currency);
+        
+        if (filterParams.minPrice !== undefined && convertedPrice < filterParams.minPrice) {
+          return false;
+        }
+        if (filterParams.maxPrice !== undefined && convertedPrice > filterParams.maxPrice) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (filterParams.status !== undefined) {
+        if (filterParams.status === 'for_sale' && !plot.isForSale) return false;
+        if (filterParams.status === 'not_for_sale' && plot.isForSale) return false;
+      }
+
+      // Date range filter
+      if (filterParams.dateFrom || filterParams.dateTo) {
+        const plotDate = new Date(plot.createdAt || '');
+        if (filterParams.dateFrom && plotDate < new Date(filterParams.dateFrom)) return false;
+        if (filterParams.dateTo && plotDate > new Date(filterParams.dateTo)) return false;
+      }
+
+      // Location filter (radius-based)
+      if (filterParams.centerLat !== undefined && filterParams.centerLng !== undefined && filterParams.radius !== undefined) {
+        const distance = calculateDistance(
+          plot.latitude,
+          plot.longitude,
+          filterParams.centerLat,
+          filterParams.centerLng
+        );
+        if (distance > filterParams.radius) return false;
+      }
+
+      // Search query filter
+      if (filterParams.search) {
+        const searchLower = filterParams.search.toLowerCase();
+        const description = (plot.description || '').toLowerCase();
+        if (!description.includes(searchLower)) return false;
+      }
+
+      return true;
+    });
+  }, [currency, areaUnit]);
+
+  // Helper function to calculate distance between two points in meters
+  const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+  }, []);
+
   // Get plots from cache or API
   const getCachedOrFetchPlots = useCallback(async (bounds: MapBounds): Promise<PlotDto[]> => {
     const cacheKey = generateCacheKey(bounds);
@@ -126,9 +208,12 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     try {
       const plotsData = await getPlotsInBounds(bounds);
       
-      // Cache the result
+      // Apply filters to the fetched data
+      const filteredPlots = applyFilters(plotsData, filters);
+      
+      // Cache the filtered result
       cacheRef.current[cacheKey] = {
-        data: plotsData,
+        data: filteredPlots,
         timestamp: now,
         bounds
       };
@@ -136,14 +221,14 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
       // Clean cache periodically
       cleanCache();
 
-      return plotsData;
+      return filteredPlots;
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
         throw new Error('Request was cancelled');
       }
       throw error;
     }
-  }, [generateCacheKey, cacheTimeout, cleanCache]);
+  }, [generateCacheKey, cacheTimeout, cleanCache, applyFilters, filters]);
 
   // Debounced plot loading
   const loadPlotsDebounced = useCallback((bounds: MapBounds) => {
@@ -189,6 +274,39 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
       loadPlotsDebounced(bounds);
     }
   }, [enableViewportLoading, loadPlotsDebounced]);
+
+  // Debounced filter update
+  const applyFiltersDebounced = useCallback(() => {
+    // Clear existing filter timer
+    if (filterDebounceTimerRef.current) {
+      clearTimeout(filterDebounceTimerRef.current);
+    }
+
+    // Set new timer for filter updates
+    filterDebounceTimerRef.current = setTimeout(async () => {
+      if (lastBounds) {
+        setLoading(true);
+        setError(null);
+
+        try {
+          const plotsData = await getCachedOrFetchPlots(lastBounds);
+          setPlots(plotsData);
+        } catch (error) {
+          if ((error as Error).message !== 'Request was cancelled') {
+            console.error('Error applying filters:', error);
+            setError(error instanceof Error ? error.message : 'Failed to apply filters');
+          }
+        } finally {
+          setLoading(false);
+        }
+      }
+    }, debounceDelay);
+  }, [lastBounds, getCachedOrFetchPlots, debounceDelay]);
+
+  // Apply filters when they change (debounced)
+  useEffect(() => {
+    applyFiltersDebounced();
+  }, [filters, applyFiltersDebounced]);
 
   // Optimistic create plot
   const createPlotOptimistic = useCallback(async (plotData: PlotDto): Promise<PlotDto> => {
@@ -324,6 +442,9 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
+      }
+      if (filterDebounceTimerRef.current) {
+        clearTimeout(filterDebounceTimerRef.current);
       }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();

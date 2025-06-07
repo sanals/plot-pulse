@@ -6,7 +6,7 @@ import { deletePlot } from '../../services/plotService';
 import { useModalContext } from './OptimizedMapComponent';
 import { useSettings } from '../../contexts/SettingsContext';
 import { convertToPricePerSqft, convertPriceToAllUnits, formatDisplayPrice } from '../../utils/priceConversions';
-import { formatCurrency, getCurrencySymbol, convertCurrency } from '../../utils/currencyUtils';
+import { getCurrencySymbol, convertCurrency } from '../../utils/currencyUtils';
 
 export type MarkerDisplayMode = 'none' | 'icon' | 'text';
 

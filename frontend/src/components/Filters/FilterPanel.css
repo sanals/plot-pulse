@@ -1,0 +1,390 @@
+/* Filter Panel Styles */
+.filter-panel-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 15000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.filter-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 400px;
+  max-width: 90vw;
+  background: white;
+  box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
+  z-index: 15001;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.filter-panel-open {
+  transform: translateX(0);
+}
+
+/* Header */
+.filter-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  flex-shrink: 0;
+}
+
+.filter-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-panel-title h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.active-filter-badge {
+  background: #3b82f6;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.filter-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clear-filters-btn {
+  color: #6366f1;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.clear-filters-btn:hover {
+  background-color: #f3f4f6;
+  color: #4338ca;
+}
+
+.filter-panel-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-panel-close:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+/* Content */
+.filter-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Filter Sections */
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.filter-input {
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: white;
+  color: #374151 !important;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-input::placeholder {
+  color: #9ca3af !important;
+}
+
+.filter-select {
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: #374151 !important;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Price Range */
+.price-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.price-input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.price-separator {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* Radio Options */
+.filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.radio-option:hover {
+  background-color: #f3f4f6;
+}
+
+.radio-option input[type="radio"] {
+  margin: 0;
+  accent-color: #3b82f6;
+}
+
+.radio-option span {
+  font-size: 14px;
+  color: #374151;
+}
+
+/* Checkbox Options */
+.filter-checkbox-header {
+  margin-bottom: 16px;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.checkbox-option:hover {
+  background-color: #f3f4f6;
+}
+
+.checkbox-option input[type="checkbox"] {
+  margin: 0;
+  accent-color: #3b82f6;
+}
+
+.checkbox-option span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Location Filter */
+.location-filter-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.location-center {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.location-center-controls {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.location-center-controls .filter-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.use-location-btn {
+  white-space: nowrap;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.use-location-btn:hover {
+  background: #e5e7eb;
+}
+
+.location-coordinates {
+  margin-top: 4px;
+}
+
+/* Radius Control */
+.radius-control {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.radius-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  outline: none;
+  accent-color: #3b82f6;
+}
+
+.radius-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.radius-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.radius-labels {
+  display: flex;
+  justify-content: space-between;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .filter-panel {
+    width: 100vw;
+    max-width: 100vw;
+  }
+  
+  .filter-panel-content {
+    padding: 16px;
+    gap: 24px;
+  }
+  
+  .price-range-inputs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .price-input {
+    min-width: auto;
+  }
+  
+  .price-separator {
+    text-align: center;
+    margin: 4px 0;
+  }
+  
+  .location-center-controls {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .location-center-controls .filter-input {
+    min-width: auto;
+  }
+} 

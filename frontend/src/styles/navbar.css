@@ -150,8 +150,6 @@
   font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .navbar-profile-avatar-small:hover {
@@ -267,6 +265,56 @@
 
 .section-header svg {
   flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+/* Filter Badge Styles */
+.filter-badge {
+  background: #dc2626;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Filter badge in collapsed navbar - positioned absolutely */
+.desktop-navbar.collapsed .filter-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  margin-left: 0;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 8px;
+  min-width: 16px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+}
+
+/* Ensure section header is positioned relative for absolute positioning */
+.desktop-navbar.collapsed .section-header {
+  position: relative;
+}
+
+.filter-badge-small {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #dc2626;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 8px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.1;
+  pointer-events: none;
 }
 
 .search-container-nav {
@@ -1579,4 +1627,21 @@
   font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
+}
+
+/* Filter Controls Container */
+.filter-controls-container {
+  position: fixed;
+  bottom: 140px; /* Higher to avoid plot stats */
+  left: 80px; /* Desktop: after navbar */
+  z-index: 1000;
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .filter-controls-container {
+    left: 20px; /* Mobile: left edge */
+    bottom: 160px; /* Higher on mobile to avoid stats and navbar */
+  }
 } 

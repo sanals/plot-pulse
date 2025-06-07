@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useGeolocationContext } from '../../contexts/GeolocationContext';
 import { useSettings } from '../../contexts/SettingsContext';
 import { getAllCurrencies, type CurrencyCode, getCurrencyInfo, refreshCurrencyRates } from '../../utils/currencyUtils';
-import type { AreaUnit } from '../../contexts/SettingsContext';
+import { useFilters } from '../../contexts/FilterContext';
 import NavbarProfile from './NavbarProfile';
 import type { MarkerDisplayMode } from '../Map/PlotMarker';
 
@@ -366,6 +366,14 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
 
   // Settings state
   const { currency, areaUnit, setCurrency, setAreaUnit } = useSettings();
+
+  // Filter state
+  const { 
+    isFilterPanelOpen, 
+    setFilterPanelOpen, 
+    hasActiveFilters, 
+    activeFilterCount 
+  } = useFilters();
 
   // Currency rate information
   const [currencyInfo, setCurrencyInfo] = useState(getCurrencyInfo());
@@ -759,6 +767,25 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
             </div>
           </div>
 
+          {/* Filter Section */}
+          <div className="navbar-section">
+            <div 
+              className="section-header clickable"
+              onClick={() => {
+                // Open filter panel without expanding navbar
+                setFilterPanelOpen(!isFilterPanelOpen);
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46 22,3"/>
+              </svg>
+              {isExpanded && <span>Filters</span>}
+              {hasActiveFilters && (
+                <span className="filter-badge">{activeFilterCount}</span>
+              )}
+            </div>
+          </div>
+
           {/* Map Controls Section */}
           <div className="navbar-section">
             <div 
@@ -936,7 +963,9 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                       className="refresh-rates-btn"
                       onClick={handleRefreshRates}
                       disabled={refreshingRates}
-                      title={`Refresh currency exchange rates\nLast updated: ${currencyInfo.lastUpdated}\nSource: ${currencyInfo.source}`}
+                      title={`Refresh currency exchange rates
+Last updated: ${currencyInfo.lastUpdated}
+Source: ${currencyInfo.source}`}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -995,7 +1024,9 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                     Currency
                     <div 
                       className="info-icon"
-                      title={`Currency Rates\nSource: ${currencyInfo.source}\nUpdated: ${currencyInfo.lastUpdated}${!currencyInfo.isLive ? '\n⚠️ Using cached/fallback rates' : ''}`}
+                      title={`Currency Rates
+Source: ${currencyInfo.source}
+Updated: ${currencyInfo.lastUpdated}${!currencyInfo.isLive ? '\n⚠️ Using cached/fallback rates' : ''}`}
                       style={{
                         width: '16px',
                         height: '16px',
@@ -1275,6 +1306,31 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
               </div>
             </div>
 
+            {/* Filter Section */}
+            <div className="mobile-menu-section">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Filters
+                {hasActiveFilters && (
+                  <span className="filter-badge">{activeFilterCount}</span>
+                )}
+              </h3>
+              
+              <div className="mobile-control-group">
+                <button 
+                  className={`mobile-nav-btn ${isFilterPanelOpen ? 'active' : ''}`}
+                  onClick={() => {
+                    setFilterPanelOpen(!isFilterPanelOpen);
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46 22,3"/>
+                  </svg>
+                  {isFilterPanelOpen ? 'Close Filters' : 'Open Filters'}
+                </button>
+              </div>
+            </div>
+
             {/* Settings Section */}
             <div className="mobile-menu-section">
               <h3>Settings</h3>
@@ -1285,7 +1341,9 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                     className="refresh-rates-btn"
                     onClick={handleRefreshRates}
                     disabled={refreshingRates}
-                    title={`Refresh currency exchange rates\nLast updated: ${currencyInfo.lastUpdated}\nSource: ${currencyInfo.source}`}
+                    title={`Refresh currency exchange rates
+Last updated: ${currencyInfo.lastUpdated}
+Source: ${currencyInfo.source}`}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -1344,7 +1402,9 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                   Currency
                   <div 
                     className="info-icon"
-                    title={`Currency Rates\nSource: ${currencyInfo.source}\nUpdated: ${currencyInfo.lastUpdated}${!currencyInfo.isLive ? '\n⚠️ Using cached/fallback rates' : ''}`}
+                    title={`Currency Rates
+Source: ${currencyInfo.source}
+Updated: ${currencyInfo.lastUpdated}${!currencyInfo.isLive ? '\n⚠️ Using cached/fallback rates' : ''}`}
                     style={{
                       width: '16px',
                       height: '16px',
