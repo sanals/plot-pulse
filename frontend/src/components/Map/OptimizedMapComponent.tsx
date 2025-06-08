@@ -293,30 +293,47 @@ const MapComponentInner: React.FC = () => {
     e.stopPropagation();
   }, []);
 
-  // Memoized props for performance
+  // Map container configuration
   const mapContainerProps = useMemo(() => ({
     center: DEFAULT_CENTER,
     zoom: DEFAULT_ZOOM,
+    minZoom: 4,
+    maxZoom: 19,
+    scrollWheelZoom: true,
     style: { 
-      height: '100%', 
-      width: '100%',
-      zIndex: 1
+      width: '100%', 
+      height: '100%',
+      background: '#f8f9fa'
     },
     zoomControl: false,
-    attributionControl: false,
+    attributionControl: true,
     preferCanvas: true,
-    maxZoom: 19,
-    minZoom: 3
+    updateWhenZooming: false,
+    updateWhenIdle: true,
+    maxBoundsViscosity: 1.0,
+    bounceAtZoomLimits: false,
+    whenReady: () => {
+      // Force a resize event after map is ready
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
+    }
   }), []);
 
+  // Tile layer configuration
   const tileLayerProps = useMemo(() => ({
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     maxZoom: 19,
-    tileSize: 256,
+    minZoom: 4,
+    keepBuffer: 4,
     updateWhenIdle: true,
     updateWhenZooming: false,
-    keepBuffer: 2
+    className: 'map-tiles',
+    errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+    bounds: [[-90, -180] as [number, number], [90, 180] as [number, number]],
+    noWrap: false,
+    detectRetina: true
   }), []);
 
   // Debug currency and area unit changes and force recalculation
