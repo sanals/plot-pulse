@@ -106,7 +106,7 @@ const MapInstanceCapture: React.FC<{ onMapReady: (map: any) => void }> = ({ onMa
 const MapComponentInner: React.FC = () => {
   const { position, loading: geoLoading, error: geoError, refreshLocation } = useGeolocationContext();
   const { currency, areaUnit } = useSettings();
-  const { getFilterParams } = useFilters();
+  const { getFilterParams, filters } = useFilters();
   
   // Use optimized plot data hook
   const {
@@ -115,7 +115,8 @@ const MapComponentInner: React.FC = () => {
     error: plotsError,
     plotStats,
     loadPlotsInViewport,
-    refreshPlots
+    refreshPlots,
+    refreshFilteredPlots
   } = useOptimizedPlotData({
     enableViewportLoading: true,
     debounceDelay: 500,
@@ -331,7 +332,7 @@ const MapComponentInner: React.FC = () => {
     return Object.keys(filterParams).length > 0;
   }, [getFilterParams]);
 
-  // Memoize expensive currency and area unit lookups for dev stats
+  // Memoized formatting for dev stats to avoid expensive recalculations
   const devStatsFormatting = useMemo(() => {
     const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
     const areaUnitLabels = {
@@ -344,6 +345,8 @@ const MapComponentInner: React.FC = () => {
     
     return { currencySymbol, areaLabel };
   }, [currency, areaUnit]);
+
+  // Real-time filtering is now handled inside the useOptimizedPlotData hook
 
   return (
     <ModalContext.Provider value={modalContextValue}>

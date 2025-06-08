@@ -1471,10 +1471,10 @@
 
 /* Search Input Wrapper and Loading */
 .search-input-wrapper {
-  flex: 1;
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
 }
 
 .search-loading-indicator {

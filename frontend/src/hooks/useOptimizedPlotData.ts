@@ -53,6 +53,79 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
   const cacheRef = useRef<PlotCache>({});
   const debounceTimerRef = useRef<number | undefined>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastFiltersRef = useRef(filters);
+
+  // Memoize filter function to avoid recreating it on every render
+  const applyFilters = useCallback((data: PlotDto[]): PlotDto[] => {
+    if (!filters) return data;
+
+    return data.filter(plot => {
+      // Price range filter
+      if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+        const { price: priceInAreaUnit } = convertToPreferredAreaUnit(
+          plot.price,
+          plot.priceUnit || 'per_sqft',
+          areaUnit
+        );
+        const convertedPrice = convertCurrency(priceInAreaUnit, 'INR', currency);
+
+        if (filters.minPrice !== undefined && convertedPrice < filters.minPrice) {
+          return false;
+        }
+        if (filters.maxPrice !== undefined && convertedPrice > filters.maxPrice) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (filters.status !== undefined) {
+        if (filters.status === 'for_sale' && !plot.isForSale) return false;
+        if (filters.status === 'not_for_sale' && plot.isForSale) return false;
+      }
+
+      // Date range filter
+      if (filters.dateFrom || filters.dateTo) {
+        const plotDate = new Date(plot.createdAt || '');
+        if (filters.dateFrom && plotDate < new Date(filters.dateFrom)) return false;
+        if (filters.dateTo && plotDate > new Date(filters.dateTo)) return false;
+      }
+
+      // Location filter (radius-based)
+      if (filters.centerLat !== undefined && filters.centerLng !== undefined && filters.radius !== undefined) {
+        const R = 6371e3; // Earth's radius in meters
+        const φ1 = plot.latitude * Math.PI / 180;
+        const φ2 = filters.centerLat * Math.PI / 180;
+        const Δφ = (filters.centerLat - plot.latitude) * Math.PI / 180;
+        const Δλ = (filters.centerLng - plot.longitude) * Math.PI / 180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+
+        if (distance > filters.radius) return false;
+      }
+
+      // Search query filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const description = (plot.description || '').toLowerCase();
+        if (!description.includes(searchLower)) return false;
+      }
+
+      return true;
+    });
+  }, [filters, areaUnit, currency]);
+
+  // Check if filters have changed
+  const haveFiltersChanged = useCallback(() => {
+    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(lastFiltersRef.current);
+    if (filtersChanged) {
+      lastFiltersRef.current = filters;
+    }
+    return filtersChanged;
+  }, [filters]);
 
   // Generate cache key from bounds only (filters applied client-side for better performance)
   const generateCacheKey = useCallback((bounds: MapBounds): string => {
@@ -60,51 +133,15 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     return `${bounds.north.toFixed(precision)}_${bounds.south.toFixed(precision)}_${bounds.east.toFixed(precision)}_${bounds.west.toFixed(precision)}`;
   }, []);
 
-  // Check if bounds are significantly different (to avoid unnecessary requests)
-  const boundsChanged = useCallback((newBounds: MapBounds, oldBounds: MapBounds | null): boolean => {
-    if (!oldBounds) return true;
-    
-    // Check if new bounds are fully contained within old bounds (zoom in case)
-    const isZoomIn = 
-      newBounds.north <= oldBounds.north && 
-      newBounds.south >= oldBounds.south && 
-      newBounds.east <= oldBounds.east && 
-      newBounds.west >= oldBounds.west;
-    
-    // If it's a zoom in operation, don't refetch data
-    if (isZoomIn) return false;
-    
-    // For pan operations, use a threshold to avoid small movements triggering refetch
-    const threshold = 0.005; // Minimum change threshold
-    return (
-      Math.abs(newBounds.north - oldBounds.north) > threshold ||
-      Math.abs(newBounds.south - oldBounds.south) > threshold ||
-      Math.abs(newBounds.east - oldBounds.east) > threshold ||
-      Math.abs(newBounds.west - oldBounds.west) > threshold
-    );
-  }, []);
-
-  // Clean expired cache entries
+  // Clean cache when it exceeds maxCacheSize
   const cleanCache = useCallback(() => {
-    const now = Date.now();
-    const cache = cacheRef.current;
-    const keys = Object.keys(cache);
-    
-    // Remove expired entries
-    keys.forEach(key => {
-      if (now - cache[key].timestamp > cacheTimeout) {
-        delete cache[key];
-      }
-    });
-
-    // Remove oldest entries if cache is too large
-    const remainingKeys = Object.keys(cache);
-    if (remainingKeys.length > maxCacheSize) {
-      const sortedKeys = remainingKeys.sort((a, b) => cache[a].timestamp - cache[b].timestamp);
-      const keysToRemove = sortedKeys.slice(0, remainingKeys.length - maxCacheSize);
-      keysToRemove.forEach(key => delete cache[key]);
+    const cacheEntries = Object.entries(cacheRef.current);
+    if (cacheEntries.length > maxCacheSize) {
+      const sortedEntries = cacheEntries.sort((a, b) => b[1].timestamp - a[1].timestamp);
+      const entriesToKeep = sortedEntries.slice(0, maxCacheSize);
+      cacheRef.current = Object.fromEntries(entriesToKeep);
     }
-  }, [cacheTimeout, maxCacheSize]);
+  }, [maxCacheSize]);
 
   // Get plots from cache or API
   const getCachedOrFetchPlots = useCallback(async (bounds: MapBounds): Promise<PlotDto[]> => {
@@ -112,7 +149,7 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     const cached = cacheRef.current[cacheKey];
     const now = Date.now();
 
-    // Return cached data if valid (apply filters to cached data)
+    // Return cached data if valid
     if (cached && (now - cached.timestamp) < cacheTimeout) {
       return cached.data;
     }
@@ -130,7 +167,7 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
       
       // Cache the raw unfiltered data
       cacheRef.current[cacheKey] = {
-        data: plotsData, // Store raw data
+        data: plotsData,
         timestamp: now,
         bounds
       };
@@ -156,82 +193,13 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
 
     // Set new timer
     debounceTimerRef.current = setTimeout(async () => {
-      const boundsSignificantlyChanged = boundsChanged(bounds, lastBounds);
-      
-      if (!boundsSignificantlyChanged) {
-        // Still update lastBounds for accurate plot statistics even if we don't refetch
-        setLastBounds(bounds);
-        return;
-      }
-
       setLoading(true);
       setError(null);
 
       try {
         const plotsData = await getCachedOrFetchPlots(bounds);
-        
-        // Apply filters to fetched data using the same logic as the useEffect
-        const filteredPlots = filters ? plotsData.filter(plot => {
-          // Price range filter
-          if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-            const { price: priceInAreaUnit } = convertToPreferredAreaUnit(
-              plot.price, 
-              plot.priceUnit || 'per_sqft', 
-              areaUnit
-            );
-            const convertedPrice = convertCurrency(priceInAreaUnit, 'INR', currency);
-            
-            if (filters.minPrice !== undefined && convertedPrice < filters.minPrice) {
-              return false;
-            }
-            if (filters.maxPrice !== undefined && convertedPrice > filters.maxPrice) {
-              return false;
-            }
-          }
-
-          // Status filter
-          if (filters.status !== undefined) {
-            if (filters.status === 'for_sale' && !plot.isForSale) return false;
-            if (filters.status === 'not_for_sale' && plot.isForSale) return false;
-          }
-
-          // Date range filter
-          if (filters.dateFrom || filters.dateTo) {
-            const plotDate = new Date(plot.createdAt || '');
-            if (filters.dateFrom && plotDate < new Date(filters.dateFrom)) return false;
-            if (filters.dateTo && plotDate > new Date(filters.dateTo)) return false;
-          }
-
-          // Location filter (radius-based)
-          if (filters.centerLat !== undefined && filters.centerLng !== undefined && filters.radius !== undefined) {
-            const R = 6371e3; // Earth's radius in meters
-            const φ1 = plot.latitude * Math.PI / 180;
-            const φ2 = filters.centerLat * Math.PI / 180;
-            const Δφ = (filters.centerLat - plot.latitude) * Math.PI / 180;
-            const Δλ = (filters.centerLng - plot.longitude) * Math.PI / 180;
-
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const distance = R * c;
-            
-            if (distance > filters.radius) return false;
-          }
-
-          // Search query filter
-          if (filters.search) {
-            const searchLower = filters.search.toLowerCase();
-            const description = (plot.description || '').toLowerCase();
-            if (!description.includes(searchLower)) return false;
-          }
-
-          return true;
-        }) : plotsData;
-        
-        // Always update plots with filtered data
+        const filteredPlots = applyFilters(plotsData);
         setPlots(filteredPlots);
-        
         setLastBounds(bounds);
       } catch (error) {
         if ((error as Error).message !== 'Request was cancelled') {
@@ -242,7 +210,7 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
         setLoading(false);
       }
     }, debounceDelay);
-  }, [debounceDelay, boundsChanged, lastBounds, getCachedOrFetchPlots, filters, currency, areaUnit]);
+  }, [debounceDelay, getCachedOrFetchPlots, applyFilters]);
 
   // Load plots for viewport
   const loadPlotsInViewport = useCallback((bounds: MapBounds) => {
@@ -251,13 +219,29 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     }
   }, [enableViewportLoading, loadPlotsDebounced]);
 
-  // Function to refresh plots with current filters (can be called explicitly)
+  // Function to refresh plots with current filters
   const refreshFilteredPlots = useCallback(() => {
     if (lastBounds) {
-      // Force reload with current filters
-      loadPlotsDebounced(lastBounds);
+      const cacheKey = generateCacheKey(lastBounds);
+      const cached = cacheRef.current[cacheKey];
+      
+      if (cached) {
+        // Apply filters to cached data without API call
+        const filteredPlots = applyFilters(cached.data);
+        setPlots(filteredPlots);
+      } else {
+        // If no cached data, do a full reload
+        loadPlotsDebounced(lastBounds);
+      }
     }
-  }, [lastBounds, loadPlotsDebounced]);
+  }, [lastBounds, generateCacheKey, applyFilters, loadPlotsDebounced]);
+
+  // Check for filter changes and reapply if needed
+  useEffect(() => {
+    if (haveFiltersChanged()) {
+      refreshFilteredPlots();
+    }
+  }, [filters, haveFiltersChanged, refreshFilteredPlots]);
 
   // Optimistic create plot
   const createPlotOptimistic = useCallback(async (plotData: PlotDto): Promise<PlotDto> => {
@@ -409,79 +393,7 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     refreshPlots: () => {
       cacheRef.current = {};
       if (lastBounds) {
-        // Force reload by bypassing the bounds change check
-        setLoading(true);
-        setError(null);
-        
-        getCachedOrFetchPlots(lastBounds).then(plotsData => {
-          // Apply filters to refreshed data using the same logic
-          const filteredPlots = filters ? plotsData.filter(plot => {
-            // Price range filter
-            if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-              const { price: priceInAreaUnit } = convertToPreferredAreaUnit(
-                plot.price, 
-                plot.priceUnit || 'per_sqft', 
-                areaUnit
-              );
-              const convertedPrice = convertCurrency(priceInAreaUnit, 'INR', currency);
-              
-              if (filters.minPrice !== undefined && convertedPrice < filters.minPrice) {
-                return false;
-              }
-              if (filters.maxPrice !== undefined && convertedPrice > filters.maxPrice) {
-                return false;
-              }
-            }
-
-            // Status filter
-            if (filters.status !== undefined) {
-              if (filters.status === 'for_sale' && !plot.isForSale) return false;
-              if (filters.status === 'not_for_sale' && plot.isForSale) return false;
-            }
-
-            // Date range filter
-            if (filters.dateFrom || filters.dateTo) {
-              const plotDate = new Date(plot.createdAt || '');
-              if (filters.dateFrom && plotDate < new Date(filters.dateFrom)) return false;
-              if (filters.dateTo && plotDate > new Date(filters.dateTo)) return false;
-            }
-
-            // Location filter (radius-based)
-            if (filters.centerLat !== undefined && filters.centerLng !== undefined && filters.radius !== undefined) {
-              const R = 6371e3; // Earth's radius in meters
-              const φ1 = plot.latitude * Math.PI / 180;
-              const φ2 = filters.centerLat * Math.PI / 180;
-              const Δφ = (filters.centerLat - plot.latitude) * Math.PI / 180;
-              const Δλ = (filters.centerLng - plot.longitude) * Math.PI / 180;
-
-              const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                        Math.cos(φ1) * Math.cos(φ2) *
-                        Math.sin(Δλ/2) * Math.sin(Δλ/2);
-              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-              const distance = R * c;
-              
-              if (distance > filters.radius) return false;
-            }
-
-            // Search query filter
-            if (filters.search) {
-              const searchLower = filters.search.toLowerCase();
-              const description = (plot.description || '').toLowerCase();
-              if (!description.includes(searchLower)) return false;
-            }
-
-            return true;
-          }) : plotsData;
-          
-          setPlots(filteredPlots);
-          setLoading(false);
-        }).catch(error => {
-          if ((error as Error).message !== 'Request was cancelled') {
-            console.error('Error refreshing plots:', error);
-            setError(error instanceof Error ? error.message : 'Failed to refresh plots');
-          }
-          setLoading(false);
-        });
+        loadPlotsInViewport(lastBounds);
       }
     },
     refreshFilteredPlots

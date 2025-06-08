@@ -730,13 +730,28 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                   setIsExpanded(true);
                   // Focus search input after expansion
                   setTimeout(() => searchInputRef.current?.focus(), 100);
+                } else if (searchValue) {
+                  // If search has value, clear it
+                  setSearchValue('');
+                  setSearchSuggestions([]);
+                  setShowSuggestions(false);
+                  searchInputRef.current?.focus();
                 }
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
-              </svg>
+              {searchValue && isExpanded ? (
+                // Show close icon when there's search text
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              ) : (
+                // Show search icon when no search text
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+              )}
               {isExpanded ? (
                 <div className="search-input-wrapper">
                   <input
