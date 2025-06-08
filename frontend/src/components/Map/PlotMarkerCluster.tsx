@@ -125,7 +125,9 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
           areaUnit
         );
         
-        console.log('🏘️ Cluster price display:', { avgPriceInPreferredUnit, currency, areaUnit, displayPrice, count });
+        // Debug logging removed for performance
+        // console.log('🏘️ Cluster price display:', { avgPriceInPreferredUnit, currency, areaUnit, displayPrice, count });
+        
         return new (window as any).L.DivIcon({
           html: `<div class="${className} cluster-price">
                    <div class="price-main">${displayPrice}</div>

@@ -320,10 +320,9 @@ const MapComponentInner: React.FC = () => {
 
   // Debug currency and area unit changes and force recalculation
   useEffect(() => {
-    console.log('Currency or area unit changed to:', currency, areaUnit);
     // Force a refresh of plot statistics when currency or area unit changes
     if (plots.length > 0) {
-      console.log('Forcing plot stats recalculation for currency:', currency, 'and areaUnit:', areaUnit);
+      // Silent refresh without logging for better performance
     }
   }, [currency, areaUnit, plots.length]);
 
@@ -331,6 +330,20 @@ const MapComponentInner: React.FC = () => {
     const filterParams = getFilterParams();
     return Object.keys(filterParams).length > 0;
   }, [getFilterParams]);
+
+  // Memoize expensive currency and area unit lookups for dev stats
+  const devStatsFormatting = useMemo(() => {
+    const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
+    const areaUnitLabels = {
+      sqft: '/sqft',
+      sqm: '/sqm', 
+      cent: '/cent',
+      acre: '/acre'
+    };
+    const areaLabel = areaUnitLabels[areaUnit] || '/sqft';
+    
+    return { currencySymbol, areaLabel };
+  }, [currency, areaUnit]);
 
   return (
     <ModalContext.Provider value={modalContextValue}>
@@ -453,15 +466,7 @@ const MapComponentInner: React.FC = () => {
                 maximumFractionDigits: 0 
               });
               
-              // Get currency symbol and area unit label
-              const currencySymbol = getAllCurrencies().find(c => c.code === currency)?.symbol || '$';
-              const areaUnitLabels = {
-                sqft: '/sqft',
-                sqm: '/sqm', 
-                cent: '/cent',
-                acre: '/acre'
-              };
-              const areaLabel = areaUnitLabels[areaUnit] || '/sqft';
+              const { currencySymbol, areaLabel } = devStatsFormatting;
               
               return `${currencySymbol}${avgPrice}${areaLabel}`;
             })()}</div>
@@ -558,4 +563,4 @@ const OptimizedMapComponent: React.FC = React.memo(() => {
 
 OptimizedMapComponent.displayName = 'OptimizedMapComponent';
 
-export default OptimizedMapComponent; 
+export default OptimizedMapComponent;
