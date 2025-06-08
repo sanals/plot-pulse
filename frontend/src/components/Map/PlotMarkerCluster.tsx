@@ -67,101 +67,119 @@ const PlotMarkerCluster: React.FC<PlotMarkerClusterProps> = React.memo(({
 
   // Custom cluster icon creation with improved plot data matching
   const createClusterCustomIcon = useMemo(() => (cluster: any) => {
-    const count = cluster.getChildCount();
-    let className = 'cluster-small';
+    if (!cluster) return null;
     
-    if (count >= 100) {
-      className = 'cluster-large';
-    } else if (count >= 10) {
-      className = 'cluster-medium';
-    }
-
-    // If in text mode, show average price in preferred area unit instead of count
-    if (mode === 'text') {
-      const markers = cluster.getAllChildMarkers();
-      let totalPriceInPreferredUnit = 0;
-      let validPrices = 0;
+    try {
+      const count = cluster.getChildCount();
+      let className = 'cluster-small';
       
-      // Calculate average price in preferred area unit from the cluster markers
-      markers.forEach((marker: any) => {
-        let plot: PlotDto | undefined;
-        
-        // Try to get plot ID from marker options first
-        const plotId = marker.options?.plotId;
-        if (plotId) {
-          plot = plots.find(p => p.id === plotId);
-        }
-        
-        // If no plotId or plot not found, try coordinate matching
-        if (!plot) {
-          const lat = marker.getLatLng().lat;
-          const lng = marker.getLatLng().lng;
-          plot = findPlotByCoordinates(lat, lng);
-        }
-        
-        if (plot && plot.price > 0) {
-          // Convert to user's preferred area unit
-          const { price: convertedPrice } = convertToPreferredAreaUnit(
-            plot.price,
-            plot.priceUnit || 'per_sqft',
-            areaUnit
-          );
-          totalPriceInPreferredUnit += convertedPrice;
-          validPrices++;
-        }
-      });
-      
-      const avgPriceInPreferredUnit = validPrices > 0 ? totalPriceInPreferredUnit / validPrices : 0;
-      
-      if (avgPriceInPreferredUnit > 0) {
-        // Use centralized formatting for cluster average price
-        // Create a dummy plot object to use formatDisplayPrice
-        const displayPrice = formatDisplayPrice(
-          avgPriceInPreferredUnit,
-          areaUnit === 'sqft' ? 'per_sqft' : 
-          areaUnit === 'sqm' ? 'per_sqm' :
-          areaUnit === 'cent' ? 'per_cent' : 'per_acre',
-          currency,
-          areaUnit
-        );
-        
-        // Debug logging removed for performance
-        // console.log('🏘️ Cluster price display:', { avgPriceInPreferredUnit, currency, areaUnit, displayPrice, count });
-        
-        return new (window as any).L.DivIcon({
-          html: `<div class="${className} cluster-price">
-                   <div class="price-main">${displayPrice}</div>
-                   <div class="price-count">${count} plots</div>
-                 </div>`,
-          className: 'custom-marker-cluster price-cluster',
-          iconSize: null,
-        });
-      } else {
-        // Fallback to regular count display when no valid prices found
-        return new (window as any).L.DivIcon({
-          html: `<div class="${className}"><span>${count}</span></div>`,
-          className: 'custom-marker-cluster',
-          iconSize: new (window as any).L.Point(40, 40, true),
-        });
+      if (count >= 100) {
+        className = 'cluster-large';
+      } else if (count >= 10) {
+        className = 'cluster-medium';
       }
-    }
 
-    return new (window as any).L.DivIcon({
-      html: `<div class="${className}"><span>${count}</span></div>`,
-      className: 'custom-marker-cluster',
-      iconSize: new (window as any).L.Point(40, 40, true),
-    });
+      // If in text mode, show average price in preferred area unit instead of count
+      if (mode === 'text' && cluster.getAllChildMarkers) {
+        try {
+          const markers = cluster.getAllChildMarkers();
+          let totalPriceInPreferredUnit = 0;
+          let validPrices = 0;
+          
+          // Calculate average price in preferred area unit from the cluster markers
+          markers.forEach((marker: any) => {
+            if (!marker) return;
+            
+            let plot: PlotDto | undefined;
+            
+            try {
+              // Try to get plot ID from marker options first
+              const plotId = marker.options?.plotId;
+              if (plotId) {
+                plot = plots.find(p => p.id === plotId);
+              }
+              
+              // If no plotId or plot not found, try coordinate matching
+              if (!plot && marker.getLatLng) {
+                const lat = marker.getLatLng().lat;
+                const lng = marker.getLatLng().lng;
+                plot = findPlotByCoordinates(lat, lng);
+              }
+              
+              if (plot && plot.price > 0) {
+                // Convert to user's preferred area unit
+                const { price: convertedPrice } = convertToPreferredAreaUnit(
+                  plot.price,
+                  plot.priceUnit || 'per_sqft',
+                  areaUnit
+                );
+                totalPriceInPreferredUnit += convertedPrice;
+                validPrices++;
+              }
+            } catch (err) {
+              console.warn('Error processing marker:', err);
+            }
+          });
+          
+          const avgPriceInPreferredUnit = validPrices > 0 ? totalPriceInPreferredUnit / validPrices : 0;
+          
+          if (avgPriceInPreferredUnit > 0) {
+            // Use centralized formatting for cluster average price
+            const displayPrice = formatDisplayPrice(
+              avgPriceInPreferredUnit,
+              areaUnit === 'sqft' ? 'per_sqft' : 
+              areaUnit === 'sqm' ? 'per_sqm' :
+              areaUnit === 'cent' ? 'per_cent' : 'per_acre',
+              currency,
+              areaUnit
+            );
+            
+            return new (window as any).L.DivIcon({
+              html: `<div class="${className} cluster-price">
+                       <div class="price-main">${displayPrice}</div>
+                       <div class="price-count">${count} plots</div>
+                     </div>`,
+              className: 'custom-marker-cluster price-cluster',
+              iconSize: null,
+            });
+          }
+        } catch (err) {
+          console.warn('Error creating price cluster:', err);
+        }
+      }
+
+      // Fallback to regular count display
+      return new (window as any).L.DivIcon({
+        html: `<div class="${className}"><span>${count}</span></div>`,
+        className: 'custom-marker-cluster',
+        iconSize: new (window as any).L.Point(40, 40, true),
+      });
+    } catch (err) {
+      console.warn('Error creating cluster icon:', err);
+      return new (window as any).L.DivIcon({
+        html: '<div class="cluster-small"><span>!</span></div>',
+        className: 'custom-marker-cluster',
+        iconSize: new (window as any).L.Point(40, 40, true),
+      });
+    }
   }, [mode, plots, findPlotByCoordinates, currency, areaUnit]);
 
   // Force cluster refresh when plots change
   useEffect(() => {
-    if (clusterGroupRef.current?.refreshClusters) {
-      const timeoutId = setTimeout(() => {
-        clusterGroupRef.current.refreshClusters();
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
-    }
+    if (!clusterGroupRef.current) return;
+
+    // Wait for next tick to ensure cluster group is properly initialized
+    const timeoutId = setTimeout(() => {
+      try {
+        if (clusterGroupRef.current?.getLayers?.().length > 0) {
+          clusterGroupRef.current.refreshClusters();
+        }
+      } catch (err) {
+        console.warn('Error refreshing clusters:', err);
+      }
+    }, 300); // Increased delay to ensure proper initialization
+    
+    return () => clearTimeout(timeoutId);
   }, [plots, mode, currency, areaUnit]);
 
   // Add smooth animations for map interactions
