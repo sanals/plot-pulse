@@ -16,7 +16,7 @@ This guide will help you deploy the PlotPulse backend to Railway and set up the 
 2. Click **"New Project"**
 3. Select **"Deploy from GitHub repo"**
 4. Choose your repository
-5. Railway will detect the `backend/` directory automatically
+5. Railway will create a service, but you need to configure it (see Step 2)
 
 ---
 
@@ -80,10 +80,20 @@ In your Railway service, go to **Variables** tab and add:
 
 ## Step 4: Configure Service Settings
 
-1. Go to your service **Settings**
-2. Set **Root Directory** to: `backend`
-3. Set **Build Command** (if needed): Railway will auto-detect Dockerfile
-4. Set **Start Command**: Railway will use the Dockerfile's ENTRYPOINT
+**⚠️ IMPORTANT: This step is critical for Railway to find your Dockerfile!**
+
+1. Go to your service → **Settings** tab
+2. Scroll down to **"Root Directory"**
+3. Set **Root Directory** to: `backend`
+   - This tells Railway to look in the `backend/` folder for the Dockerfile
+4. Scroll to **"Build & Deploy"** section
+5. **Build Command**: Leave empty (Railway will use Dockerfile)
+6. **Start Command**: Leave empty (Dockerfile ENTRYPOINT will be used)
+
+**Alternative**: If Railway still can't detect the build:
+- Go to **Settings** → **"Build & Deploy"**
+- Under **"Build Command"**, you can manually set: (leave empty for Dockerfile)
+- Under **"Dockerfile Path"**, set: `backend/Dockerfile`
 
 ---
 

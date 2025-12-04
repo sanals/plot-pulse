@@ -7,6 +7,11 @@
 - Click **"New Project"** → **"Deploy from GitHub repo"**
 - Select your repository
 
+### 1.5. Configure Service Root Directory ⚠️ IMPORTANT
+- Go to your service → **Settings** tab
+- Set **Root Directory** to: `backend`
+- This tells Railway where to find your Dockerfile
+
 ### 2. Add PostgreSQL Database
 - Click **"+ New"** → **"Database"** → **"Add PostgreSQL"**
 - Railway automatically sets `DATABASE_URL` and related variables

@@ -3,7 +3,7 @@
 # Override sensitive values using environment variables
 
 server:
-  port: ${SERVER_PORT:8091}
+  port: ${PORT:${SERVER_PORT:8091}}  # Railway uses PORT, fallback to SERVER_PORT or 8091
   servlet:
     context-path: /api/v1
 
