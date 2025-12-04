@@ -760,7 +760,7 @@ const MapNavbar: React.FC<MapNavbarProps> = ({
                     value={searchValue}
                     onChange={handleSearchChange}
                     onKeyDown={handleSearchKeyPress}
-                    placeholder="Mumbai, 28.6139 77.2090, current location"
+                    placeholder="Mumbai, 28.6139 77.2090"
                     className="search-header-input"
                     onFocus={() => {
                       if (searchSuggestions.length > 0) {
