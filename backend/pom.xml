@@ -153,9 +153,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <!-- Skip tests during Docker build when skip.tests property is set -->
-                    <!-- This is necessary because Docker build environment has no database -->
-                    <skipTests>${skip.tests:false}</skipTests>
+                    <!-- Skip tests when SKIP_TESTS environment variable or maven.test.skip property is set -->
+                    <!-- This is necessary for Docker builds where no database is available -->
+                    <skipTests>${maven.test.skip}</skipTests>
                 </configuration>
             </plugin>
         </plugins>

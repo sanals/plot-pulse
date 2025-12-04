@@ -10,7 +10,8 @@ RUN mvn dependency:go-offline
 COPY backend/src/ ./src/
 # Skip tests during Docker build (no database available)
 # Tests should be run locally or in CI/CD pipeline
-RUN mvn clean package -Dskip.tests=true
+# Using maven.test.skip to skip both compilation and execution of tests
+RUN mvn clean package -Dmaven.test.skip=true
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
