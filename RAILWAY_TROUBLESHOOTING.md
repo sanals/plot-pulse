@@ -237,6 +237,62 @@ Verify by checking:
 
 ---
 
+### Issue: "Connection to 127.0.0.1:5432 refused" or "Connection to localhost:5432 refused"
+
+**Problem**: Application is trying to connect to localhost instead of Railway's database.
+
+**Root Cause**: The application is using the `dev` profile instead of `prod` profile, which has localhost hardcoded.
+
+**Solution 1: Set SPRING_PROFILES_ACTIVE Environment Variable (REQUIRED)**
+
+1. Go to your Railway service → **Variables** tab
+2. Click **"+ New Variable"**
+3. Add:
+   - **Variable Name**: `SPRING_PROFILES_ACTIVE`
+   - **Value**: `prod`
+4. Click **Add**
+5. **Redeploy** the service (Railway will auto-redeploy, or click **"Deploy"**)
+
+**Solution 2: Verify DATABASE_URL is Set**
+
+Railway automatically sets `DATABASE_URL` when you add a PostgreSQL database. To verify:
+
+1. Go to your PostgreSQL service → **Variables** tab
+2. Look for `DATABASE_URL` - it should be in format: `postgresql://user:password@host:port/database`
+3. If it's missing, make sure:
+   - PostgreSQL service is added to your project
+   - PostgreSQL service is in the same project as your backend service
+   - The database service is running
+
+**Solution 3: Check DatabaseConfig is Working**
+
+The `DatabaseConfig` class should automatically parse `DATABASE_URL` and set the correct JDBC connection. Check the logs for:
+
+- `Warning: Failed to parse DATABASE_URL` - means parsing failed
+- If you see this, the fallback to individual PG variables should still work
+
+**Solution 4: Verify Individual PG Variables**
+
+Railway also provides individual variables. Check your PostgreSQL service → **Variables** tab for:
+- `PGHOST` - Should be a Railway hostname (not localhost)
+- `PGPORT` - Usually `5432`
+- `PGDATABASE` - Database name
+- `PGUSER` - Database username
+- `PGPASSWORD` - Database password
+
+If these are set correctly, the application should connect even if `DATABASE_URL` parsing fails.
+
+**Quick Check**:
+
+After setting `SPRING_PROFILES_ACTIVE=prod`, check the logs. You should see:
+```
+The following 1 profile is active: "prod"
+```
+
+If you see `"dev"` instead, the environment variable is not set correctly.
+
+---
+
 ### Issue: Build takes too long or times out
 
 **Problem**: Docker build is slow or fails due to timeout.

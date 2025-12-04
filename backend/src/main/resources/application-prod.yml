@@ -40,6 +40,10 @@ cors:
   allowed-origins: 
     - ${FRONTEND_URL:https://plotpulse.syrez.co.in}
     - ${FRONTEND_URL_WWW:https://www.plotpulse.syrez.co.in}
+    # Allow localhost for local testing (remove in production if not needed)
+    - http://localhost:5173
+    - http://localhost:4173
+    - http://localhost:3000
   allowed-methods: 
     - GET
     - POST
@@ -58,7 +62,7 @@ cors:
 
 # JWT Configuration - MUST use environment variables in production
 jwt:
-  secret: ${JWT_SECRET}  # REQUIRED: Set this in production
+  secret: ${JWT_SECRET}  # REQUIRED: Set this in Railway environment variables
   expiration: ${JWT_EXPIRATION:86400000}
   refresh-token:
     expiration: ${JWT_REFRESH_EXPIRATION:604800000}
