@@ -1,2 +1,2 @@
-﻿org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent=\
+﻿org.springframework.boot.env.EnvironmentPostProcessor=\
 com.company.project.config.DatabaseConfig

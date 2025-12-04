@@ -1,10 +1,10 @@
 package com.company.project.config;
 
-import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
-import org.springframework.context.ApplicationListener;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
-import org.springframework.lang.NonNull;
+import org.springframework.core.env.MutablePropertySources;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
@@ -18,15 +18,16 @@ import java.util.Map;
  * Railway provides: postgresql://user:password@host:port/database
  * Spring Boot expects: jdbc:postgresql://host:port/database with separate username/password
  * 
- * This listener parses DATABASE_URL and sets individual properties that Spring Boot can use.
+ * This processor parses DATABASE_URL and sets individual properties that Spring Boot can use.
  * Registered via META-INF/spring.factories to ensure it runs early in the application lifecycle.
  */
-public class DatabaseConfig implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
+public class DatabaseConfig implements EnvironmentPostProcessor {
 
     @Override
-    public void onApplicationEvent(@NonNull ApplicationEnvironmentPreparedEvent event) {
-        ConfigurableEnvironment environment = event.getEnvironment();
+    public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
         String databaseUrl = environment.getProperty("DATABASE_URL");
+        
+        System.out.println("🔍 DatabaseConfig: DATABASE_URL = " + (databaseUrl != null ? "SET" : "NOT SET"));
         
         // If DATABASE_URL is provided (Railway format) and not already in JDBC format, parse it
         if (databaseUrl != null && StringUtils.hasText(databaseUrl) && !databaseUrl.startsWith("jdbc:")) {
@@ -57,6 +58,13 @@ public class DatabaseConfig implements ApplicationListener<ApplicationEnvironmen
                     // Build JDBC URL
                     String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s?sslmode=require", host, port, database);
                     
+                    System.out.println("✅ DatabaseConfig: Parsed DATABASE_URL");
+                    System.out.println("   Host: " + host);
+                    System.out.println("   Port: " + port);
+                    System.out.println("   Database: " + database);
+                    System.out.println("   Username: " + username);
+                    System.out.println("   JDBC URL: " + jdbcUrl.replace(password, "***"));
+                    
                     // Set properties that Spring Boot will use
                     Map<String, Object> properties = new HashMap<>();
                     properties.put("spring.datasource.url", jdbcUrl);
@@ -80,15 +88,21 @@ public class DatabaseConfig implements ApplicationListener<ApplicationEnvironmen
                         properties.put("PGPASSWORD", password);
                     }
                     
-                    environment.getPropertySources().addFirst(
-                        new MapPropertySource("railwayDatabaseUrl", properties)
-                    );
+                    MutablePropertySources propertySources = environment.getPropertySources();
+                    propertySources.addFirst(new MapPropertySource("railwayDatabaseUrl", properties));
+                    
+                    System.out.println("✅ DatabaseConfig: Properties set successfully");
+                } else {
+                    System.out.println("⚠️ DatabaseConfig: DATABASE_URL scheme is not postgresql/postgres: " + uri.getScheme());
                 }
             } catch (Exception e) {
                 // If parsing fails, fall back to default configuration
                 // Spring Boot will use individual PGHOST, PGPORT, etc. variables
-                System.err.println("Warning: Failed to parse DATABASE_URL: " + e.getMessage());
+                System.err.println("❌ DatabaseConfig: Failed to parse DATABASE_URL: " + e.getMessage());
+                e.printStackTrace();
             }
+        } else {
+            System.out.println("⚠️ DatabaseConfig: DATABASE_URL not set or already in JDBC format");
         }
     }
 }
