@@ -37,6 +37,7 @@ public class HealthController {
     /**
      * Simple health check endpoint
      * Returns a 200 OK response if the application is running
+     * Accessible at: /api/v1/health
      * 
      * @return Success response
      */
@@ -49,6 +50,7 @@ public class HealthController {
     /**
      * Detailed health information endpoint
      * Returns more detailed information about the application status
+     * Accessible at: /api/v1/health/info
      * 
      * @return Detailed health information
      */
