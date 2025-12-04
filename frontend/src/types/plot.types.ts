@@ -59,7 +59,11 @@ export interface PlotFilters {
     max: number | null;
   };
   status: 'all' | 'for_sale' | 'not_for_sale';
-  dateAdded: 'all' | 'today' | 'week' | 'month' | 'quarter';
+  dateAdded: 'all' | 'today' | 'week' | 'month' | 'half_year' | 'year' | 'custom';
+  customDateRange?: {
+    from: string | null;
+    to: string | null;
+  };
   location: {
     enabled: boolean;
     radius: number; // in kilometers

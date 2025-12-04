@@ -219,6 +219,38 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+/* Custom Date Range */
+.custom-date-range {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.date-range-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.date-input-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.date-input {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
 /* Price Range */
 .price-range-inputs {
   display: flex;

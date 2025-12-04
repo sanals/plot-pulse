@@ -84,7 +84,23 @@ export const FilterPanel: React.FC = () => {
 
   const handleDateChange = useCallback((dateAdded: PlotFilters['dateAdded']) => {
     updateFilter('dateAdded', dateAdded);
+    // Reset custom date range when switching away from custom
+    if (dateAdded !== 'custom') {
+      updateFilter('customDateRange', {
+        from: null,
+        to: null,
+      });
+    }
   }, [updateFilter]);
+
+  const handleCustomDateChange = useCallback((field: 'from' | 'to', value: string) => {
+    const currentRange = filters.customDateRange || { from: null, to: null };
+    updateFilter('customDateRange', {
+      from: currentRange.from,
+      to: currentRange.to,
+      [field]: value || null,
+    });
+  }, [filters.customDateRange, updateFilter]);
 
   const handleLocationToggle = useCallback((enabled: boolean) => {
     updateFilter('location', {
@@ -465,7 +481,7 @@ export const FilterPanel: React.FC = () => {
                   {filters.location.center && (
                     <div className="location-coordinates">
                       <small style={{ color: '#6B7280' }}>
-                        {filters.location.center.lat.toFixed(4)}, {filters.location.center.lng.toFixed(4)}
+                        Filtering for: {filters.location.center.lat.toFixed(4)}, {filters.location.center.lng.toFixed(4)}
                       </small>
                     </div>
                   )}
@@ -576,8 +592,37 @@ export const FilterPanel: React.FC = () => {
               <option value="today">Today</option>
               <option value="week">Past Week</option>
               <option value="month">Past Month</option>
-              <option value="quarter">Past 3 Months</option>
+              <option value="half_year">Past 6 Months</option>
+              <option value="year">Past 1 Year</option>
+              <option value="custom">Custom Range</option>
             </select>
+            {filters.dateAdded === 'custom' && (
+              <div className="custom-date-range">
+                <div className="date-range-inputs">
+                  <div className="date-input-group">
+                    <label className="date-input-label">From</label>
+                    <input
+                      type="date"
+                      className="filter-input date-input"
+                      value={filters.customDateRange?.from || ''}
+                      onChange={(e) => handleCustomDateChange('from', e.target.value)}
+                      max={filters.customDateRange?.to || undefined}
+                    />
+                  </div>
+                  <div className="date-input-group">
+                    <label className="date-input-label">To</label>
+                    <input
+                      type="date"
+                      className="filter-input date-input"
+                      value={filters.customDateRange?.to || ''}
+                      onChange={(e) => handleCustomDateChange('to', e.target.value)}
+                      min={filters.customDateRange?.from || undefined}
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Search */}

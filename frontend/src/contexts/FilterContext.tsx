@@ -11,6 +11,10 @@ const DEFAULT_FILTERS: PlotFilters = {
   },
   status: 'all',
   dateAdded: 'all',
+  customDateRange: {
+    from: null,
+    to: null,
+  },
   location: {
     enabled: false,
     radius: 5, // 5km default
@@ -98,6 +102,10 @@ export const FilterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       },
       status: 'all',
       dateAdded: 'all',
+      customDateRange: {
+        from: null,
+        to: null,
+      },
       location: {
         enabled: false,
         radius: 5,
@@ -127,9 +135,16 @@ export const FilterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Date range
     if (filters.dateAdded !== 'all') {
-      const dateRange = getDateRange(filters.dateAdded);
-      if (dateRange.from) params.dateFrom = dateRange.from;
-      if (dateRange.to) params.dateTo = dateRange.to;
+      if (filters.dateAdded === 'custom' && filters.customDateRange) {
+        // Use custom date range
+        if (filters.customDateRange.from) params.dateFrom = filters.customDateRange.from;
+        if (filters.customDateRange.to) params.dateTo = filters.customDateRange.to;
+      } else {
+        // Use predefined date range
+        const dateRange = getDateRange(filters.dateAdded);
+        if (dateRange.from) params.dateFrom = dateRange.from;
+        if (dateRange.to) params.dateTo = dateRange.to;
+      }
     }
 
     // Location
@@ -154,6 +169,7 @@ export const FilterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       filters.priceRange.max !== null ||
       filters.status !== 'all' ||
       filters.dateAdded !== 'all' ||
+      (filters.dateAdded === 'custom' && (filters.customDateRange?.from || filters.customDateRange?.to)) ||
       filters.location.enabled ||
       filters.searchQuery.trim() !== ''
     );
@@ -262,6 +278,10 @@ const updateUrlFromFilters = (filters: PlotFilters, setSearchParams: (params: UR
   }
   if (filters.dateAdded !== 'all') {
     params.set('dateAdded', filters.dateAdded);
+    if (filters.dateAdded === 'custom' && filters.customDateRange) {
+      if (filters.customDateRange.from) params.set('dateFrom', filters.customDateRange.from);
+      if (filters.customDateRange.to) params.set('dateTo', filters.customDateRange.to);
+    }
   }
   if (filters.location.enabled && filters.location.center) {
     params.set('centerLat', filters.location.center.lat.toString());
@@ -297,10 +317,16 @@ const getDateRange = (period: string): { from?: string; to?: string } => {
         from: monthAgo.toISOString(),
         to: now.toISOString(),
       };
-    case 'quarter':
-      const quarterAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+    case 'half_year':
+      const halfYearAgo = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
       return {
-        from: quarterAgo.toISOString(),
+        from: halfYearAgo.toISOString(),
+        to: now.toISOString(),
+      };
+    case 'year':
+      const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+      return {
+        from: yearAgo.toISOString(),
         to: now.toISOString(),
       };
     default:
