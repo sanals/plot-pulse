@@ -4,6 +4,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "backend/Dockerfile"
+# Build context is the root directory, so Dockerfile needs to reference backend/ paths
 
 [deploy]
 startCommand = "java -jar app.jar"

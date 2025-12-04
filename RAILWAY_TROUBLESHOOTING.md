@@ -39,6 +39,23 @@ Verify by checking:
 
 ---
 
+### Issue: "failed to solve: failed to compute cache key: '/src': not found"
+
+**Problem**: Docker can't find the `src/` directory because Railway builds from the root, but Dockerfile expects files relative to `backend/`.
+
+**Solution**: The Dockerfile has been updated to work with Railway's build context. Make sure you have the latest version:
+
+1. The Dockerfile should copy from `backend/pom.xml` and `backend/src/`
+2. If you still see this error, verify the Dockerfile has:
+   ```dockerfile
+   COPY backend/pom.xml ./pom.xml
+   COPY backend/src/ ./src/
+   ```
+3. Commit and push the updated Dockerfile
+4. Redeploy in Railway
+
+---
+
 ### Issue: "Cannot connect to database"
 
 **Problem**: Backend can't connect to PostgreSQL.
