@@ -103,7 +103,8 @@ public class SecurityConfig {
     @Bean
     public RoleHierarchy roleHierarchy() {
         // Use the static fromHierarchy method for defining role hierarchy
-        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN");
+        // SUPER_ADMIN has all privileges, ADMIN has admin privileges, USER has minimal privileges
+        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_USER");
     }
 
     /**

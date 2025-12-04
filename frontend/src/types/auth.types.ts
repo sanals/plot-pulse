@@ -1,8 +1,9 @@
 export interface User {
   id: number;
   username: string;
+  name: string;
   email: string;
-  role: 'ADMIN' | 'SUPER_ADMIN';
+  role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
   status: 'ACTIVE' | 'INACTIVE';
   lastLogin?: string;
   createdAt: string;
@@ -10,14 +11,16 @@ export interface User {
 }
 
 export interface LoginRequest {
-  username: string;
+  username: string; // Can be username or email
   password: string;
 }
 
 export interface CreateUserRequest {
+  username: string;
   name: string;
   email: string;
   password: string;
+  role?: string; // Optional, will default on backend if not provided
 }
 
 // Alias for consistency with other parts of the codebase

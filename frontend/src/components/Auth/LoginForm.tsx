@@ -53,7 +53,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onClos
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="username">Username</label>
+          <label htmlFor="username">Username or Email</label>
           <input
             type="text"
             id="username"
@@ -62,7 +62,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onClos
             onChange={handleChange}
             required
             disabled={isLoading}
-            placeholder="Enter your username"
+            placeholder="Enter your username or email"
           />
         </div>
 

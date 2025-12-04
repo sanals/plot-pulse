@@ -2,6 +2,7 @@ package com.company.project.service.impl;
 
 import com.company.project.dto.request.CreateUserRequest;
 import com.company.project.entity.User;
+import com.company.project.exception.InvalidRoleException;
 import com.company.project.exception.ResourceNotFoundException;
 import com.company.project.exception.UserAlreadyExistsException;
 import com.company.project.repository.UserRepository;
@@ -30,11 +31,27 @@ public class UserServiceImpl implements UserService {
             throw new UserAlreadyExistsException("Email already exists");
         }
 
+        // Prevent assignment of ADMIN or SUPER_ADMIN roles through public registration
+        // These roles can only be assigned manually at the database level
+        String requestedRole = request.getRole();
+        if (requestedRole != null && !requestedRole.trim().isEmpty()) {
+            String roleUpper = requestedRole.toUpperCase().trim();
+            if ("ADMIN".equals(roleUpper) || "SUPER_ADMIN".equals(roleUpper)) {
+                throw new InvalidRoleException(
+                    "Cannot assign " + roleUpper + " role through registration. " +
+                    "Admin roles can only be assigned manually at the database level."
+                );
+            }
+        }
+
         User user = new User();
         user.setUsername(request.getUsername());
+        user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(User.Role.valueOf(request.getRole().toUpperCase()));
+        // Always set to USER role for public registration (least privilege)
+        // Ignore any role provided in the request to prevent privilege escalation
+        user.setRole(User.Role.USER);
         user.setStatus(User.Status.ACTIVE);
 
         return userRepository.save(user);

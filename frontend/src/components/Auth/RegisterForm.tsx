@@ -10,6 +10,7 @@ interface RegisterFormProps {
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onClose }) => {
   const { register } = useAuth();
   const [formData, setFormData] = useState<CreateUserRequest>({
+    username: '',
     name: '',
     email: '',
     password: ''
@@ -18,9 +19,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onC
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // Validate username for spaces
+    if (name === 'username') {
+      if (/\s/.test(value)) {
+        setUsernameError('Username cannot contain spaces');
+      } else {
+        setUsernameError(null);
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value,
@@ -42,6 +54,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onC
     setError(null);
     setSuccess(null);
 
+    // Validate username for spaces
+    if (/\s/.test(formData.username)) {
+      setError('Username cannot contain spaces');
+      setIsLoading(false);
+      return;
+    }
+
     // Validate password confirmation
     if (formData.password !== confirmPassword) {
       setError('Passwords do not match');
@@ -54,6 +73,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onC
       setSuccess('Registration successful! Please login with your credentials.');
       // Clear form
       setFormData({
+        username: '',
         name: '',
         email: '',
         password: '',
@@ -98,8 +118,29 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onC
             onChange={handleChange}
             required
             disabled={isLoading}
-            placeholder="Enter your name"
+            placeholder="Enter your full name"
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+            disabled={isLoading}
+            placeholder="Enter your username (no spaces)"
+            pattern="^\S+$"
+            title="Username cannot contain spaces"
+          />
+          {usernameError && (
+            <div className="field-error-message" style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+              {usernameError}
+            </div>
+          )}
         </div>
 
         <div className="form-group">

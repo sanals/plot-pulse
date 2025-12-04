@@ -42,9 +42,9 @@ export const UserProfile: React.FC = () => {
         aria-haspopup="true"
       >
         <div className="user-avatar">
-          {user.username.charAt(0).toUpperCase()}
+          {user.name?.charAt(0).toUpperCase() || user.username.charAt(0).toUpperCase()}
         </div>
-        <span className="user-name">{user.username}</span>
+        <span className="user-name">{user.name || user.username}</span>
         <svg 
           className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}
           width="12" 
@@ -59,7 +59,8 @@ export const UserProfile: React.FC = () => {
         <div className="user-dropdown">
           <div className="user-info">
             <div className="user-details">
-              <div className="username">{user.username}</div>
+              <div className="username">{user.name || user.username}</div>
+              <div className="user-email">{user.email}</div>
               <div className="user-role">{user.role}</div>
             </div>
           </div>

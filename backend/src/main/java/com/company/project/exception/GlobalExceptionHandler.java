@@ -121,4 +121,16 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
+
+    @ExceptionHandler(InvalidRoleException.class)
+    public ResponseEntity<ApiResponse<String>> handleInvalidRoleException(InvalidRoleException ex) {
+        log.warn("Invalid role assignment attempt: {}", ex.getMessage());
+        ApiResponse<String> response = new ApiResponse<>(
+                "ERROR",
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                null);
+
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
 }

@@ -67,7 +67,15 @@ const NavbarProfile: React.FC<NavbarProfileProps> = ({ isMobile = false }) => {
 
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (!user?.username) return 'U';
+    if (!user) return 'U';
+    if (user.name) {
+      // Use first letter of first and last name if available
+      const nameParts = user.name.trim().split(/\s+/);
+      if (nameParts.length >= 2) {
+        return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+      }
+      return user.name.substring(0, 2).toUpperCase();
+    }
     return user.username.substring(0, 2).toUpperCase();
   };
 
