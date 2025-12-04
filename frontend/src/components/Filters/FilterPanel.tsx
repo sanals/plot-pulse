@@ -1,10 +1,17 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useFilters } from '../../contexts/FilterContext';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useGeolocationContext } from '../../contexts/GeolocationContext';
 import { getCurrencySymbol } from '../../utils/currencyUtils';
 import type { PlotFilters } from '../../types/plot.types';
 import './FilterPanel.css';
+
+interface GeocodeResult {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
 
 export const FilterPanel: React.FC = () => {
   const {
@@ -28,6 +35,12 @@ export const FilterPanel: React.FC = () => {
 
   // Local state for location address
   const [locationAddress, setLocationAddress] = useState(filters.location.address);
+  const [locationSuggestions, setLocationSuggestions] = useState<GeocodeResult[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [geocodingError, setGeocodingError] = useState<string | null>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<number | undefined>(undefined);
 
   // Update local price inputs when filters change externally
   useEffect(() => {
@@ -41,6 +54,15 @@ export const FilterPanel: React.FC = () => {
   useEffect(() => {
     setLocationAddress(filters.location.address);
   }, [filters.location.address]);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   const handlePriceChange = useCallback((field: 'min' | 'max', value: string) => {
     // Update local state immediately for smooth typing
@@ -86,6 +108,213 @@ export const FilterPanel: React.FC = () => {
     updateFilter('searchQuery', searchQuery);
   }, [updateFilter]);
 
+  // Parse coordinates from input (supports various formats)
+  const parseCoordinates = useCallback((input: string): { lat: number; lng: number } | null => {
+    const cleaned = input.trim().replace(/\s+/g, ' ');
+    
+    // Pattern 1: "lat, lng" or "lat,lng"
+    const pattern1 = /^(-?\d+\.?\d*),?\s*(-?\d+\.?\d*)$/;
+    const match1 = cleaned.match(pattern1);
+    if (match1) {
+      const lat = parseFloat(match1[1]);
+      const lng = parseFloat(match1[2]);
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        return { lat, lng };
+      }
+    }
+
+    // Pattern 2: "lat lng" (space separated)
+    const pattern2 = /^(-?\d+\.?\d*)\s+(-?\d+\.?\d*)$/;
+    const match2 = cleaned.match(pattern2);
+    if (match2) {
+      const lat = parseFloat(match2[1]);
+      const lng = parseFloat(match2[2]);
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        return { lat, lng };
+      }
+    }
+
+    return null;
+  }, []);
+
+  // Geocode location name using Nominatim (OpenStreetMap)
+  const geocodeLocation = useCallback(async (query: string): Promise<GeocodeResult[]> => {
+    try {
+      const trimmedQuery = query.trim();
+      if (!trimmedQuery) return [];
+
+      // Try multiple search strategies for better partial matching
+      const searchQueries = [
+        trimmedQuery, // Primary search
+        trimmedQuery.toLowerCase(), // Lowercase variant
+      ];
+
+      const allResults: GeocodeResult[] = [];
+      const seenIds = new Set<string>();
+
+      // Try each search query
+      for (const searchQuery of searchQueries) {
+        try {
+          // First try: General search with higher limit
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=15&addressdetails=1&dedupe=1`,
+            {
+              headers: {
+                'User-Agent': 'PlotPulse/1.0 (https://plotpulse.app)',
+              },
+            }
+          );
+          
+          if (!response.ok) {
+            continue;
+          }
+
+          const data = await response.json();
+          
+          if (Array.isArray(data) && data.length > 0) {
+            // Add results, avoiding duplicates by location
+            for (const item of data) {
+              const lat = parseFloat(item.lat);
+              const lng = parseFloat(item.lon);
+              const locationKey = `${lat.toFixed(4)}_${lng.toFixed(4)}`;
+              
+              if (!seenIds.has(locationKey)) {
+                seenIds.add(locationKey);
+                allResults.push({
+                  id: `geocoded-${allResults.length}`,
+                  name: item.display_name || item.name || 'Unknown Location',
+                  latitude: lat,
+                  longitude: lng,
+                });
+              }
+            }
+          }
+        } catch (err) {
+          // Continue to next query if this one fails
+          continue;
+        }
+      }
+
+      // If we got results, return them (limit to 15 best matches)
+      if (allResults.length > 0) {
+        return allResults.slice(0, 15);
+      }
+
+      // Fallback: Try searching as city/town/village only
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmedQuery)}&limit=15&addressdetails=1&dedupe=1&featuretype=city,town,village`,
+          {
+            headers: {
+              'User-Agent': 'PlotPulse/1.0 (https://plotpulse.app)',
+            },
+          }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            return data.map((item: any, index: number) => ({
+              id: `geocoded-${index}`,
+              name: item.display_name || item.name || 'Unknown Location',
+              latitude: parseFloat(item.lat),
+              longitude: parseFloat(item.lon),
+            }));
+          }
+        }
+      } catch (err) {
+        // Fall through to return empty array
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return [];
+    }
+  }, []);
+
+  // Handle location address input with debouncing and geocoding
+  const handleLocationAddressChange = useCallback((value: string) => {
+    setLocationAddress(value);
+    setShowSuggestions(false);
+    setLocationSuggestions([]);
+    setGeocodingError(null);
+
+    // Clear existing debounce
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // If empty, clear the location center
+    if (!value.trim()) {
+      updateFilter('location', {
+        ...filters.location,
+        center: null,
+        address: '',
+      });
+      return;
+    }
+
+    // Try parsing as coordinates first
+    const coords = parseCoordinates(value);
+    if (coords) {
+      updateFilter('location', {
+        ...filters.location,
+        enabled: true, // Enable location filter when coordinates are set
+        center: coords,
+        address: value,
+      });
+      return;
+    }
+
+    // Debounce geocoding for address search
+    debounceRef.current = window.setTimeout(async () => {
+      const trimmedValue = value.trim();
+      if (trimmedValue.length >= 2) { // Reduced from 3 to 2 for earlier results
+        setIsGeocoding(true);
+        setGeocodingError(null);
+        try {
+          const results = await geocodeLocation(trimmedValue);
+          
+          if (results.length > 0) {
+            setLocationSuggestions(results);
+            setShowSuggestions(true);
+            setGeocodingError(null);
+          } else {
+            setLocationSuggestions([]);
+            setShowSuggestions(false);
+            // Only show error if query is long enough to be meaningful
+            if (trimmedValue.length >= 4) {
+              setGeocodingError('No locations found. Try a different search term.');
+            }
+          }
+        } catch (error) {
+          setGeocodingError('Failed to search locations. Please try again.');
+          setLocationSuggestions([]);
+          setShowSuggestions(false);
+        } finally {
+          setIsGeocoding(false);
+        }
+      }
+    }, 400); // Reduced debounce from 500ms to 400ms for faster response
+  }, [filters.location, parseCoordinates, geocodeLocation, updateFilter]);
+
+  // Handle suggestion selection
+  const handleSelectSuggestion = useCallback((suggestion: GeocodeResult) => {
+    setLocationAddress(suggestion.name);
+    updateFilter('location', {
+      ...filters.location,
+      enabled: true, // Enable location filter when suggestion is selected
+      center: {
+        lat: suggestion.latitude,
+        lng: suggestion.longitude,
+      },
+      address: suggestion.name,
+    });
+    setShowSuggestions(false);
+    setLocationSuggestions([]);
+  }, [filters.location, updateFilter]);
+
   const handleUseCurrentLocation = useCallback(() => {
     if (position) {
       updateFilter('location', {
@@ -97,6 +326,7 @@ export const FilterPanel: React.FC = () => {
         address: 'Current Location',
       });
       setLocationAddress('Current Location');
+      setShowSuggestions(false);
     }
   }, [filters.location, position, updateFilter]);
 
@@ -161,16 +391,106 @@ export const FilterPanel: React.FC = () => {
         {/* Filter Content */}
         <div className="filter-panel-content">
           
-          {/* Search */}
-          <div className="filter-section">
-            <label className="filter-label">Search</label>
-            <input
-              type="text"
-              className="filter-input"
-              placeholder="Search in descriptions..."
-              value={filters.searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
+          {/* Location Filter */}
+          <div className={`filter-section ${!filters.location.enabled ? 'filter-section-compact' : ''}`}>
+            <div className="filter-checkbox-header">
+              <label className="checkbox-option">
+                <input
+                  type="checkbox"
+                  checked={filters.location.enabled}
+                  onChange={(e) => handleLocationToggle(e.target.checked)}
+                />
+                <span>Filter by Location</span>
+              </label>
+            </div>
+            
+            {filters.location.enabled && (
+              <div className="location-filter-content">
+                <div className="location-center">
+                  <label className="filter-label">Center Point</label>
+                  <div className="location-center-controls">
+                    <div className="location-input-wrapper">
+                      <input
+                        ref={locationInputRef}
+                        type="text"
+                        className="filter-input"
+                        placeholder="Enter full city name / coordinates"
+                        value={locationAddress}
+                        onChange={(e) => handleLocationAddressChange(e.target.value)}
+                        onFocus={() => {
+                          if (locationSuggestions.length > 0) {
+                            setShowSuggestions(true);
+                          }
+                        }}
+                        onBlur={() => {
+                          // Delay to allow suggestion click
+                          setTimeout(() => setShowSuggestions(false), 200);
+                        }}
+                      />
+                      {isGeocoding && (
+                        <span className="geocoding-indicator">🔍</span>
+                      )}
+                      {showSuggestions && locationSuggestions.length > 0 && (
+                        <div className="location-suggestions">
+                          {locationSuggestions.map((suggestion) => (
+                            <div
+                              key={suggestion.id}
+                              className="location-suggestion-item"
+                              onClick={() => handleSelectSuggestion(suggestion)}
+                            >
+                              <span className="suggestion-icon">📍</span>
+                              <span className="suggestion-name">{suggestion.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {position && (
+                      <button
+                        className="btn btn-secondary use-location-btn"
+                        onClick={handleUseCurrentLocation}
+                        title="Use current location"
+                      >
+                        📍 Use Current
+                      </button>
+                    )}
+                  </div>
+                  {geocodingError && (
+                    <div className="location-error">
+                      <small style={{ color: '#ef4444' }}>
+                        {geocodingError}
+                      </small>
+                    </div>
+                  )}
+                  {filters.location.center && (
+                    <div className="location-coordinates">
+                      <small style={{ color: '#6B7280' }}>
+                        {filters.location.center.lat.toFixed(4)}, {filters.location.center.lng.toFixed(4)}
+                      </small>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="radius-control">
+                  <label className="filter-label">
+                    Radius: {filters.location.radius} km
+                  </label>
+                  <input
+                    type="range"
+                    className="radius-slider"
+                    min="1"
+                    max="50"
+                    step="1"
+                    value={filters.location.radius}
+                    onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
+                  />
+                  <div className="radius-labels">
+                    <span>1 km</span>
+                    <span>50 km</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Price Range */}
@@ -260,70 +580,18 @@ export const FilterPanel: React.FC = () => {
             </select>
           </div>
 
-          {/* Location Filter */}
+          {/* Search */}
           <div className="filter-section">
-            <div className="filter-checkbox-header">
-              <label className="checkbox-option">
-                <input
-                  type="checkbox"
-                  checked={filters.location.enabled}
-                  onChange={(e) => handleLocationToggle(e.target.checked)}
-                />
-                <span>Filter by Location</span>
-              </label>
+            <div className="floating-label-input">
+              <input
+                type="text"
+                className="filter-input floating-input"
+                placeholder=" "
+                value={filters.searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+              />
+              <label className="floating-label">Search in descriptions...</label>
             </div>
-            
-            {filters.location.enabled && (
-              <div className="location-filter-content">
-                <div className="location-center">
-                  <label className="filter-label">Center Point</label>
-                  <div className="location-center-controls">
-                    <input
-                      type="text"
-                      className="filter-input"
-                      placeholder="Enter address or use current location"
-                      value={locationAddress}
-                      onChange={(e) => setLocationAddress(e.target.value)}
-                    />
-                    {position && (
-                      <button
-                        className="btn btn-secondary use-location-btn"
-                        onClick={handleUseCurrentLocation}
-                        title="Use current location"
-                      >
-                        📍 Use Current
-                      </button>
-                    )}
-                  </div>
-                  {filters.location.center && (
-                    <div className="location-coordinates">
-                      <small style={{ color: '#6B7280' }}>
-                        {filters.location.center.lat.toFixed(4)}, {filters.location.center.lng.toFixed(4)}
-                      </small>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="radius-control">
-                  <label className="filter-label">
-                    Radius: {filters.location.radius} km
-                  </label>
-                  <input
-                    type="range"
-                    className="radius-slider"
-                    min="1"
-                    max="50"
-                    step="1"
-                    value={filters.location.radius}
-                    onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
-                  />
-                  <div className="radius-labels">
-                    <span>1 km</span>
-                    <span>50 km</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
         </div>
