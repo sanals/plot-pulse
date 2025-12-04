@@ -475,7 +475,7 @@ const MapComponentInner: React.FC = () => {
 
         {import.meta.env.DEV && (
           <div className="dev-stats">
-            <div>Plots: {plotStats.total}</div>
+            <div>Plots Marked: {plotStats.total}</div>
             <div>For Sale: {plotStats.forSale}</div>
             <div>Avg Price: {(() => {
               // Use centralized price formatting for consistency

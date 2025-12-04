@@ -161,29 +161,6 @@ export const FilterPanel: React.FC = () => {
         {/* Filter Content */}
         <div className="filter-panel-content">
           
-          {/* Active Filter Status */}
-          {hasActiveFilters && (
-            <div className="filter-status-message">
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px',
-                padding: '12px 16px',
-                backgroundColor: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                borderRadius: '8px',
-                marginBottom: '16px'
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
-                  <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46 22,3"/>
-                </svg>
-                <span style={{ color: '#1e40af', fontSize: '14px', fontWeight: '500' }}>
-                  {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} active
-                </span>
-              </div>
-            </div>
-          )}
-          
           {/* Search */}
           <div className="filter-section">
             <label className="filter-label">Search</label>
@@ -225,37 +202,45 @@ export const FilterPanel: React.FC = () => {
           {/* Plot Status */}
           <div className="filter-section">
             <label className="filter-label">Plot Status</label>
-            <div className="filter-options">
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="status"
-                  value="all"
-                  checked={filters.status === 'all'}
-                  onChange={() => handleStatusChange('all')}
-                />
+            <div className="toggle-group">
+              <button
+                className={`toggle-btn ${filters.status === 'all' ? 'active' : ''}`}
+                onClick={() => handleStatusChange('all')}
+                title="Show all plots"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6"/>
+                  <line x1="8" y1="12" x2="21" y2="12"/>
+                  <line x1="8" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6"/>
+                  <line x1="3" y1="12" x2="3.01" y2="12"/>
+                  <line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
                 <span>All</span>
-              </label>
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="status"
-                  value="for_sale"
-                  checked={filters.status === 'for_sale'}
-                  onChange={() => handleStatusChange('for_sale')}
-                />
+              </button>
+              <button
+                className={`toggle-btn ${filters.status === 'for_sale' ? 'active' : ''}`}
+                onClick={() => handleStatusChange('for_sale')}
+                title="Show plots for sale"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="21" r="1"/>
+                  <circle cx="20" cy="21" r="1"/>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                </svg>
                 <span>For Sale</span>
-              </label>
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="status"
-                  value="not_for_sale"
-                  checked={filters.status === 'not_for_sale'}
-                  onChange={() => handleStatusChange('not_for_sale')}
-                />
+              </button>
+              <button
+                className={`toggle-btn ${filters.status === 'not_for_sale' ? 'active' : ''}`}
+                onClick={() => handleStatusChange('not_for_sale')}
+                title="Show plots not for sale"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18"/>
+                  <path d="M6 6l12 12"/>
+                </svg>
                 <span>Not For Sale</span>
-              </label>
+              </button>
             </div>
           </div>
 
