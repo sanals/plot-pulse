@@ -1,7 +1,6 @@
-server:
-  port: 8091
-  servlet:
-    context-path: /api/v1
+# Base Configuration
+# Environment-specific overrides are in application-dev.yml and application-prod.yml
+# Set spring.profiles.active=dev for development or spring.profiles.active=prod for production
 
 spring:
   application:
@@ -9,67 +8,11 @@ spring:
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
-  datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/plotpulse?sslmode=disable
-    username: postgres
-    password: root
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          lob:
-            non_contextual_creation: true
-  flyway:
-    enabled: false
-  # CORS configuration moved to SecurityConfig to avoid conflicts
-  # web.cors is disabled in favor of SecurityConfig CORS configuration
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}  # Default to dev if not specified
 
-# CORS configuration for CorsProperties (used by SecurityConfig)
-cors:
-  allowed-origins: 
-    - http://localhost:5173
-    - http://localhost:4173
-    - http://localhost:3000
-    - http://localhost:3003
-  allowed-methods: 
-    - GET
-    - POST
-    - PUT
-    - DELETE
-    - OPTIONS
-  allowed-headers: 
-    - Authorization
-    - Content-Type
-    - X-Requested-With
-    - Accept
-    - Origin
-    - X-Request-ID
-    - X-Client-Version
-  max-age: 3600
-
-jwt:
-  # Secret key used to sign JWT tokens (must be Base64 encoded)
-  secret: V1R5cUI0TUE3RDdTbkhGcXFkSktHV3d0WWVKY3ZXM2U1UEQyNGxLRjN3cQ==
-  # Access token expiration time in milliseconds (24 hours)
-  expiration: 86400000
-  refresh-token:
-    # Refresh token expiration time in milliseconds (7 days)
-    expiration: 604800000
-    # Configure refresh token storage strategy
-    storage: database
-
-logging:
-  level:
-    root: INFO
-    com.company.project: DEBUG
-    org.springframework.security: DEBUG
-
-# Base URL for application
-app:
-  base-url: http://localhost:8091/api
+# Default configuration (can be overridden by profile-specific files)
+server:
+  port: 8091
+  servlet:
+    context-path: /api/v1

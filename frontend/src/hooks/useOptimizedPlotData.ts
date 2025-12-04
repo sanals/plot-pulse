@@ -118,10 +118,13 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
     });
   }, [filters, areaUnit, currency]);
 
-  // Check if filters have changed
+  // Check if filters have changed (using ref to avoid recreating function)
+  const filtersStringRef = useRef<string>('');
   const haveFiltersChanged = useCallback(() => {
-    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(lastFiltersRef.current);
+    const currentFiltersString = JSON.stringify(filters || {});
+    const filtersChanged = currentFiltersString !== filtersStringRef.current;
     if (filtersChanged) {
+      filtersStringRef.current = currentFiltersString;
       lastFiltersRef.current = filters;
     }
     return filtersChanged;
@@ -220,8 +223,16 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
   }, [enableViewportLoading, loadPlotsDebounced]);
 
   // Function to refresh plots with current filters
+  // Use ref to prevent infinite loops from state updates
+  const isRefreshingRef = useRef(false);
   const refreshFilteredPlots = useCallback(() => {
+    // Prevent multiple simultaneous refreshes
+    if (isRefreshingRef.current) {
+      return;
+    }
+    
     if (lastBounds) {
+      isRefreshingRef.current = true;
       const cacheKey = generateCacheKey(lastBounds);
       const cached = cacheRef.current[cacheKey];
       
@@ -233,15 +244,44 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
         // If no cached data, do a full reload
         loadPlotsDebounced(lastBounds);
       }
+      
+      // Reset flag after a short delay to allow state updates to complete
+      setTimeout(() => {
+        isRefreshingRef.current = false;
+      }, 100);
     }
   }, [lastBounds, generateCacheKey, applyFilters, loadPlotsDebounced]);
 
   // Check for filter changes and reapply if needed
+  // Use a ref to track the previous filters string to avoid infinite loops
+  const prevFiltersStringRef = useRef<string>('');
+  const filtersEffectRunningRef = useRef(false);
+  
   useEffect(() => {
-    if (haveFiltersChanged()) {
-      refreshFilteredPlots();
+    // Prevent concurrent executions
+    if (filtersEffectRunningRef.current) {
+      return;
     }
-  }, [filters, haveFiltersChanged, refreshFilteredPlots]);
+    
+    const currentFiltersString = JSON.stringify(filters || {});
+    
+    // Only proceed if filters actually changed (not just reference)
+    if (currentFiltersString !== prevFiltersStringRef.current) {
+      filtersEffectRunningRef.current = true;
+      prevFiltersStringRef.current = currentFiltersString;
+      
+      // Only refresh if we have bounds and filters actually changed
+      if (lastBounds) {
+        // Use setTimeout to break the synchronous update cycle
+        setTimeout(() => {
+          refreshFilteredPlots();
+          filtersEffectRunningRef.current = false;
+        }, 0);
+      } else {
+        filtersEffectRunningRef.current = false;
+      }
+    }
+  }, [filters, lastBounds, refreshFilteredPlots]);
 
   // Optimistic create plot
   const createPlotOptimistic = useCallback(async (plotData: PlotDto): Promise<PlotDto> => {

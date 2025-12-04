@@ -101,6 +101,7 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
   // Get current position or watch for position updates
   useEffect(() => {
     if (!navigator.geolocation) {
+      console.error('Geolocation API not available in this browser');
       setState(prev => ({
         ...prev,
         error: 'Geolocation is not supported by your browser',
@@ -109,6 +110,13 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
       }));
       return;
     }
+    
+    console.log('🌍 Starting geolocation request...', {
+      enableHighAccuracy,
+      timeout,
+      maximumAge,
+      watchPosition,
+    });
 
     const geoSuccess = (position: GeolocationPosition) => {
       const newPosition = {
@@ -116,6 +124,8 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
         longitude: position.longitude,
         accuracy: position.accuracy,
       };
+      
+      console.log('✅ Geolocation success:', newPosition);
       
       const timestamp = Date.now();
       
@@ -140,6 +150,15 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
     };
 
     const geoError = (error: GeolocationPositionError) => {
+      // Log error for debugging
+      console.error('Geolocation error:', {
+        code: error.code,
+        message: error.message,
+        PERMISSION_DENIED: error.PERMISSION_DENIED,
+        POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
+        TIMEOUT: error.TIMEOUT,
+      });
+      
       let permissionState: PermissionState = 'prompt';
       let errorMessage = error.message;
       
@@ -148,6 +167,7 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
         case error.PERMISSION_DENIED:
           permissionState = 'denied';
           errorMessage = '📍 Location access blocked. Click the location icon 🌐 in your browser\'s address bar to enable.';
+          console.warn('Geolocation permission denied. User needs to allow location access in browser settings.');
           break;
         case error.POSITION_UNAVAILABLE:
           errorMessage = '🛰️ Location temporarily unavailable. Try moving to an area with better signal.';

@@ -1,0 +1,80 @@
+# Production Environment Configuration
+# This file is loaded when spring.profiles.active=prod
+# Override sensitive values using environment variables
+
+server:
+  port: ${SERVER_PORT:8091}
+  servlet:
+    context-path: /api/v1
+
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/plotpulse}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate  # Never auto-update in production
+    show-sql: false  # Disable SQL logging in production
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  flyway:
+    enabled: true  # Enable migrations in production
+
+# CORS configuration for production
+cors:
+  allowed-origins: 
+    - ${FRONTEND_URL:https://plotpulse.app}
+    - ${FRONTEND_URL_WWW:https://www.plotpulse.app}
+  allowed-methods: 
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowed-headers: 
+    - Authorization
+    - Content-Type
+    - X-Requested-With
+    - Accept
+    - Origin
+    - X-Request-ID
+    - X-Client-Version
+  max-age: 3600
+
+# JWT Configuration - MUST use environment variables in production
+jwt:
+  secret: ${JWT_SECRET}  # REQUIRED: Set this in production
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-token:
+    expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+    storage: database
+
+# Logging configuration for production
+logging:
+  level:
+    root: WARN
+    com.company.project: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  file:
+    name: ${LOG_FILE_PATH:./logs/plotpulse.log}
+    max-size: 10MB
+    max-history: 30
+
+# Application configuration
+app:
+  base-url: ${APP_BASE_URL:https://api.plotpulse.app/api}
+

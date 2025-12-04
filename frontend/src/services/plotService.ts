@@ -1,8 +1,9 @@
 import type { NearestPlotRequest, PlotDto, MapBounds } from '../types/plot.types';
+import { getApiBaseUrl } from '../config/env';
 
 // Configuration
 const USE_MOCK_DATA = false;
-const API_URL = 'http://localhost:8091/api/v1';
+const API_URL = getApiBaseUrl();
 const REQUEST_TIMEOUT = 10000; // 10 seconds
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second

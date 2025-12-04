@@ -8,8 +8,9 @@ import type {
   ApiResponse,
   User 
 } from '../types/auth.types';
+import { getApiBaseUrl } from '../config/env';
 
-const API_BASE_URL = 'http://localhost:8091/api/v1';
+const API_BASE_URL = getApiBaseUrl();
 
 class AuthService {
   private tokenKey = 'auth_token';
