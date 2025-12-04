@@ -3,7 +3,10 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
+// For GitHub Pages: use '/repo-name/' if using default GitHub Pages URL
+// Use '/' if using custom domain (plotpulse.syrez.co.in)
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [
     react({
       // Just using default options with automatic JSX runtime

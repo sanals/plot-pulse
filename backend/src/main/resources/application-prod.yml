@@ -9,9 +9,11 @@ server:
 
 spring:
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/plotpulse}
-    username: ${DATABASE_USERNAME:postgres}
-    password: ${DATABASE_PASSWORD:}
+    # Railway provides DATABASE_URL in format: postgresql://user:password@host:port/database
+    # If DATABASE_URL is provided, it will be parsed. Otherwise, use individual variables.
+    url: ${DATABASE_URL:jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:plotpulse}?sslmode=require}
+    username: ${PGUSER:${DATABASE_USERNAME:postgres}}
+    password: ${PGPASSWORD:${DATABASE_PASSWORD:}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -36,8 +38,8 @@ spring:
 # CORS configuration for production
 cors:
   allowed-origins: 
-    - ${FRONTEND_URL:https://plotpulse.app}
-    - ${FRONTEND_URL_WWW:https://www.plotpulse.app}
+    - ${FRONTEND_URL:https://plotpulse.syrez.co.in}
+    - ${FRONTEND_URL_WWW:https://www.plotpulse.syrez.co.in}
   allowed-methods: 
     - GET
     - POST
