@@ -56,9 +56,14 @@ class JwtAuthenticationFilterTest {
         when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
         when(jwtService.isTokenValid(token, userDetails)).thenReturn(true);
         
+        // Ensure SecurityContext is empty (no existing authentication)
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
         
         verify(filterChain).doFilter(request, response);
+        verify(jwtService).extractUsername(token);
+        verify(userDetailsService).loadUserByUsername(username);
         verify(jwtService).isTokenValid(token, userDetails);
     }
 } 

@@ -36,9 +36,10 @@ class UserServiceTest {
         // Arrange
         CreateUserRequest request = new CreateUserRequest();
         request.setUsername("testuser");
+        request.setName("Test User");
         request.setEmail("test@example.com");
         request.setPassword("password123");
-        request.setRole("ADMIN");
+        // Don't set role - should default to USER
 
         when(userRepository.existsByUsername(anyString())).thenReturn(false);
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
@@ -51,10 +52,30 @@ class UserServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(request.getUsername(), result.getUsername());
+        assertEquals(request.getName(), result.getName());
         assertEquals(request.getEmail(), result.getEmail());
-        assertEquals(User.Role.ADMIN, result.getRole());
+        assertEquals(User.Role.USER, result.getRole()); // Should default to USER
         assertEquals(User.Status.ACTIVE, result.getStatus());
         verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void createUserWithAdminRoleShouldFail() {
+        // Arrange
+        CreateUserRequest request = new CreateUserRequest();
+        request.setUsername("adminuser");
+        request.setName("Admin User");
+        request.setEmail("admin@example.com");
+        request.setPassword("password123");
+        request.setRole("ADMIN"); // Should be rejected
+
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(com.company.project.exception.InvalidRoleException.class, 
+            () -> userService.createUser(request));
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
