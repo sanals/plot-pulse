@@ -1,0 +1,2 @@
+﻿org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent=\
+com.company.project.config.DatabaseConfig

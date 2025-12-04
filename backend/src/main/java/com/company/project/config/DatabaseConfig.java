@@ -5,7 +5,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
@@ -20,8 +19,8 @@ import java.util.Map;
  * Spring Boot expects: jdbc:postgresql://host:port/database with separate username/password
  * 
  * This listener parses DATABASE_URL and sets individual properties that Spring Boot can use.
+ * Registered via META-INF/spring.factories to ensure it runs early in the application lifecycle.
  */
-@Component
 public class DatabaseConfig implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
 
     @Override

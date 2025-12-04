@@ -10,8 +10,10 @@ server:
 spring:
   datasource:
     # Railway provides DATABASE_URL in format: postgresql://user:password@host:port/database
-    # If DATABASE_URL is provided, it will be parsed. Otherwise, use individual variables.
-    url: ${DATABASE_URL:jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:plotpulse}?sslmode=require}
+    # DatabaseConfig.java will parse DATABASE_URL and set spring.datasource.* properties
+    # If DATABASE_URL is not set, use individual PG variables (Railway also provides these)
+    # Note: Do NOT use DATABASE_URL directly here - it's in Railway format, not JDBC format
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:plotpulse}?sslmode=require
     username: ${PGUSER:${DATABASE_USERNAME:postgres}}
     password: ${PGPASSWORD:${DATABASE_PASSWORD:}}
     driver-class-name: org.postgresql.Driver
