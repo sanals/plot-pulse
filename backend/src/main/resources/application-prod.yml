@@ -4,6 +4,7 @@
 
 server:
   port: ${PORT:${SERVER_PORT:8091}}  # Railway uses PORT, fallback to SERVER_PORT or 8091
+  address: 0.0.0.0  # Bind to all interfaces (required for Railway)
   servlet:
     context-path: /api/v1
 
