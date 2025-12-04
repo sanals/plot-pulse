@@ -38,6 +38,9 @@ spring:
             non_contextual_creation: true
   flyway:
     enabled: true  # Enable migrations in production
+    locations: classpath:db/migration
+    baseline-on-migrate: true  # Create flyway_schema_history if it doesn't exist
+    validate-on-migrate: true
 
 # CORS configuration for production
 cors:

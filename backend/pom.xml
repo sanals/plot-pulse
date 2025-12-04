@@ -63,6 +63,12 @@
             <scope>runtime</scope>
         </dependency>
         
+        <!-- Flyway for database migrations -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        
         <!-- Hibernate Spatial for PostGIS support -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
