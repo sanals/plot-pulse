@@ -106,4 +106,3 @@ GitHub will automatically provision an SSL certificate (may take a few minutes).
 3. Check mobile responsiveness
 4. Monitor Railway backend logs for API calls
 5. Set up monitoring/analytics if needed
-
