@@ -1245,6 +1245,16 @@
   margin-left: 8px;
 }
 
+.mobile-search-close svg {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  stroke-width: 1.5 !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
+
 .mobile-search-close:hover {
   background: #dc2626;
 }
