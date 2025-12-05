@@ -13,7 +13,9 @@ COPY backend/src/ ./src/
 # Using maven.test.skip to skip both compilation and execution of tests
 RUN mvn clean package -Dmaven.test.skip=true
 
-FROM eclipse-temurin:17-jre-alpine
+# Use non-alpine version for better registry stability
+# Alpine images sometimes have registry pull issues
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8091
