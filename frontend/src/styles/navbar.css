@@ -481,8 +481,8 @@
 }
 
 .mobile-menu-toggle {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: none;
   color: #4a5568;
@@ -493,6 +493,12 @@
   border-radius: 8px;
   transition: all 0.2s ease;
   outline: none;
+  flex-shrink: 0;
+}
+
+.mobile-menu-toggle svg {
+  width: 24px;
+  height: 24px;
 }
 
 .mobile-menu-toggle:hover {
@@ -594,8 +600,8 @@
 }
 
 .quick-action-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: rgba(59, 130, 246, 0.1);
   color: #3b82f6;
@@ -606,6 +612,12 @@
   justify-content: center;
   font-size: 16px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.quick-action-btn svg {
+  width: 22px;
+  height: 22px;
 }
 
 .quick-action-btn:hover:not(:disabled) {
@@ -640,9 +652,10 @@
   margin: 20px auto;
   border-radius: 16px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 120px - env(safe-area-inset-bottom));
   overflow-y: auto;
   animation: slideDown 0.3s ease;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
 }
 
 .mobile-menu-section {
@@ -676,6 +689,19 @@
   cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.mobile-nav-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobile-nav-btn.primary {
@@ -737,7 +763,16 @@
   text-align: left;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.mobile-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobile-toggle-btn.active {
