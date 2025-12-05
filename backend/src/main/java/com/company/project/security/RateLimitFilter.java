@@ -12,13 +12,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import io.github.bucket4j.ConsumptionProbe;
 
 /**
  * Rate limiting filter using Bucket4j
@@ -40,8 +43,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final Map<String, Bucket> bucketCache = new ConcurrentHashMap<>();
     
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, 
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
         
         // Skip rate limiting if disabled
         if (!rateLimitProperties.isEnabled()) {
@@ -57,20 +60,30 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String bucketKey = clientIp + ":" + endpointKey;
         Bucket bucket = bucketCache.computeIfAbsent(bucketKey, k -> createBucket(endpointKey));
         
-        // Try to consume a token
-        if (bucket.tryConsume(1)) {
-            // Request allowed, continue
+        // Get endpoint limit for header calculations
+        RateLimitProperties.EndpointLimit limit = getEndpointLimit(endpointKey);
+        
+        // Try to consume a token and get consumption probe
+        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+        
+        if (probe.isConsumed()) {
+            // Request allowed, add rate limit headers
+            addRateLimitHeaders(response, probe, limit);
             filterChain.doFilter(request, response);
         } else {
             // Rate limit exceeded
             log.warn("Rate limit exceeded for IP: {} on endpoint: {}", clientIp, path);
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType("application/json");
-            response.setHeader("Retry-After", String.valueOf(getRetryAfterSeconds(endpointKey)));
+            
+            // Add rate limit headers even when limit is exceeded
+            addRateLimitHeaders(response, probe, limit);
+            response.setHeader("Retry-After", String.valueOf(probe.getNanosToWaitForRefill() / 1_000_000_000));
+            
             response.getWriter().write(
                 String.format(
                     "{\"error\":\"Too Many Requests\",\"message\":\"Rate limit exceeded. Please try again later.\",\"retryAfter\":%d}",
-                    getRetryAfterSeconds(endpointKey)
+                    probe.getNanosToWaitForRefill() / 1_000_000_000
                 )
             );
         }
@@ -125,29 +138,48 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
     
     /**
-     * Get retry-after seconds based on endpoint pattern
+     * Get endpoint limit configuration based on endpoint pattern
      */
-    private int getRetryAfterSeconds(String endpointKey) {
-        RateLimitProperties.EndpointLimit limit;
-        
+    private RateLimitProperties.EndpointLimit getEndpointLimit(String endpointKey) {
         switch (endpointKey) {
             case "auth":
-                limit = rateLimitProperties.getAuth();
-                break;
+                return rateLimitProperties.getAuth();
             case "geocoding":
-                limit = rateLimitProperties.getGeocoding();
-                break;
+                return rateLimitProperties.getGeocoding();
             case "health":
-                limit = rateLimitProperties.getHealth();
-                break;
+                return rateLimitProperties.getHealth();
             case "plots":
-                limit = rateLimitProperties.getPlots();
-                break;
+                return rateLimitProperties.getPlots();
             default:
-                limit = rateLimitProperties.getAuthenticated();
+                return rateLimitProperties.getAuthenticated();
         }
+    }
+    
+    /**
+     * Add rate limit headers to response
+     * Includes X-RateLimit-Remaining, X-RateLimit-Reset, and X-RateLimit-Limit
+     */
+    private void addRateLimitHeaders(HttpServletResponse response, ConsumptionProbe probe, 
+                                    RateLimitProperties.EndpointLimit limit) {
+        // Remaining tokens available
+        long remaining = probe.getRemainingTokens();
+        response.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
         
-        return limit.getWindowSeconds();
+        // Total limit for this endpoint
+        response.setHeader("X-RateLimit-Limit", String.valueOf(limit.getRequests()));
+        
+        // Reset time (when the bucket will be fully refilled)
+        // Calculate reset time as current time + time to wait for refill
+        long nanosToWait = probe.getNanosToWaitForRefill();
+        if (nanosToWait > 0) {
+            // If we need to wait, reset time is current time + wait time
+            Instant resetTime = Instant.now().plusNanos(nanosToWait);
+            response.setHeader("X-RateLimit-Reset", String.valueOf(resetTime.getEpochSecond()));
+        } else {
+            // If no wait needed, reset time is current time + window duration
+            Instant resetTime = Instant.now().plusSeconds(limit.getWindowSeconds());
+            response.setHeader("X-RateLimit-Reset", String.valueOf(resetTime.getEpochSecond()));
+        }
     }
     
     /**

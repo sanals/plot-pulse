@@ -153,6 +153,7 @@ public class SecurityConfig {
      * - How JWT authentication is applied
      * - Exception handling for unauthorized access
      * - Session management (stateless)
+     * - Security headers (X-Frame-Options, CSP, HSTS, etc.)
      * 
      * @param http HttpSecurity to configure
      * @return Configured security filter chain
@@ -163,6 +164,25 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        // Prevent clickjacking attacks
+                        .frameOptions(frameOptions -> frameOptions.deny())
+                        // Prevent MIME type sniffing
+                        .contentTypeOptions(contentTypeOptions -> {})
+                        // HTTP Strict Transport Security (HSTS) - force HTTPS
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .maxAgeInSeconds(31536000) // 1 year
+                                .preload(false))
+                        // Content Security Policy (CSP) - restrict resource loading
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; " +
+                                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                                        "style-src 'self' 'unsafe-inline'; " +
+                                        "img-src 'self' data: https:; " +
+                                        "font-src 'self' data:; " +
+                                        "connect-src 'self' https:; " +
+                                        "frame-ancestors 'none';"))
+                )
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints that don't require authentication
                         .requestMatchers("/health/**", "/auth/**", "/users/create", "/plots/**", "/geocoding/**").permitAll()
@@ -174,11 +194,13 @@ public class SecurityConfig {
         // Use the custom authentication provider
         http.authenticationProvider(authenticationProvider());
 
-        // Add rate limiting filter first (before authentication)
-        http.addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class);
-
-        // Add JWT filter before the standard authentication filter
+        // Add JWT filter before the standard authentication filter first
+        // This ensures JwtAuthenticationFilter is in the chain before we reference it
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // Add rate limiting filter before JWT authentication filter
+        // Rate limiting should happen before authentication
+        http.addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

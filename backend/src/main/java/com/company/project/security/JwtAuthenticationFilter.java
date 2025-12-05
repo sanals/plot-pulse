@@ -7,6 +7,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.core.Ordered;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -31,7 +32,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Component
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter implements Ordered {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
@@ -80,5 +81,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         // Continue filter chain
         filterChain.doFilter(request, response);
+    }
+    
+    /**
+     * Returns the order value for this filter.
+     * Lower values have higher priority.
+     * Order 2 means this filter runs after rate limiting (Order 1) but before standard authentication.
+     */
+    @Override
+    public int getOrder() {
+        return 2;
     }
 }
