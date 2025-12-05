@@ -1,5 +1,10 @@
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+# Use Amazon Corretto - alternative to Eclipse Temurin
+# Less prone to Docker Hub CDN issues
+FROM amazoncorretto:17-alpine AS build
 WORKDIR /app
+
+# Install Maven
+RUN apk add --no-cache maven
 
 # Copy pom.xml first for dependency caching
 COPY backend/pom.xml ./pom.xml
@@ -13,9 +18,8 @@ COPY backend/src/ ./src/
 # Using maven.test.skip to skip both compilation and execution of tests
 RUN mvn clean package -Dmaven.test.skip=true
 
-# Use non-alpine version for better registry stability
-# Alpine images sometimes have registry pull issues
-FROM eclipse-temurin:17-jre
+# Use Amazon Corretto for runtime
+FROM amazoncorretto:17-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8091
