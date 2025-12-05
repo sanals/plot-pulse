@@ -1,0 +1,246 @@
+/* ==========================================
+   Unified Search Component
+   Clean, minimal, works everywhere
+   ========================================== */
+
+.unified-search {
+  position: relative;
+  width: 100%;
+}
+
+.unified-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.unified-search-box:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.unified-search .search-icon {
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+.unified-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: #1f2937;
+  background: transparent;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.unified-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.unified-search .search-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: unified-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes unified-spin {
+  to { transform: rotate(360deg); }
+}
+
+.unified-search .search-clear-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.unified-search .search-clear-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.unified-search .search-clear-btn:active {
+  transform: scale(0.95);
+}
+
+/* Results dropdown */
+.unified-search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 99999;
+}
+
+.unified-search-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.unified-search-result:last-child {
+  border-bottom: none;
+}
+
+.unified-search-result:hover,
+.unified-search-result:active {
+  background: #f0f9ff;
+}
+
+.unified-search-result.coordinates {
+  background: #ecfdf5;
+}
+
+.unified-search-result.coordinates:hover {
+  background: #d1fae5;
+}
+
+.unified-search-result.current {
+  background: #fef3c7;
+}
+
+.unified-search-result.current:hover {
+  background: #fde68a;
+}
+
+.unified-search-result .result-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.unified-search-result .result-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.unified-search-result .result-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  line-height: 1.35;
+  /* Allow text to wrap on mobile */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.unified-search-result .result-coords {
+  font-size: 12px;
+  color: #6b7280;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .unified-search-box {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .unified-search-box:focus-within {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+  }
+
+  .unified-search-input {
+    color: #f9fafb;
+  }
+
+  .unified-search-input::placeholder {
+    color: #9ca3af;
+  }
+
+  .unified-search .search-clear-btn {
+    background: #374151;
+    color: #d1d5db;
+  }
+
+  .unified-search .search-clear-btn:hover {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+
+  .unified-search-results {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .unified-search-result {
+    border-color: #374151;
+  }
+
+  .unified-search-result:hover,
+  .unified-search-result:active {
+    background: #374151;
+  }
+
+  .unified-search-result.coordinates {
+    background: rgba(16, 185, 129, 0.15);
+  }
+
+  .unified-search-result.current {
+    background: rgba(245, 158, 11, 0.15);
+  }
+
+  .unified-search-result .result-name {
+    color: #f9fafb;
+  }
+
+  .unified-search-result .result-coords {
+    color: #9ca3af;
+  }
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  .unified-search-box {
+    padding: 12px 14px;
+  }
+
+  .unified-search-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .unified-search-result {
+    padding: 14px;
+  }
+
+  .unified-search-result .result-name {
+    font-size: 14px;
+  }
+}
+
