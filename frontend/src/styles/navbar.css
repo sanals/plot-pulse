@@ -1219,48 +1219,110 @@
 /* Mobile search expanded layout */
 .mobile-search-expanded {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: stretch;
+  gap: 0;
   width: 100%;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mobile-search-expanded:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .mobile-search-expanded .simple-search {
   flex: 1;
 }
 
-.mobile-search-close {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+/* Make the search box blend into the container */
+.mobile-search-expanded .unified-search-box {
   border: none;
-  background: #ef4444;
-  color: white;
-  border-radius: 10px;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.mobile-search-expanded .unified-search-box:focus-within {
+  border: none;
+  box-shadow: none;
+}
+
+/* Hide the internal clear button in mobile mode - we use the mobile close button instead */
+.mobile-search-expanded .search-clear-btn {
+  display: none !important;
+}
+
+.mobile-search-close {
+  /* Match the height of the unified search box */
+  height: auto;
+  min-height: 44px;
+  width: 44px;
+  min-width: 44px;
+  border: none;
+  border-left: 1px solid #e5e7eb;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s ease;
-  margin-left: 8px;
+  transition: all 0.2s ease;
+  padding: 0;
+  align-self: stretch;
+  position: relative;
 }
 
 .mobile-search-close svg {
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  stroke-width: 1.5 !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  stroke-width: 2 !important;
   display: block !important;
   flex-shrink: 0 !important;
 }
 
 .mobile-search-close:hover {
-  background: #dc2626;
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .mobile-search-close:active {
-  transform: scale(0.95);
+  background: #fecaca;
+  transform: scale(0.98);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .mobile-search-expanded {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .mobile-search-expanded:focus-within {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+  }
+
+  .mobile-search-close {
+    border-left-color: #374151;
+    color: #d1d5db;
+  }
+
+  .mobile-search-close:hover {
+    background: rgba(127, 29, 29, 0.3);
+    color: #fca5a5;
+  }
+
+  .mobile-search-close:active {
+    background: rgba(153, 27, 27, 0.4);
+  }
 }
 
 /* Desktop suggestions dropdown portal */
