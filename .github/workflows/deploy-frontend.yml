@@ -6,7 +6,9 @@ on:
       - main  # Change to your default branch name if different
     paths:
       - 'frontend/**'
-  workflow_dispatch:  # Allow manual triggering
+      - '.github/workflows/deploy-frontend.yml'  # Trigger when workflow changes
+  workflow_dispatch:  # Allow manual triggering - use this for initial deployment
+  # Note: For initial setup, go to Actions tab and click "Run workflow" manually
 
 permissions:
   contents: read
