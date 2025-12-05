@@ -42,7 +42,7 @@ jobs:
       - name: Create production .env file
         working-directory: ./frontend
         run: |
-          echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL || 'http://localhost:8091/api/v1' }}" > .env.production
+          echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL || 'https://plot-pulse-production.up.railway.app/api/v1' }}" > .env.production
           echo "VITE_APP_NAME=PlotPulse" >> .env.production
           echo "VITE_APP_ENV=production" >> .env.production
           echo "VITE_ENABLE_DEBUG=false" >> .env.production
