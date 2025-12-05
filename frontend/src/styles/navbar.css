@@ -497,8 +497,10 @@
 }
 
 .mobile-menu-toggle svg {
-  width: 24px;
-  height: 24px;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
 }
 
 .mobile-menu-toggle:hover {
@@ -558,16 +560,7 @@
   font-weight: 400;
 }
 
-.mobile-search-expanded {
-  display: flex;
-  align-items: flex-start;
-  width: 100%;
-  position: relative;
-}
-
-.mobile-search-expanded .unified-search {
-  flex: 1;
-}
+/* Removed duplicate - using the definition at line 1220 */
 
 .mobile-search {
   position: static !important;
@@ -598,8 +591,10 @@
 }
 
 .quick-action-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
 }
 
 .quick-action-btn:hover:not(:disabled) {
@@ -1222,6 +1217,7 @@
   align-items: stretch;
   gap: 0;
   width: 100%;
+  min-width: 0; /* Allow container to shrink */
   background: white;
   border: 1px solid #d1d5db;
   border-radius: 10px;
@@ -1236,6 +1232,15 @@
 
 .mobile-search-expanded .simple-search {
   flex: 1;
+  min-width: 0; /* Allow search to shrink */
+  overflow: hidden; /* Prevent content overflow */
+}
+
+/* Ensure unified-search can shrink */
+.mobile-search-expanded .unified-search {
+  width: 100%;
+  min-width: 0; /* Allow shrinking */
+  overflow: hidden;
 }
 
 /* Make the search box blend into the container */
@@ -1244,6 +1249,11 @@
   border-radius: 0;
   box-shadow: none;
   background: transparent;
+  position: relative; /* For absolute positioning of loader */
+  min-width: 0; /* Allow flex shrinking */
+  width: 100%;
+  overflow: hidden; /* Prevent content from overflowing */
+  padding-left: 14px; /* Reduce left padding since we're hiding the icon */
 }
 
 .mobile-search-expanded .unified-search-box:focus-within {
@@ -1251,9 +1261,48 @@
   box-shadow: none;
 }
 
+/* Hide the search icon in mobile expanded mode - user already knows it's a search box */
+.mobile-search-expanded .search-icon {
+  display: none !important;
+}
+
 /* Hide the internal clear button in mobile mode - we use the mobile close button instead */
 .mobile-search-expanded .search-clear-btn {
   display: none !important;
+}
+
+/* Position loader absolutely in mobile mode so it doesn't push the close button */
+.mobile-search-expanded .search-spinner {
+  position: absolute !important;
+  right: 8px !important; /* Reduced from 12px */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  z-index: 1;
+  width: 16px !important; /* Smaller loader */
+  height: 16px !important;
+}
+
+/* Ensure input has proper padding - only add right padding when loader is actually visible */
+.mobile-search-expanded .unified-search-input {
+  padding-left: 0 !important; /* No left padding since icon is hidden */
+  padding-right: 0 !important; /* Default - no extra padding */
+  min-width: 0; /* Allow input to shrink */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Add right padding only when loader is visible */
+.mobile-search-expanded .unified-search-box:has(.search-spinner) .unified-search-input {
+  padding-right: 28px !important; /* Reduced from 40px - just enough for smaller loader */
+}
+
+/* Make search results dropdown span full width including close button */
+.mobile-search-expanded ~ .unified-search-results,
+.mobile-search-expanded .unified-search-results {
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
 }
 
 .mobile-search-close {
@@ -1262,6 +1311,7 @@
   min-height: 44px;
   width: 44px;
   min-width: 44px;
+  max-width: 44px; /* Prevent expansion - keep fixed width */
   border: none;
   border-left: 1px solid #e5e7eb;
   background: transparent;
@@ -1271,11 +1321,13 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  flex-shrink: 0;
+  flex-shrink: 0 !important; /* Always visible, never shrink */
+  flex-grow: 0 !important; /* Prevent growing */
   transition: all 0.2s ease;
   padding: 0;
   align-self: stretch;
   position: relative;
+  z-index: 2; /* Ensure it's above other elements */
 }
 
 .mobile-search-close svg {

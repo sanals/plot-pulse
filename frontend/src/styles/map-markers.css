@@ -384,12 +384,12 @@
   left: 330px; /* Adjust for expanded navbar */
 }
 
-/* Mobile - position below navbar */
+/* Mobile - position at bottom left like desktop */
 @media (max-width: 767px) {
   .dev-stats {
-    top: 70px; /* Below mobile navbar */
+    bottom: 10px; /* Keep at bottom like desktop */
     left: 10px;
-    bottom: auto;
+    top: auto; /* Remove top positioning */
   }
   
   .navbar-expanded .dev-stats {

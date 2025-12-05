@@ -209,7 +209,12 @@ const UnifiedSearch: React.FC<UnifiedSearchProps> = ({
   // Update dropdown position for portal
   useEffect(() => {
     if (usePortalForResults && isOpen && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
+      // Try to find the parent mobile-search-expanded container for full width
+      const parentContainer = containerRef.current.closest('.mobile-search-expanded');
+      const rect = parentContainer 
+        ? parentContainer.getBoundingClientRect()
+        : containerRef.current.getBoundingClientRect();
+      
       setDropdownStyle({
         position: 'fixed',
         top: rect.bottom + 4,
