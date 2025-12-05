@@ -169,12 +169,12 @@ const NavbarProfile: React.FC<NavbarProfileProps> = ({ isMobile = false }) => {
               handleLogout();
             }}
             onClick={(e) => {
-              console.log('Logout dropdown button clicked', e); // Debug log
+              console.log('Logout dropdown button clicked'); // Debug log
               e.preventDefault();
               e.stopPropagation();
               handleLogout();
             }}
-            onMouseDown={(e) => {
+            onMouseDown={() => {
               console.log('Logout button mouse down'); // Debug log
             }}
           >

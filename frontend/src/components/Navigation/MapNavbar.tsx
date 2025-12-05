@@ -32,7 +32,7 @@ const StandaloneSearch: React.FC<StandaloneSearchProps> = ({ onNavigate, classNa
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<number | undefined>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Parse coordinates from input (supports various formats)
   const parseCoordinates = useCallback((input: string): { lat: number; lng: number } | null => {

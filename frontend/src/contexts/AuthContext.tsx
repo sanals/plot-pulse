@@ -1,10 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { User, LoginRequest, CreateUserRequest } from '../types/auth.types';
+import type { LoginRequest, CreateUserRequest } from '../types/auth.types';
 import authService from '../services/authService';
 
+interface UserInfo {
+  username: string;
+  name?: string;
+  email?: string;
+  role: string;
+}
+
 interface AuthContextType {
-  user: { username: string; role: string } | null;
+  user: UserInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
@@ -27,7 +34,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<{ username: string; role: string } | null>(null);
+  const [user, setUser] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -52,7 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginRequest) => {
     try {
       setIsLoading(true);
-      const authResponse = await authService.login(credentials);
+      await authService.login(credentials);
       const currentUser = authService.getCurrentUser();
       setUser(currentUser);
     } catch (error) {

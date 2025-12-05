@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useRef, useCallback } from 'react';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import PlotMarker, { type MarkerDisplayMode } from './PlotMarker';
 import type { PlotDto } from '../../types/plot.types';
-import { convertToPricePerSqft, convertToPreferredAreaUnit, formatDisplayPrice } from '../../utils/priceConversions';
+import { convertToPreferredAreaUnit, formatDisplayPrice } from '../../utils/priceConversions';
 import { useSettings } from '../../contexts/SettingsContext';
 
 interface PlotMarkerClusterProps {

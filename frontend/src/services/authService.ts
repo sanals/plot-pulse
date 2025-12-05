@@ -2,7 +2,6 @@ import type {
   LoginRequest, 
   CreateUserRequest, 
   AuthResponse, 
-  TokenRefreshRequest, 
   TokenRefreshResponse, 
   PasswordChangeRequest,
   ApiResponse,
@@ -174,7 +173,7 @@ class AuthService {
     }
   }
 
-  getCurrentUser(): { username: string; role: string } | null {
+  getCurrentUser(): { username: string; name?: string; email?: string; role: string } | null {
     const token = this.getToken();
     if (!token) return null;
 
@@ -182,6 +181,8 @@ class AuthService {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return {
         username: payload.sub,
+        name: payload.name,
+        email: payload.email,
         role: payload.role || 'USER'
       };
     } catch (error) {

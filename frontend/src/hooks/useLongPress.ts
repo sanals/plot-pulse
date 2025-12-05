@@ -32,7 +32,7 @@ export const useLongPress = (options: LongPressOptions): LongPressHandlers => {
   } = options;
 
   const [longPressTriggered, setLongPressTriggered] = useState(false);
-  const timeout = useRef<number | undefined>(undefined);
+  const timeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const target = useRef<EventTarget | undefined>(undefined);
 
   const start = useCallback((event: any) => {
@@ -93,7 +93,7 @@ export const useLongPress = (options: LongPressOptions): LongPressHandlers => {
  */
 export const useMapLongPress = (onLongPress: (lat: number, lng: number, event: any) => void, delay = 500) => {
   const [isLongPressing, setIsLongPressing] = useState(false);
-  const timeout = useRef<number | undefined>(undefined);
+  const timeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const coordinatesRef = useRef<{ lat: number; lng: number } | null>(null);
   const eventRef = useRef<any>(null);
 

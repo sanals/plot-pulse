@@ -14,8 +14,7 @@ interface LocationButtonProps {
  * and centers the map on user's location when clicked
  */
 const LocationButton: React.FC<LocationButtonProps> = ({ 
-  position = 'topright',
-  className = ''
+  position = 'topright'
 }) => {
   const map = useMap();
   const { 

@@ -7,7 +7,7 @@ interface RegisterFormProps {
   onClose: () => void;
 }
 
-export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onClose }) => {
+export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const { register } = useAuth();
   const [formData, setFormData] = useState<CreateUserRequest>({
     username: '',

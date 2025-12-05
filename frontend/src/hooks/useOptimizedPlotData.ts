@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getPlotsInBounds, createPlot, updatePlot, deletePlot, getNearestPlot } from '../services/plotService';
 import type { PlotDto, MapBounds, NearestPlotRequest, PlotFilterParams } from '../types/plot.types';
-import { convertCurrency, getCurrencyInfo, type CurrencyCode } from '../utils/currencyUtils';
+import { convertCurrency, type CurrencyCode } from '../utils/currencyUtils';
 import { convertToPreferredAreaUnit } from '../utils/priceConversions';
 import type { AreaUnit } from '../contexts/SettingsContext';
 
@@ -51,7 +51,7 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
 
   // Cache management
   const cacheRef = useRef<PlotCache>({});
-  const debounceTimerRef = useRef<number | undefined>(undefined);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastFiltersRef = useRef(filters);
 
@@ -120,14 +120,13 @@ export const useOptimizedPlotData = (options: UseOptimizedPlotDataOptions = {}) 
 
   // Check if filters have changed (using ref to avoid recreating function)
   const filtersStringRef = useRef<string>('');
-  const haveFiltersChanged = useCallback(() => {
+  // Update filter ref when filters change
+  useEffect(() => {
     const currentFiltersString = JSON.stringify(filters || {});
-    const filtersChanged = currentFiltersString !== filtersStringRef.current;
-    if (filtersChanged) {
+    if (currentFiltersString !== filtersStringRef.current) {
       filtersStringRef.current = currentFiltersString;
       lastFiltersRef.current = filters;
     }
-    return filtersChanged;
   }, [filters]);
 
   // Generate cache key from bounds only (filters applied client-side for better performance)

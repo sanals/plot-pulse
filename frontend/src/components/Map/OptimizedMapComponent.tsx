@@ -106,7 +106,7 @@ const MapInstanceCapture: React.FC<{ onMapReady: (map: any) => void }> = ({ onMa
 const MapComponentInner: React.FC = () => {
   const { position, loading: geoLoading, error: geoError, refreshLocation } = useGeolocationContext();
   const { currency, areaUnit } = useSettings();
-  const { getFilterParams, filters } = useFilters();
+  const { getFilterParams } = useFilters();
   
   // Use optimized plot data hook
   const {
@@ -115,8 +115,7 @@ const MapComponentInner: React.FC = () => {
     error: plotsError,
     plotStats,
     loadPlotsInViewport,
-    refreshPlots,
-    refreshFilteredPlots
+    refreshPlots
   } = useOptimizedPlotData({
     enableViewportLoading: true,
     debounceDelay: 500,

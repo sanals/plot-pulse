@@ -164,15 +164,14 @@ export const FilterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
-    return (
-      filters.priceRange.min !== null ||
-      filters.priceRange.max !== null ||
-      filters.status !== 'all' ||
-      filters.dateAdded !== 'all' ||
-      (filters.dateAdded === 'custom' && (filters.customDateRange?.from || filters.customDateRange?.to)) ||
-      filters.location.enabled ||
-      filters.searchQuery.trim() !== ''
-    );
+    const hasPriceFilter = filters.priceRange.min !== null || filters.priceRange.max !== null;
+    const hasStatusFilter = filters.status !== 'all';
+    const hasDateFilter = filters.dateAdded !== 'all';
+    const hasCustomDateFilter = filters.dateAdded === 'custom' && Boolean(filters.customDateRange?.from || filters.customDateRange?.to);
+    const hasLocationFilter = filters.location.enabled;
+    const hasSearchFilter = filters.searchQuery.trim() !== '';
+    
+    return Boolean(hasPriceFilter || hasStatusFilter || hasDateFilter || hasCustomDateFilter || hasLocationFilter || hasSearchFilter);
   }, [filters]);
 
   // Count active filters
@@ -228,8 +227,8 @@ const parseFiltersFromUrl = (searchParams: URLSearchParams): PlotFilters | null 
 
     // Date
     const dateAdded = searchParams.get('dateAdded');
-    if (dateAdded && ['today', 'week', 'month', 'quarter'].includes(dateAdded)) {
-      filters.dateAdded = dateAdded as 'today' | 'week' | 'month' | 'quarter';
+    if (dateAdded && ['today', 'week', 'month', 'half_year', 'year', 'custom'].includes(dateAdded)) {
+      filters.dateAdded = dateAdded as 'today' | 'week' | 'month' | 'half_year' | 'year' | 'custom';
       hasFilters = true;
     }
 
