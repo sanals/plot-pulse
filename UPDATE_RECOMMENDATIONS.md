@@ -92,17 +92,28 @@ mvn versions:display-dependency-updates
 - ✅ JWT secret now uses environment variable (`${JWT_SECRET}`)
 - ✅ Database credentials now use environment variables
 - ⚠️ CSRF disabled (may be intentional for API-only, but should be documented)
-- ❌ No rate limiting implemented
+- ✅ **Rate limiting implemented** - Using Bucket4j with per-endpoint limits
 - ❌ No security headers configured (X-Frame-Options, X-Content-Type-Options, etc.)
 
 **Still Needed:**
-- Add rate limiting for API endpoints (especially `/auth/**` and `/plots/**`)
 - Add security headers configuration
 - Consider enabling CSRF for state-changing operations
 - Add input validation improvements
 
+**Rate Limiting Implementation:**
+- ✅ Added Bucket4j dependencies (`bucket4j-core`, `bucket4j-caffeine`)
+- ✅ Created `RateLimitFilter` with per-IP tracking
+- ✅ Configured different limits for different endpoint patterns:
+  - Auth endpoints: 10 requests/minute (production), 20/minute (dev)
+  - Plot endpoints: 100 requests/minute (production), 200/minute (dev)
+  - Geocoding endpoints: 30 requests/minute (production), 60/minute (dev)
+  - Authenticated endpoints: 200 requests/minute (production), 500/minute (dev)
+  - Health endpoints: 1000 requests/minute
+- ✅ Returns 429 Too Many Requests with Retry-After header
+- ✅ Configurable via environment variables in production
+- ✅ Integrated into Spring Security filter chain
+
 **Recommendations:**
-- Use Spring Security's rate limiting or Bucket4j
 - Configure security headers in `SecurityConfig`
 - Add request size limits
 
@@ -250,7 +261,7 @@ const logger = {
 8. ✅ Set up proper logging for production - **COMPLETED**
 9. ❌ **Remove or disable debug console.log statements** - 151 statements found, needs cleanup
 10. ⚠️ **Create `.env.example` files** - Setup scripts exist, but example files would help
-11. ⚠️ **Add rate limiting** - Critical for public API
+11. ✅ **Add rate limiting** - **COMPLETED** - Using Bucket4j with per-endpoint limits
 12. ⚠️ **Add security headers** - X-Frame-Options, CSP, etc.
 13. ⚠️ **Disable mock data in production** - Use environment variable
 14. ⚠️ **Update README.md** - Needs comprehensive setup guide
@@ -286,7 +297,7 @@ const logger = {
 - [ ] Create `frontend/.env.example` with all variables
 - [ ] Create `backend/.env.example` with database and JWT config
 - [ ] Remove or gate debug console.log statements (151 found)
-- [ ] Add rate limiting to backend API
+- [x] Add rate limiting to backend API - **COMPLETED** (Bucket4j implementation)
 - [ ] Add security headers configuration
 - [ ] Disable mock data in production builds
 - [ ] Update main `README.md` with comprehensive setup instructions
@@ -352,17 +363,31 @@ const logger = {
 
 ---
 
-### 18. Rate Limiting Not Implemented ❌ NOT IMPLEMENTED
+### 18. Rate Limiting ✅ IMPLEMENTED
 
-**Issue**: No rate limiting on API endpoints
-- Public endpoints vulnerable to abuse
-- `/auth/**` endpoints can be brute-forced
-- `/plots/**` endpoints can be spammed
+**Status**: ✅ **COMPLETED**
 
-**Recommendation**: 
-- Use Spring Security rate limiting
-- Or Bucket4j for more advanced rate limiting
-- Different limits for authenticated vs. unauthenticated users
+**Implementation Details:**
+- ✅ Implemented using Bucket4j with token bucket algorithm
+- ✅ Per-IP address tracking with endpoint-specific limits
+- ✅ Different rate limits for different endpoint patterns:
+  - Authentication endpoints: 10 req/min (prod), 20 req/min (dev)
+  - Plot endpoints: 100 req/min (prod), 200 req/min (dev)
+  - Geocoding endpoints: 30 req/min (prod), 60 req/min (dev)
+  - Authenticated endpoints: 200 req/min (prod), 500 req/min (dev)
+  - Health check endpoints: 1000 req/min
+- ✅ Returns HTTP 429 (Too Many Requests) with Retry-After header
+- ✅ Configurable via `application.yml` and environment variables
+- ✅ Integrated into Spring Security filter chain (executes before authentication)
+- ✅ Can be disabled via `rate-limit.enabled` property
+
+**Files Created/Modified:**
+- `backend/src/main/java/com/company/project/config/RateLimitProperties.java`
+- `backend/src/main/java/com/company/project/security/RateLimitFilter.java`
+- `backend/src/main/java/com/company/project/config/SecurityConfig.java` (updated)
+- `backend/pom.xml` (added Bucket4j dependencies)
+- `backend/src/main/resources/application-dev.yml` (added rate limit config)
+- `backend/src/main/resources/application-prod.yml` (added rate limit config with env vars)
 
 ---
 

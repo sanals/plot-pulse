@@ -25,6 +25,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.company.project.security.AuthEntryPointJwt;
 import com.company.project.security.JwtAuthenticationFilter;
+import com.company.project.security.RateLimitFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -52,6 +53,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthEntryPointJwt unauthorizedHandler;
     private final CorsProperties corsProperties;
+    private final RateLimitFilter rateLimitFilter;
 
     /**
      * Configures authentication provider with user details service and password
@@ -171,6 +173,9 @@ public class SecurityConfig {
 
         // Use the custom authentication provider
         http.authenticationProvider(authenticationProvider());
+
+        // Add rate limiting filter first (before authentication)
+        http.addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class);
 
         // Add JWT filter before the standard authentication filter
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

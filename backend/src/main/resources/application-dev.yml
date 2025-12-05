@@ -66,6 +66,25 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
+# Rate limiting configuration for development
+rate-limit:
+  enabled: true
+  auth:
+    requests: 20  # More lenient in dev
+    window-seconds: 60
+  plots:
+    requests: 200  # More lenient in dev
+    window-seconds: 60
+  geocoding:
+    requests: 60  # More lenient in dev
+    window-seconds: 60
+  authenticated:
+    requests: 500  # More lenient in dev
+    window-seconds: 60
+  health:
+    requests: 1000
+    window-seconds: 60
+
 # Application configuration
 app:
   base-url: http://localhost:8091/api

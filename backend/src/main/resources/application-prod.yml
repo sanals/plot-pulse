@@ -85,6 +85,25 @@ logging:
     max-size: 10MB
     max-history: 30
 
+# Rate limiting configuration for production
+rate-limit:
+  enabled: ${RATE_LIMIT_ENABLED:true}
+  auth:
+    requests: ${RATE_LIMIT_AUTH_REQUESTS:10}  # 10 requests per minute for auth endpoints
+    window-seconds: ${RATE_LIMIT_AUTH_WINDOW:60}
+  plots:
+    requests: ${RATE_LIMIT_PLOTS_REQUESTS:100}  # 100 requests per minute for plot endpoints
+    window-seconds: ${RATE_LIMIT_PLOTS_WINDOW:60}
+  geocoding:
+    requests: ${RATE_LIMIT_GEOCODING_REQUESTS:30}  # 30 requests per minute for geocoding
+    window-seconds: ${RATE_LIMIT_GEOCODING_WINDOW:60}
+  authenticated:
+    requests: ${RATE_LIMIT_AUTHENTICATED_REQUESTS:200}  # 200 requests per minute for authenticated endpoints
+    window-seconds: ${RATE_LIMIT_AUTHENTICATED_WINDOW:60}
+  health:
+    requests: ${RATE_LIMIT_HEALTH_REQUESTS:1000}  # 1000 requests per minute for health checks
+    window-seconds: ${RATE_LIMIT_HEALTH_WINDOW:60}
+
 # Application configuration
 app:
   base-url: ${APP_BASE_URL:https://api.plotpulse.app/api}
