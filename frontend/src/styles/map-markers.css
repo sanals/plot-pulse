@@ -821,6 +821,15 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.search-submit-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  display: block;
 }
 
 .search-submit-btn:hover:not(:disabled) {
@@ -858,6 +867,9 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .search-suggestion:last-child {
@@ -885,6 +897,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0; /* Allow flex item to shrink below content size */
+  overflow: hidden;
 }
 
 .suggestion-name {
@@ -892,6 +906,10 @@
   font-weight: 500;
   color: #333;
   line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: break-word;
 }
 
 .suggestion-coords {
@@ -903,6 +921,7 @@
 .suggestion-type {
   font-size: 16px;
   opacity: 0.7;
+  flex-shrink: 0;
 }
 
 .search-help {

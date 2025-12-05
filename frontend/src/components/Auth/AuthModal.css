@@ -10,6 +10,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 /* Auth Modal Container */
@@ -19,10 +20,11 @@
   padding: 2rem;
   max-width: 500px;
   width: 90%;
-  max-height: 90vh;
+  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
   overflow-y: auto;
   position: relative;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  margin: max(1rem, env(safe-area-inset-top)) auto max(1rem, env(safe-area-inset-bottom)) auto;
 }
 
 /* Close Button */
@@ -236,9 +238,17 @@
 
 /* Responsive Design */
 @media (max-width: 600px) {
+  .auth-modal-overlay {
+    align-items: flex-start;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
   .auth-modal {
     padding: 1.5rem;
-    margin: 1rem;
+    margin: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom)) 1rem;
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
+    width: calc(100% - 2rem);
   }
   
   .form-row {
