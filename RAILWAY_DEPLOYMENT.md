@@ -118,9 +118,15 @@ In **plot-pulse** service → **"Variables"** tab, add:
 
 | Variable | Value | Notes |
 |----------|-------|-------|
-| `SPRING_PROFILES_ACTIVE` | `prod` | **REQUIRED** |
+| `SPRING_PROFILES_ACTIVE` | `prod,railway` | **REQUIRED** - Use `prod,railway` to enable Railway-specific overrides |
 | `JWT_SECRET` | (generate secure secret) | **REQUIRED** - See below |
 | `FRONTEND_URL` | `https://plotpulse.syrez.co.in` | Optional - for CORS |
+
+**Note:** Using `prod,railway` profile enables Railway-specific configurations:
+- Server binds to `0.0.0.0` (required for Railway networking)
+- Uses `PORT` environment variable (Railway's convention)
+- Database defaults to `railway` (Railway's default database name)
+- SSL mode set to `disable` for internal connections (Railway's internal network)
 
 **Generate JWT_SECRET:**
 
@@ -138,7 +144,7 @@ Or use this pre-generated one (for testing only - generate new for production):
 
 Your **plot-pulse** service should have:
 
-✅ `SPRING_PROFILES_ACTIVE=prod`
+✅ `SPRING_PROFILES_ACTIVE=prod,railway` (use `prod,railway` to enable Railway-specific overrides)
 ✅ `JWT_SECRET` (secure value)
 ✅ `PGHOST=postgis.railway.internal`
 ✅ `PGPORT=5432`

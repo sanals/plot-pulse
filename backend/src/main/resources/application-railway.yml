@@ -1,0 +1,20 @@
+# Railway-Specific Configuration
+# This profile contains Railway-specific overrides
+# Use with: spring.profiles.active=prod,railway
+# Or Railway automatically sets SPRING_PROFILES_ACTIVE=prod,railway
+
+server:
+  # Railway requires binding to 0.0.0.0 to accept external connections
+  address: 0.0.0.0
+  # Railway uses PORT environment variable (standard for containerized platforms)
+  port: ${PORT:${SERVER_PORT:8091}}
+
+spring:
+  datasource:
+    # Railway-specific database configuration
+    # Railway uses 'railway' as default database name
+    # Railway internal connections use sslmode=disable for performance
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:railway}?sslmode=${PGSSLMODE:disable}
+    username: ${PGUSER:${DATABASE_USERNAME:postgres}}
+    password: ${PGPASSWORD:${DATABASE_PASSWORD:}}
+

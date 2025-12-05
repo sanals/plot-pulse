@@ -88,4 +88,3 @@ logging:
 # Application configuration
 app:
   base-url: ${APP_BASE_URL:https://api.plotpulse.app/api}
-
