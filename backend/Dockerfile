@@ -1,10 +1,7 @@
-# Use Amazon Corretto - alternative to Eclipse Temurin
-# Less prone to Docker Hub CDN issues
-FROM amazoncorretto:17-alpine AS build
+# Use pinned version tags for better caching and stability
+# These specific versions are more likely to be cached by Railway
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 WORKDIR /app
-
-# Install Maven
-RUN apk add --no-cache maven
 
 # Copy pom.xml first for dependency caching
 COPY backend/pom.xml ./pom.xml
@@ -18,8 +15,8 @@ COPY backend/src/ ./src/
 # Using maven.test.skip to skip both compilation and execution of tests
 RUN mvn clean package -Dmaven.test.skip=true
 
-# Use Amazon Corretto for runtime
-FROM amazoncorretto:17-alpine
+# Use pinned JRE version - more likely to be cached
+FROM eclipse-temurin:17.0.13_11-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8091
