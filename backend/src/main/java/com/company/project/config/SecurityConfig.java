@@ -163,9 +163,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints that don't require authentication
-                        .requestMatchers("/", "/health/**", "/auth/**", "/users/create", "/plots/**").permitAll()
+                        .requestMatchers("/health/**", "/auth/**", "/users/create", "/plots/**").permitAll()
                         // Also allow with explicit API prefix patterns (in case context path changes)
-                        .requestMatchers("/api/v1/", "/api/v1/health/**", "/api/auth/**", "/api/users/create", "/api/health/**", "/api/plots/**").permitAll()
+                        .requestMatchers("/api/v1/health/**", "/api/auth/**", "/api/users/create", "/api/health/**", "/api/plots/**").permitAll()
                         // All other endpoints require authentication
                         .anyRequest().authenticated());
 

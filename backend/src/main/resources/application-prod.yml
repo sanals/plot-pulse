@@ -10,12 +10,9 @@ server:
 
 spring:
   datasource:
-    # Railway provides DATABASE_URL in format: postgresql://user:password@host:port/database
-    # DatabaseConfig.java will parse DATABASE_URL and set spring.datasource.* properties
-    # If DATABASE_URL is not set, use individual PG variables (Railway also provides these)
-    # Note: Do NOT use DATABASE_URL directly here - it's in Railway format, not JDBC format
+    # Railway provides individual PG* environment variables automatically
+    # Use internal hostname (postgis.railway.internal) for faster connections
     # For Railway internal connection, sslmode=disable is fine
-    # For external connections, use sslmode=require
     url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:railway}?sslmode=${PGSSLMODE:disable}
     username: ${PGUSER:${DATABASE_USERNAME:postgres}}
     password: ${PGPASSWORD:${DATABASE_PASSWORD:}}
