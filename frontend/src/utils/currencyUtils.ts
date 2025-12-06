@@ -1,32 +1,38 @@
-// Currency configuration with fallback static rates
+// Currency configuration with fallback static rates (approximate, per 1 INR)
 const STATIC_CURRENCIES = {
-  INR: {
-    symbol: '₹',
-    code: 'INR',
-    name: 'Indian Rupee',
-    exchangeRate: 1, // Base currency
-  },
-  USD: {
-    symbol: '$',
-    code: 'USD', 
-    name: 'US Dollar',
-    exchangeRate: 0.012, // 1 INR = 0.012 USD (fallback)
-  },
-  EUR: {
-    symbol: '€',
-    code: 'EUR',
-    name: 'Euro',
-    exchangeRate: 0.011, // 1 INR = 0.011 EUR (fallback)
-  },
-  GBP: {
-    symbol: '£',
-    code: 'GBP',
-    name: 'British Pound',
-    exchangeRate: 0.0095, // 1 INR = 0.0095 GBP (fallback)
-  },
-};
+  INR: { symbol: '₹', code: 'INR', name: 'Indian Rupee', exchangeRate: 1 },
+  USD: { symbol: '$', code: 'USD', name: 'US Dollar', exchangeRate: 0.012 },
+  EUR: { symbol: '€', code: 'EUR', name: 'Euro', exchangeRate: 0.011 },
+  GBP: { symbol: '£', code: 'GBP', name: 'British Pound', exchangeRate: 0.0095 },
+  AED: { symbol: 'د.إ', code: 'AED', name: 'UAE Dirham', exchangeRate: 0.044 },
+  SAR: { symbol: '﷼', code: 'SAR', name: 'Saudi Riyal', exchangeRate: 0.045 },
+  AUD: { symbol: 'A$', code: 'AUD', name: 'Australian Dollar', exchangeRate: 0.018 },
+  CAD: { symbol: 'C$', code: 'CAD', name: 'Canadian Dollar', exchangeRate: 0.016 },
+  SGD: { symbol: 'S$', code: 'SGD', name: 'Singapore Dollar', exchangeRate: 0.016 },
+  NZD: { symbol: 'NZ$', code: 'NZD', name: 'New Zealand Dollar', exchangeRate: 0.019 },
+  CHF: { symbol: 'CHF', code: 'CHF', name: 'Swiss Franc', exchangeRate: 0.011 },
+  JPY: { symbol: '¥', code: 'JPY', name: 'Japanese Yen', exchangeRate: 1.75 },
+  CNY: { symbol: '¥', code: 'CNY', name: 'Chinese Yuan', exchangeRate: 0.085 },
+  HKD: { symbol: 'HK$', code: 'HKD', name: 'Hong Kong Dollar', exchangeRate: 0.094 },
+  THB: { symbol: '฿', code: 'THB', name: 'Thai Baht', exchangeRate: 0.44 },
+  MYR: { symbol: 'RM', code: 'MYR', name: 'Malaysian Ringgit', exchangeRate: 0.057 },
+  IDR: { symbol: 'Rp', code: 'IDR', name: 'Indonesian Rupiah', exchangeRate: 189 },
+  KRW: { symbol: '₩', code: 'KRW', name: 'South Korean Won', exchangeRate: 16 },
+  TWD: { symbol: 'NT$', code: 'TWD', name: 'Taiwan Dollar', exchangeRate: 0.37 },
+  PHP: { symbol: '₱', code: 'PHP', name: 'Philippine Peso', exchangeRate: 0.68 },
+  ZAR: { symbol: 'R', code: 'ZAR', name: 'South African Rand', exchangeRate: 0.21 },
+  BRL: { symbol: 'R$', code: 'BRL', name: 'Brazilian Real', exchangeRate: 0.059 },
+  MXN: { symbol: '$', code: 'MXN', name: 'Mexican Peso', exchangeRate: 0.21 },
+  TRY: { symbol: '₺', code: 'TRY', name: 'Turkish Lira', exchangeRate: 0.36 },
+  SEK: { symbol: 'kr', code: 'SEK', name: 'Swedish Krona', exchangeRate: 0.13 },
+  NOK: { symbol: 'kr', code: 'NOK', name: 'Norwegian Krone', exchangeRate: 0.13 },
+  DKK: { symbol: 'kr', code: 'DKK', name: 'Danish Krone', exchangeRate: 0.081 },
+  PLN: { symbol: 'zł', code: 'PLN', name: 'Polish Złoty', exchangeRate: 0.047 },
+  RUB: { symbol: '₽', code: 'RUB', name: 'Russian Ruble', exchangeRate: 1.05 },
+} as const;
 
 export type CurrencyCode = keyof typeof STATIC_CURRENCIES;
+const SUPPORTED_CODES: CurrencyCode[] = Object.keys(STATIC_CURRENCIES) as CurrencyCode[];
 
 // Define a more flexible type for live currencies
 interface CurrencyConfig {
@@ -91,15 +97,19 @@ const loadCachedRates = (): boolean => {
     const cachedRates = localStorage.getItem(CACHE_KEY);
     if (!cachedRates) return false;
     
-    const rates = JSON.parse(cachedRates);
+    const rates = JSON.parse(cachedRates) as Record<string, number>;
     
-    // Update live currencies with cached rates
-    LIVE_CURRENCIES = {
-      INR: { ...STATIC_CURRENCIES.INR, exchangeRate: 1 },
-      USD: { ...STATIC_CURRENCIES.USD, exchangeRate: rates.USD || STATIC_CURRENCIES.USD.exchangeRate },
-      EUR: { ...STATIC_CURRENCIES.EUR, exchangeRate: rates.EUR || STATIC_CURRENCIES.EUR.exchangeRate },
-      GBP: { ...STATIC_CURRENCIES.GBP, exchangeRate: rates.GBP || STATIC_CURRENCIES.GBP.exchangeRate },
-    };
+    // Update live currencies with cached rates (fallback to static)
+    const updated: Partial<CurrenciesType> = {};
+    SUPPORTED_CODES.forEach(code => {
+      updated[code] = {
+        ...STATIC_CURRENCIES[code],
+        exchangeRate: code === 'INR'
+          ? 1
+          : rates[code] ?? STATIC_CURRENCIES[code].exchangeRate,
+      };
+    });
+    LIVE_CURRENCIES = updated as CurrenciesType;
     
     console.log('✅ Loaded cached currency rates:', rates);
     return true;
@@ -146,20 +156,22 @@ const fetchLiveCurrencyRates = async (): Promise<boolean> => {
       throw new Error('Invalid API response: missing rates');
     }
     
-    // Extract rates for our supported currencies
-    const rates = {
-      USD: data.rates.USD || STATIC_CURRENCIES.USD.exchangeRate,
-      EUR: data.rates.EUR || STATIC_CURRENCIES.EUR.exchangeRate,
-      GBP: data.rates.GBP || STATIC_CURRENCIES.GBP.exchangeRate,
-    };
+    // Extract rates for all supported currencies (fallback to static)
+    const rates: Record<string, number> = {};
+    SUPPORTED_CODES.forEach(code => {
+      if (code === 'INR') return;
+      rates[code] = data.rates[code] ?? STATIC_CURRENCIES[code].exchangeRate;
+    });
     
     // Update live currencies
-    LIVE_CURRENCIES = {
-      INR: { ...STATIC_CURRENCIES.INR, exchangeRate: 1 },
-      USD: { ...STATIC_CURRENCIES.USD, exchangeRate: rates.USD },
-      EUR: { ...STATIC_CURRENCIES.EUR, exchangeRate: rates.EUR },
-      GBP: { ...STATIC_CURRENCIES.GBP, exchangeRate: rates.GBP },
-    };
+    const updated: Partial<CurrenciesType> = {};
+    SUPPORTED_CODES.forEach(code => {
+      updated[code] = {
+        ...STATIC_CURRENCIES[code],
+        exchangeRate: code === 'INR' ? 1 : rates[code],
+      };
+    });
+    LIVE_CURRENCIES = updated as CurrenciesType;
     
     // Save to cache
     saveCachedRates(rates);
@@ -218,11 +230,12 @@ export const refreshCurrencyRates = async (): Promise<boolean> => {
     console.log('📊 Received exchange rate data:', data);
 
     // Update live currencies with new rates
-    Object.keys(LIVE_CURRENCIES).forEach(code => {
+    SUPPORTED_CODES.forEach(code => {
+      if (code === 'INR') return;
       if (data.rates[code]) {
-        LIVE_CURRENCIES[code as CurrencyCode] = {
-          ...LIVE_CURRENCIES[code as CurrencyCode],
-          exchangeRate: data.rates[code]
+        LIVE_CURRENCIES[code] = {
+          ...LIVE_CURRENCIES[code],
+          exchangeRate: data.rates[code],
         };
       }
     });

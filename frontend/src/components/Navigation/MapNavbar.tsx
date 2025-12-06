@@ -997,7 +997,7 @@ Updated: ${currencyInfo.lastUpdated}${!currencyInfo.isLive ? '\n⚠️ Using cac
               
               <div className="mobile-control-group">
                 <label>Display Mode</label>
-                <div className="mobile-toggle-group">
+                <div className="mobile-toggle-group mobile-toggle-group-display">
                   <button 
                     className={`mobile-toggle-btn ${markerDisplayMode === 'none' ? 'active' : ''}`}
                     onClick={() => {
@@ -1199,7 +1199,7 @@ Updated: ${currencyInfo.lastUpdated}${!currencyInfo.isLive ? '\n⚠️ Using cac
               {/* Area Unit Selection */}
               <div className="mobile-control-group">
                 <label>Area Unit</label>
-                <div className="mobile-toggle-group">
+                <div className="mobile-toggle-group mobile-toggle-group-area">
                   <button 
                     className={`mobile-toggle-btn ${areaUnit === 'sqft' ? 'active' : ''}`}
                     onClick={() => setAreaUnit('sqft')}
