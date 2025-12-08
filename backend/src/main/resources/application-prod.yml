@@ -13,14 +13,14 @@ spring:
     # Railway provides individual PG* environment variables automatically
     # Use internal hostname (postgis.railway.internal) for faster connections
     # For Railway internal connection, sslmode=disable is fine
-    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:railway}?sslmode=${PGSSLMODE:disable}
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:railway}?sslmode=${PGSSLMODE:disable}&connectTimeout=60&socketTimeout=60
     username: ${PGUSER:${DATABASE_USERNAME:postgres}}
     password: ${PGPASSWORD:${DATABASE_PASSWORD:}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
-      connection-timeout: 30000
+      connection-timeout: 60000  # Increased from 30s to 60s
       idle-timeout: 600000
       max-lifetime: 1800000
   jpa:
