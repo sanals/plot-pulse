@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS plots (
     id BIGSERIAL PRIMARY KEY,
     price NUMERIC(19, 2) NOT NULL,
-    price_unit VARCHAR(50) NOT NULL DEFAULT 'sqft' CHECK (price_unit IN ('sqft', 'cent', 'acre', 'sqm')),
+    price_unit VARCHAR(50) NOT NULL DEFAULT 'per_sqft' CHECK (price_unit IN ('per_sqft', 'per_sqm', 'per_cent', 'per_acre', 'per_hectare')),
     is_for_sale BOOLEAN NOT NULL DEFAULT true,
     description VARCHAR(500),
     location geometry(Point, 4326) NOT NULL,

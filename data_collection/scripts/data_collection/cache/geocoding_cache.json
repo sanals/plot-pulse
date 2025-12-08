@@ -1,0 +1,46 @@
+{
+  "mumbai, india, mumbai, india": {
+    "latitude": 19.1146916,
+    "longitude": 72.8391495
+  },
+  "bangalore, india, bangalore, india": {
+    "latitude": 12.9660842,
+    "longitude": 77.7183767
+  },
+  "hyderabad, india, hyderabad, india": {
+    "latitude": 17.4085473,
+    "longitude": 78.598649
+  },
+  "chennai, india, chennai, india": {
+    "latitude": 13.0530054,
+    "longitude": 80.2279292
+  },
+  "pune, india, pune, india": {
+    "latitude": 18.4713775,
+    "longitude": 73.8644697
+  },
+  "kolkata, india, kolkata, india": {
+    "latitude": 22.5732616,
+    "longitude": 88.3551352
+  },
+  "ahmedabad, india, ahmedabad, india": {
+    "latitude": 23.0245252,
+    "longitude": 72.5308057
+  },
+  "mumbai, maharashtra, mumbai, india": {
+    "latitude": 18.9327713,
+    "longitude": 72.8370823
+  },
+  "agartala, tripura, agartala, india": {
+    "latitude": 23.8881179,
+    "longitude": 91.2414518
+  },
+  "agra, uttar pradesh, agra, india": {
+    "latitude": 27.1752554,
+    "longitude": 78.0098161
+  },
+  "kochi, kerala, kochi, india": {
+    "latitude": 9.9679032,
+    "longitude": 76.2444378
+  }
+}

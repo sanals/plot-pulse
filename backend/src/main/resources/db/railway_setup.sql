@@ -31,19 +31,29 @@ ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
 ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('USER', 'ADMIN', 'SUPER_ADMIN'));
 
 -- Step 6: Add price_unit column to plots table (if not exists)
-ALTER TABLE plots ADD COLUMN IF NOT EXISTS price_unit VARCHAR(20) DEFAULT 'sqft';
+ALTER TABLE plots ADD COLUMN IF NOT EXISTS price_unit VARCHAR(20) DEFAULT 'per_sqft';
 
--- Step 7: Add constraint for price_unit (if not exists)
+-- Step 7: Update existing data to add "per_" prefix (if needed)
+UPDATE plots SET price_unit = 'per_sqft' WHERE price_unit = 'sqft';
+UPDATE plots SET price_unit = 'per_sqm' WHERE price_unit = 'sqm';
+UPDATE plots SET price_unit = 'per_cent' WHERE price_unit = 'cent';
+UPDATE plots SET price_unit = 'per_acre' WHERE price_unit = 'acre';
+
+-- Step 8: Drop old constraint and add new one with "per_" prefix
 DO $$
 BEGIN
-    IF NOT EXISTS (
+    -- Drop old constraint if it exists
+    IF EXISTS (
         SELECT 1 FROM information_schema.table_constraints 
         WHERE constraint_name = 'plots_price_unit_check' 
         AND table_name = 'plots'
     ) THEN
-        ALTER TABLE plots ADD CONSTRAINT plots_price_unit_check 
-        CHECK (price_unit IN ('sqft', 'cent', 'acre', 'sqm'));
+        ALTER TABLE plots DROP CONSTRAINT plots_price_unit_check;
     END IF;
+    
+    -- Add new constraint with "per_" prefix to match frontend
+    ALTER TABLE plots ADD CONSTRAINT plots_price_unit_check 
+    CHECK (price_unit IN ('per_sqft', 'per_sqm', 'per_cent', 'per_acre', 'per_hectare'));
 END $$;
 
 -- Step 8: Create spatial indexes if they don't exist
