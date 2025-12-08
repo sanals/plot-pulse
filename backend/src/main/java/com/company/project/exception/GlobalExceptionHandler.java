@@ -6,6 +6,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessException;
 
 import com.company.project.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +24,52 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        log.error("Database constraint violation: {}", ex.getMessage(), ex);
+        
+        String errorMessage = "Database constraint violation";
+        String details = ex.getMessage();
+        
+        // Extract more specific error message if available
+        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+            details = ex.getCause().getMessage();
+            // Check for constraint violation messages
+            if (details.contains("violates check constraint")) {
+                errorMessage = "Invalid data: constraint violation";
+            } else if (details.contains("violates foreign key constraint")) {
+                errorMessage = "Invalid reference: foreign key violation";
+            } else if (details.contains("duplicate key")) {
+                errorMessage = "Duplicate entry: this record already exists";
+            }
+        }
+        
+        ErrorResponse error = ErrorResponse.builder()
+                .status("ERROR")
+                .code(400)
+                .message(errorMessage)
+                .data(details)
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException ex) {
+        log.error("Database access error: {}", ex.getMessage(), ex);
+        ErrorResponse error = ErrorResponse.builder()
+                .status("ERROR")
+                .code(500)
+                .message("Database access error")
+                .data(ex.getMessage())
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<String>> handleException(Exception ex) {
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
         ApiResponse<String> response = new ApiResponse<>(
                 "ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
