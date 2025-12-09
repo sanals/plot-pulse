@@ -15,12 +15,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import jakarta.annotation.PreDestroy;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import io.github.bucket4j.ConsumptionProbe;
 
 /**
@@ -40,7 +45,28 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final RateLimitProperties rateLimitProperties;
     
     // Cache of buckets per IP address and endpoint pattern
+    // Limited to prevent memory leaks from unbounded growth
+    private static final int MAX_CACHE_SIZE = 10000; // Maximum number of buckets to cache
     private final Map<String, Bucket> bucketCache = new ConcurrentHashMap<>();
+    
+    // Track last access time for each bucket to enable cleanup
+    private final Map<String, Long> bucketAccessTime = new ConcurrentHashMap<>();
+    
+    // Cleanup scheduler to remove old buckets periodically
+    private final ScheduledExecutorService cleanupScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "rate-limit-cleanup");
+        t.setDaemon(true);
+        return t;
+    });
+    
+    // Track cache size to prevent unbounded growth
+    private final AtomicLong cacheSize = new AtomicLong(0);
+    
+    // Initialize cleanup task
+    {
+        // Clean up buckets that haven't been accessed in 1 hour
+        cleanupScheduler.scheduleAtFixedRate(this::cleanupOldBuckets, 5, 5, TimeUnit.MINUTES);
+    }
     
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, 
@@ -58,7 +84,48 @@ public class RateLimitFilter extends OncePerRequestFilter {
         
         // Get or create bucket for this IP + endpoint pattern
         String bucketKey = clientIp + ":" + endpointKey;
-        Bucket bucket = bucketCache.computeIfAbsent(bucketKey, k -> createBucket(endpointKey));
+        
+        // Check cache size limit to prevent memory leaks
+        if (cacheSize.get() >= MAX_CACHE_SIZE && !bucketCache.containsKey(bucketKey)) {
+            // Cache is full, try to clean up old entries first
+            cleanupOldBuckets();
+            
+            // If still full after cleanup, log warning and use a default bucket
+            if (cacheSize.get() >= MAX_CACHE_SIZE) {
+                log.warn("Rate limit cache is full ({} entries). Using default bucket for IP: {}", 
+                        cacheSize.get(), clientIp);
+                // Create a temporary bucket without caching it
+                Bucket bucket = createBucket(endpointKey);
+                RateLimitProperties.EndpointLimit limit = getEndpointLimit(endpointKey);
+                ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+                
+                if (probe.isConsumed()) {
+                    addRateLimitHeaders(response, probe, limit);
+                    filterChain.doFilter(request, response);
+                } else {
+                    log.warn("Rate limit exceeded for IP: {} on endpoint: {}", clientIp, path);
+                    response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+                    response.setContentType("application/json");
+                    addRateLimitHeaders(response, probe, limit);
+                    response.setHeader("Retry-After", String.valueOf(probe.getNanosToWaitForRefill() / 1_000_000_000));
+                    response.getWriter().write(
+                        String.format(
+                            "{\"error\":\"Too Many Requests\",\"message\":\"Rate limit exceeded. Please try again later.\",\"retryAfter\":%d}",
+                            probe.getNanosToWaitForRefill() / 1_000_000_000
+                        )
+                    );
+                }
+                return;
+            }
+        }
+        
+        Bucket bucket = bucketCache.computeIfAbsent(bucketKey, k -> {
+            cacheSize.incrementAndGet();
+            return createBucket(endpointKey);
+        });
+        
+        // Update access time
+        bucketAccessTime.put(bucketKey, System.currentTimeMillis());
         
         // Get endpoint limit for header calculations
         RateLimitProperties.EndpointLimit limit = getEndpointLimit(endpointKey);
@@ -207,6 +274,47 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         
         return ip != null ? ip : "unknown";
+    }
+    
+    /**
+     * Clean up old buckets that haven't been accessed recently
+     * This prevents memory leaks from unbounded cache growth
+     */
+    private void cleanupOldBuckets() {
+        long currentTime = System.currentTimeMillis();
+        long expireTime = currentTime - TimeUnit.HOURS.toMillis(1); // Remove buckets not accessed in 1 hour
+        
+        int removed = 0;
+        for (Map.Entry<String, Long> entry : bucketAccessTime.entrySet()) {
+            if (entry.getValue() < expireTime) {
+                String key = entry.getKey();
+                bucketCache.remove(key);
+                bucketAccessTime.remove(key);
+                cacheSize.decrementAndGet();
+                removed++;
+            }
+        }
+        
+        if (removed > 0) {
+            log.debug("Cleaned up {} old rate limit buckets. Cache size: {}", removed, cacheSize.get());
+        }
+    }
+    
+    /**
+     * Cleanup resources on shutdown
+     */
+    @PreDestroy
+    public void cleanup() {
+        log.info("Shutting down rate limit cleanup scheduler");
+        cleanupScheduler.shutdown();
+        try {
+            if (!cleanupScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                cleanupScheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            cleanupScheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 }
 

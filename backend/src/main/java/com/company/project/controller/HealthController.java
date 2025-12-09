@@ -56,6 +56,13 @@ public class HealthController {
      */
     @GetMapping("/info")
     public ResponseEntity<ApiResponse<Map<String, Object>>> healthInfo() {
+        Runtime runtime = Runtime.getRuntime();
+        long maxMemory = runtime.maxMemory();
+        long totalMemory = runtime.totalMemory();
+        long freeMemory = runtime.freeMemory();
+        long usedMemory = totalMemory - freeMemory;
+        double usedPercent = maxMemory > 0 ? (usedMemory * 100.0 / maxMemory) : 0;
+        
         Map<String, Object> healthData = new HashMap<>();
         healthData.put("application", applicationName);
         healthData.put("profile", activeProfile);
@@ -65,6 +72,15 @@ public class HealthController {
         String formattedTimestamp = DateTimeFormatter.ofPattern(AppConstants.DEFAULT_DATETIME_FORMAT)
                 .format(LocalDateTime.now());
         healthData.put("timestamp", formattedTimestamp);
+        
+        // Memory information
+        Map<String, Object> memoryInfo = new HashMap<>();
+        memoryInfo.put("maxMB", maxMemory / (1024 * 1024));
+        memoryInfo.put("totalMB", totalMemory / (1024 * 1024));
+        memoryInfo.put("freeMB", freeMemory / (1024 * 1024));
+        memoryInfo.put("usedMB", usedMemory / (1024 * 1024));
+        memoryInfo.put("usedPercent", String.format("%.2f%%", usedPercent));
+        healthData.put("memory", memoryInfo);
 
         return ResponseEntity.ok(
                 new ApiResponse<>("SUCCESS", HttpStatus.OK.value(), "Health information", healthData));
