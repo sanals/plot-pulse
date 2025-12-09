@@ -14,7 +14,11 @@ spring:
     # Railway-specific database configuration
     # Railway uses 'railway' as default database name
     # Railway internal connections use sslmode=disable for performance
-    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:railway}?sslmode=${PGSSLMODE:disable}
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:railway}?sslmode=${PGSSLMODE:disable}&connectTimeout=60&socketTimeout=60
     username: ${PGUSER:${DATABASE_USERNAME:postgres}}
     password: ${PGPASSWORD:${DATABASE_PASSWORD:}}
+    hikari:
+      connection-timeout: 60000  # 60 seconds
+      maximum-pool-size: 10
+      minimum-idle: 5
 
