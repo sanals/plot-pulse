@@ -25,14 +25,8 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !loading) {
-      onCancel();
-    }
-  };
-
   return (
-    <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
+    <div className="long-press-modal-overlay">
       <div className="long-press-modal confirmation-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>{title}</h3>

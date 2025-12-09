@@ -134,17 +134,11 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
     }
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   // Destructure for easier access in render
   const { name, price, priceUnit, isForSale, description, submitting, error } = formState;
 
   return (
-    <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
+    <div className="long-press-modal-overlay">
       <div className="long-press-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Add New Plot</h3>

@@ -19,12 +19,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
 
   if (!isOpen) return null;
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   const handleSwitchToRegister = () => {
     setMode('register');
   };
@@ -34,7 +28,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
   };
 
   return (
-    <div className="auth-modal-overlay" onClick={handleOverlayClick}>
+    <div className="auth-modal-overlay">
       <div className="auth-modal">
         <button className="close-button" onClick={onClose} aria-label="Close modal">
           ×

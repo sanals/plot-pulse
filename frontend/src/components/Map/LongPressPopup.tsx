@@ -94,14 +94,8 @@ export const LongPressModal: React.FC<LongPressModalProps> = ({
     }
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
-    <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
+    <div className="long-press-modal-overlay">
       <div className="long-press-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Add New Plot</h3>

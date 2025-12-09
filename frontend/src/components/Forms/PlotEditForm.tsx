@@ -103,17 +103,11 @@ const PlotEditForm = memo(function PlotEditForm({
     }
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   // Destructure for easier access in render
   const { price, priceUnit, isForSale, description, submitting, error } = formState;
   
   return (
-    <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
+    <div className="long-press-modal-overlay">
       <div className="long-press-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Edit: {plot.name || `Plot ${plot.id}`}</h3>
