@@ -11,10 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.company.project.dto.PlotDto;
 import com.company.project.dto.PlotMapper;
 import com.company.project.entity.Plot;
+import com.company.project.entity.User;
 import com.company.project.repository.PlotRepository;
+import com.company.project.repository.UserRepository;
 import com.company.project.service.PlotService;
 import com.company.project.exception.DuplicateLocationException;
 import com.company.project.exception.PlotNotFoundException;
+import com.company.project.exception.PlotOwnershipException;
 
 import java.math.BigDecimal;
 
@@ -31,6 +34,8 @@ public class PlotServiceImpl implements PlotService {
 
     private final PlotRepository plotRepository;
     private final PlotMapper plotMapper;
+    private final UserRepository userRepository;
+    private final com.company.project.util.SecurityUtils securityUtils;
 
     @Override
     @Transactional(readOnly = true)
@@ -67,6 +72,11 @@ public class PlotServiceImpl implements PlotService {
         log.debug("Creating new plot: lat={}, lng={}, price={}", 
                 plotDto.getLatitude(), plotDto.getLongitude(), plotDto.getPrice());
         
+        // Require authentication for creating plots
+        User currentUser = securityUtils.getCurrentUser()
+                .orElseThrow(() -> new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                        "Authentication required to create plots"));
+        
         // Check for duplicate locations within 10 meters
         double minDistance = 10.0; // meters
         if (plotRepository.existsPlotsWithinDistance(plotDto.getLatitude(), plotDto.getLongitude(), minDistance)) {
@@ -76,9 +86,12 @@ public class PlotServiceImpl implements PlotService {
         }
         
         Plot plot = plotMapper.toEntity(plotDto);
+        // Set the current user as the owner
+        plot.setUser(currentUser);
+        
         Plot savedPlot = plotRepository.save(plot);
         
-        log.info("Successfully created plot with ID: {}", savedPlot.getId());
+        log.info("Successfully created plot with ID: {} by user: {}", savedPlot.getId(), currentUser.getId());
         return plotMapper.toDto(savedPlot);
     }
 
@@ -86,8 +99,20 @@ public class PlotServiceImpl implements PlotService {
     public PlotDto updatePlot(Long id, PlotDto plotDto) {
         log.debug("Updating plot with ID: {}", id);
         
+        // Require authentication for updating plots
+        User currentUser = securityUtils.getCurrentUser()
+                .orElseThrow(() -> new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                        "Authentication required to update plots"));
+        
         Plot existingPlot = plotRepository.findById(id)
                 .orElseThrow(() -> new PlotNotFoundException(id));
+        
+        // Check ownership: only the owner can update their plot
+        if (existingPlot.getUser() == null || !existingPlot.getUser().getId().equals(currentUser.getId())) {
+            log.warn("User {} attempted to update plot {} owned by user {}", 
+                    currentUser.getId(), id, existingPlot.getUser() != null ? existingPlot.getUser().getId() : "null");
+            throw new PlotOwnershipException(id, currentUser.getId());
+        }
         
         // Check for duplicate locations within 10 meters (excluding current plot)
         if (plotDto.getLatitude() != null && plotDto.getLongitude() != null) {
@@ -102,7 +127,7 @@ public class PlotServiceImpl implements PlotService {
         Plot updatedPlot = plotMapper.updateEntityFromDto(existingPlot, plotDto);
         Plot savedPlot = plotRepository.save(updatedPlot);
         
-        log.info("Successfully updated plot with ID: {}", savedPlot.getId());
+        log.info("Successfully updated plot with ID: {} by user: {}", savedPlot.getId(), currentUser.getId());
         return plotMapper.toDto(savedPlot);
     }
 
@@ -110,12 +135,23 @@ public class PlotServiceImpl implements PlotService {
     public void deletePlot(Long id) {
         log.debug("Deleting plot with ID: {}", id);
         
-        if (!plotRepository.existsById(id)) {
-            throw new PlotNotFoundException(id);
+        // Require authentication for deleting plots
+        User currentUser = securityUtils.getCurrentUser()
+                .orElseThrow(() -> new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                        "Authentication required to delete plots"));
+        
+        Plot existingPlot = plotRepository.findById(id)
+                .orElseThrow(() -> new PlotNotFoundException(id));
+        
+        // Check ownership: only the owner can delete their plot
+        if (existingPlot.getUser() == null || !existingPlot.getUser().getId().equals(currentUser.getId())) {
+            log.warn("User {} attempted to delete plot {} owned by user {}", 
+                    currentUser.getId(), id, existingPlot.getUser() != null ? existingPlot.getUser().getId() : "null");
+            throw new PlotOwnershipException(id, currentUser.getId());
         }
         
         plotRepository.deleteById(id);
-        log.info("Successfully deleted plot with ID: {}", id);
+        log.info("Successfully deleted plot with ID: {} by user: {}", id, currentUser.getId());
     }
 
     @Override

@@ -4,6 +4,7 @@
 
 export interface PlotDto {
   id?: number;
+  name: string;
   price: number;
   priceUnit: string; // Unit for the price (e.g., 'per_sqm', 'per_cent', 'per_acre', 'per_hectare', 'total')
   isForSale: boolean;
@@ -12,6 +13,7 @@ export interface PlotDto {
   longitude: number;
   createdAt?: string;
   updatedAt?: string;
+  userId?: number; // ID of the user who created this plot
 }
 
 export interface NearestPlotRequest {

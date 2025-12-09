@@ -27,6 +27,7 @@ import '../../styles/navbar.css';
 import type { MapPosition, MapBounds, PlotDto } from '../../types/plot.types';
 import { AuthModal } from '../Auth/AuthModal';
 import { useFilters } from '../../contexts/FilterContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Constants
 const DEFAULT_CENTER: MapPosition = { lat: 51.505, lng: -0.09 };
@@ -107,6 +108,7 @@ const MapComponentInner: React.FC = () => {
   const { position, loading: geoLoading, error: geoError, refreshLocation } = useGeolocationContext();
   const { currency, areaUnit } = useSettings();
   const { getFilterParams } = useFilters();
+  const { isAuthenticated } = useAuth();
   
   // Use optimized plot data hook
   const {
@@ -507,6 +509,8 @@ const MapComponentInner: React.FC = () => {
           setShowPlotForm(true);
           setShowPopup(false);
         }}
+        isAuthenticated={isAuthenticated}
+        onRequireLogin={handleShowLogin}
       />
       
       <PlotSubmissionForm

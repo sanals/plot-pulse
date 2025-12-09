@@ -173,13 +173,14 @@ class AuthService {
     }
   }
 
-  getCurrentUser(): { username: string; name?: string; email?: string; role: string } | null {
+  getCurrentUser(): { id?: number; username: string; name?: string; email?: string; role: string } | null {
     const token = this.getToken();
     if (!token) return null;
 
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return {
+        id: payload.userId ?? payload.id, // include user id if present in token
         username: payload.sub,
         name: payload.name,
         email: payload.email,

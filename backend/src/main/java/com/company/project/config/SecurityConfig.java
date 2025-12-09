@@ -185,9 +185,12 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints that don't require authentication
-                        .requestMatchers("/health/**", "/auth/**", "/users/create", "/plots/**", "/geocoding/**").permitAll()
+                        .requestMatchers("/health/**", "/auth/**", "/users/create", "/geocoding/**").permitAll()
                         // Also allow with explicit API prefix patterns (in case context path changes)
-                        .requestMatchers("/api/v1/health/**", "/api/auth/**", "/api/users/create", "/api/health/**", "/api/plots/**", "/api/v1/geocoding/**").permitAll()
+                        .requestMatchers("/api/v1/health/**", "/api/auth/**", "/api/users/create", "/api/health/**", "/api/v1/geocoding/**").permitAll()
+                        // Plot endpoints: GET is public (viewing), write operations checked in service layer
+                        .requestMatchers("/plots", "/plots/**").permitAll()
+                        .requestMatchers("/api/v1/plots", "/api/v1/plots/**").permitAll()
                         // All other endpoints require authentication
                         .anyRequest().authenticated());
 

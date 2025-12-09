@@ -34,6 +34,11 @@ public class Plot {
     private BigDecimal price;
 
     @NotNull
+    @Size(max = 150)
+    @Column(name = "name", nullable = false, length = 150)
+    private String name;
+
+    @NotNull
     @Size(max = 50)
     @Column(name = "price_unit", nullable = false, length = 50)
     private String priceUnit;

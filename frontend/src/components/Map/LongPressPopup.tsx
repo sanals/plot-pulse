@@ -70,19 +70,28 @@ interface LongPressModalProps {
   position: { lat: number; lng: number } | null;
   onClose: () => void;
   onAddPlot: (lat: number, lng: number) => void;
+  isAuthenticated: boolean;
+  onRequireLogin: () => void;
 }
 
 export const LongPressModal: React.FC<LongPressModalProps> = ({
   isOpen,
   position,
   onClose,
-  onAddPlot
+  onAddPlot,
+  isAuthenticated,
+  onRequireLogin
 }) => {
   if (!isOpen || !position) return null;
 
   const handleAddPlot = () => {
-    onAddPlot(position.lat, position.lng);
-    onClose();
+    if (isAuthenticated) {
+      onAddPlot(position.lat, position.lng);
+      onClose();
+    } else {
+      onRequireLogin();
+      onClose();
+    }
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -111,8 +120,10 @@ export const LongPressModal: React.FC<LongPressModalProps> = ({
               <span>{position.lng.toFixed(6)}</span>
             </div>
           </div>
-          <p className="help-text">
-            Would you like to add a new plot at this location?
+          <p className="help-text" style={{ textAlign: 'center' }}>
+            {isAuthenticated
+              ? 'Would you like to add a new plot at this location?'
+              : 'Please log in to add a new plot at this location.'}
           </p>
         </div>
         <div className="modal-footer">
@@ -120,7 +131,7 @@ export const LongPressModal: React.FC<LongPressModalProps> = ({
             className="btn btn-primary"
             onClick={handleAddPlot}
           >
-            Add Plot Here
+            {isAuthenticated ? 'Add Plot Here' : 'Login to Add Plot'}
           </button>
           <button 
             className="btn btn-secondary"

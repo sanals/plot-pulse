@@ -28,6 +28,7 @@ public class PlotMapper {
         return PlotDto.builder()
                 .id(plot.getId())
                 .price(plot.getPrice())
+                .name(plot.getName())
                 .priceUnit(plot.getPriceUnit())
                 .isForSale(plot.getIsForSale())
                 .description(plot.getDescription())
@@ -65,6 +66,7 @@ public class PlotMapper {
         Plot plot = new Plot();
         plot.setId(plotDto.getId());
         plot.setPrice(plotDto.getPrice());
+        plot.setName(plotDto.getName());
         plot.setPriceUnit(plotDto.getPriceUnit());
         plot.setIsForSale(plotDto.getIsForSale());
         plot.setDescription(plotDto.getDescription());
@@ -100,6 +102,7 @@ public class PlotMapper {
             plot.setPrice(plotDto.getPrice());
         }
         
+        // Name is immutable once set; do not update it here
         if (plotDto.getPriceUnit() != null) {
             plot.setPriceUnit(plotDto.getPriceUnit());
         }

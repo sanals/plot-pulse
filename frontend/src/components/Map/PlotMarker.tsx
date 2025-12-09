@@ -7,6 +7,7 @@ import { useModalContext } from './OptimizedMapComponent';
 import { useSettings } from '../../contexts/SettingsContext';
 import { convertToPricePerSqft, convertPriceToAllUnits, formatDisplayPrice } from '../../utils/priceConversions';
 import { getCurrencySymbol, convertCurrency } from '../../utils/currencyUtils';
+import { useAuth } from '../../contexts/AuthContext';
 
 export type MarkerDisplayMode = 'none' | 'icon' | 'text';
 
@@ -28,6 +29,7 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
   const modalContext = useModalContext();
   const map = useMap();
   const settings = useSettings();
+  const { isAuthenticated, user } = useAuth();
 
   const position: MapPosition = {
     lat: plot.latitude,
@@ -158,7 +160,7 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
         closeOnClick={false}
       >
         <div className="plot-popup">
-          <h3>Plot {plot.id}</h3>
+          <h3>{plot.name ? plot.name : `Plot ${plot.id}`}</h3>
           
           <div className="price-conversions">
             <h4>Price in All Units:</h4>
@@ -195,33 +197,35 @@ const PlotMarker = ({ plot, mode, onPlotDeleted }: PlotMarkerProps) => {
             </div>
           )}
           
-          <div className="plot-actions">
-            <button 
-              className="btn btn-primary btn-small"
-              style={{ 
-                marginTop: 0, 
-                transition: 'background-color 0.2s',
-                transform: 'none'
-              }}
-              onClick={handleEdit}
-              title="Edit this plot"
-            >
-              <span className="btn-icon">✏️</span>
-              <span>Edit</span>
-            </button>
-            <button 
-              className="btn btn-danger btn-small"
-              style={{ 
-                transition: 'background-color 0.2s',
-                transform: 'none'
-              }}
-              onClick={handleDelete}
-              title="Delete this plot"
-            >
-              <span className="btn-icon">🗑️</span>
-              <span>Delete</span>
-            </button>
-          </div>
+          {isAuthenticated && plot.userId != null && user?.id === plot.userId && (
+            <div className="plot-actions">
+              <button 
+                className="btn btn-primary btn-small"
+                style={{ 
+                  marginTop: 0, 
+                  transition: 'background-color 0.2s',
+                  transform: 'none'
+                }}
+                onClick={handleEdit}
+                title="Edit this plot"
+              >
+                <span className="btn-icon">✏️</span>
+                <span>Edit</span>
+              </button>
+              <button 
+                className="btn btn-danger btn-small"
+                style={{ 
+                  transition: 'background-color 0.2s',
+                  transform: 'none'
+                }}
+                onClick={handleDelete}
+                title="Delete this plot"
+              >
+                <span className="btn-icon">🗑️</span>
+                <span>Delete</span>
+              </button>
+            </div>
+          )}
         </div>
       </Popup>
     </Marker>

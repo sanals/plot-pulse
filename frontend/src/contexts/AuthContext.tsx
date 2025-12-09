@@ -4,6 +4,7 @@ import type { LoginRequest, CreateUserRequest } from '../types/auth.types';
 import authService from '../services/authService';
 
 interface UserInfo {
+  id?: number;
   username: string;
   name?: string;
   email?: string;

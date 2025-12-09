@@ -71,7 +71,22 @@ public class JwtServiceImpl implements JwtService {
      */
     @Override
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> extraClaims = new HashMap<>();
+        
+        // Add userId if userDetails is a User entity
+        if (userDetails instanceof com.company.project.entity.User) {
+            com.company.project.entity.User user = (com.company.project.entity.User) userDetails;
+            extraClaims.put("userId", user.getId());
+            extraClaims.put("role", user.getRole() != null ? user.getRole().name() : "USER");
+            if (user.getName() != null) {
+                extraClaims.put("name", user.getName());
+            }
+            if (user.getEmail() != null) {
+                extraClaims.put("email", user.getEmail());
+            }
+        }
+        
+        return generateToken(extraClaims, userDetails);
     }
 
     /**

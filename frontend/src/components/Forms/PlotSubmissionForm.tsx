@@ -24,6 +24,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
   
   // Initialize state only when component mounts
   const [formState, setFormState] = useState({
+    name: '',
     price: '',
     priceUnit: 'per_sqft', // Default to per square foot
     isForSale: true,
@@ -36,6 +37,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
   useEffect(() => {
     if (!isOpen) {
       setFormState({
+        name: '',
         price: '',
         priceUnit: 'per_sqft',
         isForSale: true,
@@ -49,6 +51,10 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
   if (!isOpen || !position) return null;
 
   // Handle input changes
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState(prev => ({ ...prev, name: e.target.value }));
+  };
+
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormState(prev => ({ ...prev, price: e.target.value }));
   };
@@ -68,6 +74,10 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formState.name.trim()) {
+      setFormState(prev => ({ ...prev, error: 'Please enter a name for the plot' }));
+      return;
+    }
     if (!formState.price || isNaN(Number(formState.price)) || Number(formState.price) <= 0) {
       setFormState(prev => ({ ...prev, error: 'Please enter a valid price' }));
       return;
@@ -77,6 +87,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
     
     try {
       const plotData: PlotDto = {
+        name: formState.name.trim(),
         price: Number(formState.price),
         priceUnit: formState.priceUnit,
         isForSale: formState.isForSale,
@@ -91,6 +102,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
       
       // Reset form and notify parent
       setFormState({
+        name: '',
         price: '',
         priceUnit: 'per_sqft',
         isForSale: true,
@@ -129,7 +141,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
   };
 
   // Destructure for easier access in render
-  const { price, priceUnit, isForSale, description, submitting, error } = formState;
+  const { name, price, priceUnit, isForSale, description, submitting, error } = formState;
 
   return (
     <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
@@ -162,6 +174,20 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
 
             <div className="form-row">
               <div className="form-group">
+                <label htmlFor="name">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={handleNameChange}
+                  required
+                  maxLength={150}
+                  disabled={submitting}
+                  placeholder="Enter plot name"
+                />
+              </div>
+
+              <div className="form-group">
                 <label htmlFor="price">Price ({getCurrencySymbol(currency)})</label>
                 <input
                   type="number"
@@ -175,7 +201,9 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
                   placeholder="Enter plot price"
                 />
               </div>
+            </div>
 
+            <div className="form-row">
               <div className="form-group">
                 <label htmlFor="priceUnit">Price Unit</label>
                 <select
@@ -191,9 +219,7 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
                   ))}
                 </select>
               </div>
-            </div>
 
-            <div className="form-row">
               <div className="form-group">
                 <label htmlFor="isForSale">Status</label>
                 <select
@@ -206,19 +232,24 @@ const PlotSubmissionForm = memo(function PlotSubmissionForm({
                   <option value="false">Not For Sale</option>
                 </select>
               </div>
+            </div>
 
-              <div className="form-group">
-                <label htmlFor="description">Description (optional)</label>
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={handleDescriptionChange}
-                  maxLength={500}
-                  rows={1}
-                  disabled={submitting}
-                  placeholder="Enter plot description..."
-                />
-                <small>{description.length}/500 characters</small>
+            <div className="form-group textarea-group">
+              <label htmlFor="description">Description (optional)</label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={handleDescriptionChange}
+                maxLength={500}
+                rows={3}
+                disabled={submitting}
+                placeholder="Enter plot description..."
+              />
+              <div
+                className="char-count"
+                style={{ color: '#6B7280', fontSize: '12px', marginTop: '4px', textAlign: 'right' }}
+              >
+                {description.length}/500 characters
               </div>
             </div>
           </div>

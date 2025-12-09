@@ -116,7 +116,7 @@ const PlotEditForm = memo(function PlotEditForm({
     <div className="long-press-modal-overlay" onClick={handleBackdropClick}>
       <div className="long-press-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Edit Plot {plot.id}</h3>
+          <h3>Edit: {plot.name || `Plot ${plot.id}`}</h3>
           <button className="plot-modal-close-button" onClick={onClose}>
             ×
           </button>
@@ -136,13 +136,17 @@ const PlotEditForm = memo(function PlotEditForm({
               <small style={{ color: '#6B7280', fontStyle: 'italic' }}>Location cannot be changed</small>
             </div>
 
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-
             <div className="form-row">
+              <div className="form-group">
+                <label>Plot Name</label>
+                <input
+                  type="text"
+                  value={plot.name || `Plot ${plot.id}`}
+                  readOnly
+                  disabled
+                />
+              </div>
+
               <div className="form-group">
                 <label htmlFor="edit-price">Price ({getCurrencySymbol(currency)})</label>
                 <input
@@ -157,7 +161,9 @@ const PlotEditForm = memo(function PlotEditForm({
                   placeholder="Enter plot price"
                 />
               </div>
+            </div>
 
+            <div className="form-row">
               <div className="form-group">
                 <label htmlFor="edit-priceUnit">Price Unit</label>
                 <select
@@ -173,9 +179,7 @@ const PlotEditForm = memo(function PlotEditForm({
                   ))}
                 </select>
               </div>
-            </div>
 
-            <div className="form-row">
               <div className="form-group">
                 <label htmlFor="edit-isForSale">Status</label>
                 <select
@@ -188,19 +192,30 @@ const PlotEditForm = memo(function PlotEditForm({
                   <option value="false">Not For Sale</option>
                 </select>
               </div>
+            </div>
 
-              <div className="form-group">
-                <label htmlFor="edit-description">Description (optional)</label>
-                <textarea
-                  id="edit-description"
-                  value={description}
-                  onChange={handleDescriptionChange}
-                  maxLength={500}
-                  rows={1}
-                  disabled={submitting}
-                  placeholder="Enter plot description..."
-                />
-                <small>{description.length}/500 characters</small>
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+
+            <div className="form-group textarea-group">
+              <label htmlFor="edit-description">Description (optional)</label>
+              <textarea
+                id="edit-description"
+                value={description}
+                onChange={handleDescriptionChange}
+                maxLength={500}
+                rows={3}
+                disabled={submitting}
+                placeholder="Enter plot description..."
+              />
+              <div
+                className="char-count"
+                style={{ color: '#6B7280', fontSize: '12px', marginTop: '4px', textAlign: 'right' }}
+              >
+                {description.length}/500 characters
               </div>
             </div>
           </div>

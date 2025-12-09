@@ -1,5 +1,6 @@
 import type { NearestPlotRequest, PlotDto, MapBounds } from '../types/plot.types';
 import { getApiBaseUrl } from '../config/env';
+import authService from './authService';
 
 // Configuration
 const USE_MOCK_DATA = false;
@@ -150,12 +151,18 @@ const retryRequest = async <T>(
  * Request interceptor for common headers and logging
  */
 const createRequestOptions = (options: RequestInit = {}): RequestInit => {
-  const defaultHeaders = {
+  const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'X-Client-Version': '1.0.0',
     'X-Request-ID': generateRequestId(),
   };
+  
+  // Add Authorization header if token is available
+  const token = authService.getToken();
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
   
   return {
     ...options,
@@ -424,6 +431,7 @@ export const createPlot = async (plot: PlotDto): Promise<PlotDto> => {
     
     const newPlot = {
       ...plot,
+      name: plot.name || `Plot ${newId}`,
       id: newId,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -544,6 +552,7 @@ const generateMockPlots = (): PlotDto[] => {
     const lngOffset = (Math.random() - 0.5) * 0.06;
     
     generatedPlots.push({
+      name: `Mock Plot ${id}`,
       id,
       price,
       priceUnit: 'per_sqft',

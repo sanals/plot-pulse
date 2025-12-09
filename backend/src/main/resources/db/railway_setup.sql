@@ -56,7 +56,46 @@ BEGIN
     CHECK (price_unit IN ('per_sqft', 'per_sqm', 'per_cent', 'per_acre', 'per_hectare'));
 END $$;
 
--- Step 8: Create spatial indexes if they don't exist
+-- Step 9: Add name column to plots table (V8 migration)
+ALTER TABLE plots ADD COLUMN IF NOT EXISTS name VARCHAR(150);
+
+-- Step 10: Update existing plots to set default name if null
+UPDATE plots SET name = CONCAT('Plot ', id) WHERE name IS NULL;
+
+-- Step 11: Make the name column NOT NULL (if not already)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'plots' 
+        AND column_name = 'name' 
+        AND is_nullable = 'YES'
+    ) THEN
+        ALTER TABLE plots ALTER COLUMN name SET NOT NULL;
+    END IF;
+END $$;
+
+-- Step 12: Create plot_feedback table (V7 migration)
+CREATE TABLE IF NOT EXISTS plot_feedback (
+    id BIGSERIAL PRIMARY KEY,
+    plot_id BIGINT NOT NULL,
+    user_id BIGINT,
+    feedback_type VARCHAR(50) NOT NULL CHECK (feedback_type IN ('OUTDATED', 'REPORTED', 'PRICE_SUGGESTION')),
+    suggested_price NUMERIC(19, 2),
+    suggested_price_unit VARCHAR(50),
+    comment VARCHAR(500),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_plot_feedback_plot FOREIGN KEY (plot_id) REFERENCES plots(id) ON DELETE CASCADE,
+    CONSTRAINT fk_plot_feedback_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Step 13: Create indexes for plot_feedback table
+CREATE INDEX IF NOT EXISTS idx_plot_feedback_plot_id ON plot_feedback(plot_id);
+CREATE INDEX IF NOT EXISTS idx_plot_feedback_user_id ON plot_feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_plot_feedback_type ON plot_feedback(feedback_type);
+CREATE INDEX IF NOT EXISTS idx_plot_feedback_created_at ON plot_feedback(created_at);
+
+-- Step 14: Create spatial indexes if they don't exist
 -- Index for plots.location (geometry column)
 DO $$
 BEGIN
@@ -73,4 +112,6 @@ END $$;
 -- SELECT * FROM pg_extension WHERE extname = 'postgis';
 -- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'name';
 -- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'plots' AND column_name = 'price_unit';
+-- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'plots' AND column_name = 'name';
+-- SELECT * FROM information_schema.tables WHERE table_name = 'plot_feedback';
 

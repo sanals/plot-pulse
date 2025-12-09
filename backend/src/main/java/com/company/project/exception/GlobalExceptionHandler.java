@@ -179,4 +179,30 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
+
+    @ExceptionHandler(PlotOwnershipException.class)
+    public ResponseEntity<ErrorResponse> handlePlotOwnershipException(PlotOwnershipException ex) {
+        log.warn("Plot ownership violation: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status("ERROR")
+                .code(403)
+                .message("You do not have permission to modify this plot. Only the plot owner can edit or delete it.")
+                .data(ex.getMessage())
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(org.springframework.security.authentication.AuthenticationCredentialsNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationRequired(org.springframework.security.authentication.AuthenticationCredentialsNotFoundException ex) {
+        log.warn("Authentication required: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status("ERROR")
+                .code(401)
+                .message("Authentication required. Please log in to perform this action.")
+                .data(ex.getMessage())
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
 }
