@@ -535,7 +535,7 @@ const MapComponentInner: React.FC = () => {
       <ConfirmationDialog
         isOpen={!!deletingPlot}
         title="Delete Plot"
-        message={`Are you sure you want to delete Plot ${deletingPlot?.id}? This action cannot be undone.`}
+        message={`Are you sure you want to delete ${deletingPlot?.name || `Plot ${deletingPlot?.id}`}? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         isDestructive={true}
