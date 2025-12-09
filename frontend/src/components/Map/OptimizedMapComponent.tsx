@@ -425,8 +425,8 @@ const MapComponentInner: React.FC = () => {
           />
           
           <MapRecenterComponent 
-            position={centerPosition && !geoLoading ? centerPosition : null}
-            onlyOnce={false}
+            position={centerPosition && !geoLoading && !hasInitiallyRecentered ? centerPosition : null}
+            onlyOnce={true}
             respectUserInteraction={true}
             onRecenter={() => {
               if (!hasInitiallyRecentered) {

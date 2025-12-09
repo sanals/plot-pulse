@@ -104,8 +104,8 @@
 }
 
 .plot-price-marker.price-low .price-label {
-  /* Simple solid background */
-  background: rgba(255, 193, 7, 0.95) !important;
+  /* Simple solid background - Green for low prices */
+  background: rgba(34, 197, 94, 0.95) !important;
   
   /* Simple minimal text shadow */
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) !important;
@@ -113,7 +113,7 @@
 
 .plot-price-marker.price-low:hover .price-label {
   /* Simple solid background on hover */
-  background: rgba(255, 193, 7, 1) !important;
+  background: rgba(34, 197, 94, 1) !important;
   
   /* Enhanced shadow on hover */
   box-shadow: 
